@@ -47,11 +47,12 @@
         system = "aarch64-linux";
         overlays = with self.overlays; [ core libcamera ];
       };
+      clusterList = import ./libraryofalexandria/clusters-list.nix;
     in
     {
       overlays = {
-        core = import ./overlays (builtins.removeAttrs srcs [ "self" ]);
-        libcamera = import ./overlays/libcamera.nix (builtins.removeAttrs srcs [ "self" ]);
+        core = import ./rpi/overlays (builtins.removeAttrs srcs [ "self" ]);
+        libcamera = import ./rpi/overlays/libcamera.nix (builtins.removeAttrs srcs [ "self" ]);
       };
       nixosModules = {
         raspberry-pi = import ./rpi {
@@ -59,14 +60,24 @@
           core-overlay = self.overlays.core;
           libcamera-overlay = self.overlays.libcamera;
         };
-        sd-image = import ./sd-image;
+        sd-image = import ./rpi/sd-image;
       };
       nixosConfigurations = {
         rpi-example = srcs.nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           modules = [ self.nixosModules.raspberry-pi self.nixosModules.sd-image ./example ];
         };
-      };
+
+        dummy0-rpi = srcs.nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          modules = [ self.nixosModules.raspberry-pi self.nixosModules.sd-image ./libraryofalexandria/master-0.nix ];
+        };
+      } // (let
+          clustersConfigsList = builtins.map(label: import ./libraryofalexandria/cluster-${label}.nix {srcs=srcs; nixosModules=self.nixosModules;}) clusterList;
+          clustersConfigs = builtins.foldl' (prev: cluster: prev // cluster) {} clustersConfigsList;
+        in
+          clustersConfigs
+      );
       checks.aarch64-linux = self.packages.aarch64-linux;
       packages.aarch64-linux = with pinned.lib;
         let
@@ -87,5 +98,33 @@
           wireless-firmware = pinned.raspberrypiWirelessFirmware;
           uboot-rpi-arm64 = pinned.uboot-rpi-arm64;
         } // kernels;
+      colmena = {
+        meta = {
+          nixpkgs = pinned;
+        };
+
+        defaults = { pkgs, ... }: {
+          modules = [
+            self.nixosModules.raspberry-pi
+            self.nixosModules.sd-image
+            ./example
+          ];
+        };
+
+        # Also see the non-Flakes hive.nix example above.
+        host-a = { name, nodes, pkgs, ... }: {
+          boot.isContainer = true;
+          time.timeZone = nodes.host-b.config.time.timeZone;
+        };
+        host-b = {
+          deployment = {
+            targetHost = "somehost.tld";
+            targetPort = 1234;
+            targetUser = "luser";
+          };
+          boot.isContainer = true;
+          time.timeZone = "America/Los_Angeles";
+        };
+      };
     };
 }
