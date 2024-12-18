@@ -1,7 +1,14 @@
 nodeConfig:
 {
   time.timeZone = "America/New_York";
-  users.users.root.initialPassword = "root";
+  users.users = {
+    root.initialPassword = "root";
+    kevint = {
+      isNormalUser = true;
+      home = "/home/kevint";
+      extraGroups = [ "wheel" "networkmanager" ];
+    };
+  };
   networking = {
     hostName =  let
             prefix = if nodeConfig.hostnamePrefix != "" then nodeConfig.hostnamePrefix + "-" else "";

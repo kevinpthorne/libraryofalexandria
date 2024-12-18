@@ -12,6 +12,7 @@ let
                     nixosModules.sd-image 
                     nMaster
                 ];
+                extraModules = [ srcs.colmena.nixosModules.deploymentOptions ];
             };
         };
     worker = clusterLabel: n:
@@ -26,6 +27,7 @@ let
                     nixosModules.sd-image 
                     nWorker
                 ];
+                extraModules = [ srcs.colmena.nixosModules.deploymentOptions ];
             };
         };
 in

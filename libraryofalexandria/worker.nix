@@ -1,7 +1,8 @@
 platform: hostnamePrefix: nodeNumber:
 { pkgs, lib, ... }:
 let
-    base = import ../libraryofalexandria/platforms/${platform} {
+    base = import ../libraryofalexandria/defaults.nix {};
+    platformBase = import ../libraryofalexandria/platforms/${platform} {
         isMaster = false;
         nodeNumber = nodeNumber;
         hostnamePrefix = hostnamePrefix;
@@ -10,5 +11,5 @@ let
 in
 {
     options = {};
-    config = {} // base // overrides;
+    config = {} // base // platformBase // overrides;
 }

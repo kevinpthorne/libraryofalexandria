@@ -39,6 +39,13 @@
       flake = false;
       url = "github:raspberrypi/libpisp/v1.0.7";
     };
+    colmena = {
+      url = "github:zhaofengli/colmena";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        stable.follows = "nixpkgs";
+      };
+    };
   };
 
   outputs = srcs@{ self, ... }:
@@ -63,17 +70,21 @@
         sd-image = import ./rpi/sd-image;
       };
       nixosConfigurations = {
-        rpi-example = srcs.nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux";
-          modules = [ self.nixosModules.raspberry-pi self.nixosModules.sd-image ./example ];
-        };
+        # rpi-example = srcs.nixpkgs.lib.nixosSystem {
+        #   system = "aarch64-linux";
+        #   modules = [ self.nixosModules.raspberry-pi self.nixosModules.sd-image ./example ];
+        # };
 
-        dummy0-rpi = srcs.nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux";
-          modules = [ self.nixosModules.raspberry-pi self.nixosModules.sd-image ./libraryofalexandria/master-0.nix ];
-        };
+        # dummy0-rpi = srcs.nixpkgs.lib.nixosSystem {
+        #   system = "aarch64-linux";
+        #   modules = [ self.nixosModules.raspberry-pi self.nixosModules.sd-image ./libraryofalexandria/master-0.nix ];
+        # };
       } // (let
-          clustersConfigsList = builtins.map(label: import ./libraryofalexandria/cluster-${label}.nix {srcs=srcs; nixosModules=self.nixosModules;}) clusterList;
+          clustersConfigsList = builtins.map(label: 
+            import ./libraryofalexandria/cluster-${label}.nix {
+              srcs=srcs; 
+              nixosModules=self.nixosModules;
+          }) clusterList;
           clustersConfigs = builtins.foldl' (prev: cluster: prev // cluster) {} clustersConfigsList;
         in
           clustersConfigs
@@ -101,30 +112,13 @@
       colmena = {
         meta = {
           nixpkgs = pinned;
+          nodeNixpkgs = builtins.mapAttrs (_: v: v.pkgs) self.nixosConfigurations;
+          nodeSpecialArgs = builtins.mapAttrs (_: v: v._module.specialArgs) self.nixosConfigurations;
+          specialArgs.lib = pinned.lib;
         };
-
-        defaults = { pkgs, ... }: {
-          modules = [
-            self.nixosModules.raspberry-pi
-            self.nixosModules.sd-image
-            ./example
-          ];
-        };
-
-        # Also see the non-Flakes hive.nix example above.
-        host-a = { name, nodes, pkgs, ... }: {
-          boot.isContainer = true;
-          time.timeZone = nodes.host-b.config.time.timeZone;
-        };
-        host-b = {
-          deployment = {
-            targetHost = "somehost.tld";
-            targetPort = 1234;
-            targetUser = "luser";
-          };
-          boot.isContainer = true;
-          time.timeZone = "America/Los_Angeles";
-        };
-      };
+      } // builtins.mapAttrs (name: value: {
+        nixpkgs.system = value.config.nixpkgs.system;
+        imports = value._module.args.modules;
+      }) (self.nixosConfigurations);
     };
 }
