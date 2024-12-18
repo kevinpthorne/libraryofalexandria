@@ -11,5 +11,8 @@ let
 in
 {
     options = {};
-    config = {} // base // platformBase // overrides;
+    config = {
+        environment.systemPackages = with pkgs; [ vim ];
+        nix.trustedUsers = [ "root" "@wheel" ];
+    } // base // platformBase // overrides;
 }

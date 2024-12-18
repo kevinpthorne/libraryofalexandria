@@ -1,4 +1,12 @@
 nodeConfig:
+let
+ hostname = let
+            prefix = if nodeConfig.hostnamePrefix != "" then nodeConfig.hostnamePrefix + "-" else "";
+            nodeType = if nodeConfig.isMaster then "master" else "worker";
+            nodeNumber = "-" + toString nodeConfig.nodeNumber;
+          in
+            prefix + nodeType + nodeNumber;
+in
 {
   time.timeZone = "America/New_York";
   users.users = {
@@ -9,13 +17,13 @@ nodeConfig:
       extraGroups = [ "wheel" "networkmanager" ];
     };
   };
+  deployment = {
+    targetHost = hostname;
+    targetPort = 22;
+    targetUser = "kevint";
+  };
   networking = {
-    hostName =  let
-            prefix = if nodeConfig.hostnamePrefix != "" then nodeConfig.hostnamePrefix + "-" else "";
-            nodeType = if nodeConfig.isMaster then "master" else "worker";
-            nodeNumber = "-" + toString nodeConfig.nodeNumber;
-          in
-            prefix + nodeType + nodeNumber;
+    hostName = hostname;
     useDHCP = false;
     interfaces = {
       wlan0.useDHCP = false;
