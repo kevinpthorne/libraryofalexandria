@@ -10,7 +10,7 @@ let
     overrides = import ../libraryofalexandria/platforms/${platform}/worker.nix {} { pkgs=pkgs; lib=lib; };
     deepMerge = import ../libraryofalexandria/logic/deep-merge.nix;
 in
-deepMerge overrides platformBase base {
+deepMerge [ overrides platformBase base {
     options = {};
     config = {};
-}
+} ]

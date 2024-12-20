@@ -3,12 +3,14 @@ nodeConfig:
 let
     iamConfig = import ./iam.nix;
     iamUserKeys = builtins.attrNames iamConfig;
-    hostUsers = builtins.map (user: { "${user}" = iamConfig."${user}".host; }) iamUserKeys;
+    iamUserKeysWithHost = builtins.filter (user: builtins.hasAttr "host" iamConfig."${user}") iamUserKeys;
+    hostUsers = builtins.map (user: { "${user}" = iamConfig."${user}".host; }) iamUserKeysWithHost;
+    deepMerge = import ../libraryofalexandria/logic/deep-merge.nix;
 in
 {
     config = {
-        users.users = builtins.map (user: user.host) (import ./iam.nix);
-        nix.trustedUsers = [ "root" "@wheel" ];
+        users.users = deepMerge hostUsers;
+        nix.settings.trusted-users = [ "root" "@wheel" ];
         environment.systemPackages = with pkgs; [ vim ];
     };
 }

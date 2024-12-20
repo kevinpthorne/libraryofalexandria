@@ -16,4 +16,4 @@ in
     merge = 
       acc: new: lib.recursiveUpdate new acc;
   in
-    builtins.foldl merge {}
+    builtins.foldl' merge {}
