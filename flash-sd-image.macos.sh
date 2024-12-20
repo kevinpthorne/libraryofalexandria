@@ -40,7 +40,7 @@ set -x  # show output
 diskutil unmountDisk $disk
 
 # Decompress the disk image on the fly and flash it to the selected disk
-sudo zstd -d -c "$disk_image" | sudo dd bs=8m of="/dev/$disk" status=progress
+zstd -d -c "$disk_image" | sudo dd bs=8m of="/dev/$disk" status=progress
 
 diskutil eject $disk
 
