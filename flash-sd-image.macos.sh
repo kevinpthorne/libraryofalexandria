@@ -20,13 +20,20 @@ disks=$(diskutil list | grep "/dev" | sed 's/\/dev\/\([^ ]*\).*/\1/')
 diskutil list
 
 # Prompt the user to select a disk
-echo "Select a disk to flash:"
+echo "Select a disk to flash: (don't put disk number)"
 select disk in $disks; do
     if [[ $disk ]]; then
         break
     fi
-    echo "Invalid disk. Please try again."
+    echo "Invalid option. Please try again."
 done
+
+# Confirm the disk selection
+read -p "Are you sure you want to flash disk '$disk'? (yes/no): " confirm
+if [[ "$confirm" != "yes" ]]; then
+    echo "Flashing cancelled."
+    exit 1
+fi
 
 set -x  # show output
 
@@ -36,5 +43,7 @@ diskutil unmountDisk $disk
 sudo zstd -d -c "$disk_image" | sudo dd bs=8m of="/dev/$disk" status=progress
 
 diskutil eject $disk
+
+set +x ""
 
 echo "Writing complete!"
