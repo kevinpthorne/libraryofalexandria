@@ -8,8 +8,9 @@ let
         hostnamePrefix = hostnamePrefix;
     } { pkgs=pkgs; lib=lib; };
     overrides = import ../libraryofalexandria/platforms/${platform}/master.nix {} { pkgs=pkgs; lib=lib; };
+    deepMerge = import ../libraryofalexandria/logic/deep-merge.nix;
 in
-{
+deepMerge overrides platformBase base {
     options = {};
     config = {};
-} // base // platformBase // overrides
+}
