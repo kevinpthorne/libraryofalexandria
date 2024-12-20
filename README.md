@@ -2,5 +2,5 @@
 
 TODO
 
-[ ] trusted-users
-[ ] fix libraryofalexandria's platform master and worker files to allow
+- [ ] sudo nopasswd for deployment (maybe separate account too?)
+- [ ] enable flakes
