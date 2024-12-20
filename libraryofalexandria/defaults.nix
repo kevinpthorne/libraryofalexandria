@@ -5,7 +5,7 @@ let
     iamUserKeys = builtins.attrNames iamConfig;
     iamUserKeysWithHost = builtins.filter (user: builtins.hasAttr "host" iamConfig."${user}") iamUserKeys;
     hostUsers = builtins.map (user: { "${user}" = iamConfig."${user}".host; }) iamUserKeysWithHost;
-    deepMerge = import ../libraryofalexandria/logic/deep-merge.nix;
+    deepMerge = import ../libraryofalexandria/logic/deep-merge.nix lib;
 in
 {
     config = {
