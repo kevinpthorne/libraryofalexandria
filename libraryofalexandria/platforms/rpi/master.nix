@@ -1,2 +1,3 @@
 nodeOverrides:
+{ pkgs, lib, ... }:
 {}
