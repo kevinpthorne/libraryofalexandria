@@ -54,7 +54,7 @@
         system = "aarch64-linux";
         overlays = with self.overlays; [ core libcamera ];
       };
-      clusterList = import ./libraryofalexandria/clusters-list.nix;
+      clusterList = import ./libraryofalexandria/clusters/registry.nix;
     in
     {
       overlays = {
@@ -81,7 +81,7 @@
         # };
       } // (let
           clustersConfigsList = builtins.map(label: 
-            import ./libraryofalexandria/cluster-${label}.nix {
+            import ./libraryofalexandria/clusters/${label}/cluster-${label}.nix {
               srcs=srcs; 
               nixosModules=self.nixosModules;
           }) clusterList;

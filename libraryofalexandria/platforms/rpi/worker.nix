@@ -1,3 +1,3 @@
-nodeOverrides:
+nodeConfig:
 { pkgs, lib, ... }:
 {}

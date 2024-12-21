@@ -1,9 +1,17 @@
 { srcs, nixosModules }:
 let
+    nodeConfig = clusterLabel: n: {
+        lib = srcs.nixpkgs.lib;
+        platform = "rpi";
+        clusterLabel = clusterLabel;
+        nodeNumber = n;
+    };
     master = clusterLabel: n:
         let 
             nStr = toString n;
-            nMaster = import ./master.nix "rpi" "libraryofalexandria-${clusterLabel}" n;
+            nMasterBaseConfig = (nodeConfig clusterLabel n) // { nodeType = "master"; };
+            nMasterConfig = import ../../node.cfg.nix nMasterBaseConfig;
+            nMaster = import ../../node.nix nMasterConfig;
         in {
             "libraryofalexandria-${clusterLabel}-master${nStr}-rpi" = srcs.nixpkgs.lib.nixosSystem {
                 system = "aarch64-linux";
@@ -18,7 +26,9 @@ let
     worker = clusterLabel: n:
         let 
             nStr = toString n;
-            nWorker = import ./worker.nix "rpi" "libraryofalexandria-${clusterLabel}" n;
+            nWorkerBaseConfig = (nodeConfig clusterLabel n) // { nodeType = "worker"; };
+            nWorkerConfig = import ../../node.cfg.nix nWorkerBaseConfig;
+            nWorker = import ../../node.nix nWorkerBaseConfig;
         in {
             "libraryofalexandria-${clusterLabel}-worker${nStr}-rpi" = srcs.nixpkgs.lib.nixosSystem {
                 system = "aarch64-linux";
@@ -31,4 +41,4 @@ let
             };
         };
 in
-import ./cluster.nix "k" master 2 worker 3
+import ../cluster-gen.nix "k" master 1 worker 4

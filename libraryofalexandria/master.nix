@@ -1,16 +1,5 @@
-platform: hostnamePrefix: nodeNumber:
+nodeConfig:
 { pkgs, lib, ... }:
-let
-    base = import ../libraryofalexandria/defaults.nix {} { pkgs=pkgs; lib=lib; };
-    platformBase = import ../libraryofalexandria/platforms/${platform} {
-        isMaster = true;
-        nodeNumber = nodeNumber;
-        hostnamePrefix = hostnamePrefix;
-    } { pkgs=pkgs; lib=lib; };
-    overrides = import ../libraryofalexandria/platforms/${platform}/master.nix {} { pkgs=pkgs; lib=lib; };
-    deepMerge = import ../libraryofalexandria/logic/deep-merge.nix lib;
-in
-deepMerge [ overrides platformBase base {
-    options = {};
-    config = {};
-} ]
+{
+    
+}
