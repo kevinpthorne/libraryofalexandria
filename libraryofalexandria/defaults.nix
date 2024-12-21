@@ -34,7 +34,7 @@ deepMerge [ clusterOverrides platformBase {
         };
         security.sudo.extraRules = [
             {  
-                users = [ "privileged_user" ];
+                users = [ colmenaUser ];
                 commands = [
                     { 
                         command = "ALL";
