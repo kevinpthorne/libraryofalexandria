@@ -5,10 +5,10 @@ let
     deepMerge = import ../libraryofalexandria/logic/deep-merge.nix lib;
     # render config
     finalConfig = import ./node.cfg.nix nodeConfig;
-    finalConfig2 = builtins.trace finalConfig finalConfig;  # hack to get it to print config schema
+    # finalConfig2 = builtins.trace finalConfig finalConfig;  # hack to get it to print config schema
     # render nixos module
     args = { pkgs=pkgs; lib=lib; };
-    base = import ../libraryofalexandria/defaults.nix finalConfig2 args;
+    base = import ../libraryofalexandria/defaults.nix finalConfig args;
     nodeTypeBase = importIfExists  ../libraryofalexandria/${nodeType}.nix finalConfig args;
     platformOverrides = importIfExists  ../libraryofalexandria/platforms/${platform}/${nodeType}.nix finalConfig args;
     nodeTypeOverrides = importIfExists ../libraryofalexandria/clusters/${clusterLabel}/${nodeType}.nix finalConfig args;
