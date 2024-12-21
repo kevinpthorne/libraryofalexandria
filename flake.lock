@@ -112,6 +112,21 @@
         "type": "github"
       }
     },
+    "nixos-boot": {
+      "locked": {
+        "lastModified": 1722927293,
+        "narHash": "sha256-8oCsiFyAuidAdhSz60Lu8+TwCPHxaeWixyv0xT0mLt4=",
+        "owner": "Melkor333",
+        "repo": "nixos-boot",
+        "rev": "afaed735149d0a06f234e54dd2d9db2e18dc64ae",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Melkor333",
+        "repo": "nixos-boot",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1728193676,
@@ -133,6 +148,7 @@
         "colmena": "colmena",
         "libcamera-src": "libcamera-src",
         "libpisp-src": "libpisp-src",
+        "nixos-boot": "nixos-boot",
         "nixpkgs": "nixpkgs",
         "rpi-bluez-firmware-src": "rpi-bluez-firmware-src",
         "rpi-firmware-nonfree-src": "rpi-firmware-nonfree-src",

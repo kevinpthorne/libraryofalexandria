@@ -17,7 +17,8 @@ let
                 system = "aarch64-linux";
                 modules = [ 
                     nixosModules.raspberry-pi 
-                    nixosModules.sd-image 
+                    nixosModules.sd-image
+                    srcs.nixos-boot.nixosModules.default
                     nMaster
                 ];
                 extraModules = [ srcs.colmena.nixosModules.deploymentOptions ];
@@ -34,7 +35,8 @@ let
                 system = "aarch64-linux";
                 modules = [ 
                     nixosModules.raspberry-pi 
-                    nixosModules.sd-image 
+                    nixosModules.sd-image
+                    srcs.nixos-boot.nixosModules.default
                     nWorker
                 ];
                 extraModules = [ srcs.colmena.nixosModules.deploymentOptions ];

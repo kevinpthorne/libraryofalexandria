@@ -46,6 +46,7 @@
         stable.follows = "nixpkgs";
       };
     };
+    nixos-boot.url = "github:Melkor333/nixos-boot";
   };
 
   outputs = srcs@{ self, ... }:
@@ -55,6 +56,12 @@
         overlays = with self.overlays; [ core libcamera ];
       };
       clusterList = import ./libraryofalexandria/clusters/registry.nix;
+      clustersConfigsList = builtins.map(label: 
+        import ./libraryofalexandria/clusters/${label}/cluster-${label}.nix {
+          srcs=srcs; 
+          nixosModules=self.nixosModules;
+      }) clusterList;
+      clustersConfigs = builtins.foldl' (prev: cluster: prev // cluster) {} clustersConfigsList;
     in
     {
       overlays = {
@@ -79,16 +86,7 @@
         #   system = "aarch64-linux";
         #   modules = [ self.nixosModules.raspberry-pi self.nixosModules.sd-image ./libraryofalexandria/master-0.nix ];
         # };
-      } // (let
-          clustersConfigsList = builtins.map(label: 
-            import ./libraryofalexandria/clusters/${label}/cluster-${label}.nix {
-              srcs=srcs; 
-              nixosModules=self.nixosModules;
-          }) clusterList;
-          clustersConfigs = builtins.foldl' (prev: cluster: prev // cluster) {} clustersConfigsList;
-        in
-          clustersConfigs
-      );
+      } // clustersConfigs;
       checks.aarch64-linux = self.packages.aarch64-linux;
       packages.aarch64-linux = with pinned.lib;
         let
