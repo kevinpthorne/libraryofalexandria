@@ -50,6 +50,6 @@ deepMerge [ clusterOverrides platformBase {
             trusted-users = [ "root" colmenaUser ];
         };
 
-        environment.systemPackages = with pkgs; [ vim ];
+        # environment.systemPackages = with pkgs; [ vim ];
     };
 } ]
