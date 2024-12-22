@@ -18,4 +18,5 @@ let
     # 
     renderedConfig = nodeOverrides;
 in
-builtins.trace renderedConfig renderedConfig
+renderedConfig
+# builtins.trace renderedConfig renderedConfig
