@@ -1,3 +1,0 @@
-nodeConfig:
-{ pkgs, lib, ... }:
-{}
