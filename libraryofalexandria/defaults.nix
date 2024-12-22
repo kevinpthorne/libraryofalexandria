@@ -53,6 +53,8 @@ deepMerge [ clusterOverrides platformBase {
         environment.systemPackages = with pkgs; [
             vim
             curl
+            htop
+            k9s
         ];
     };
 } ]
