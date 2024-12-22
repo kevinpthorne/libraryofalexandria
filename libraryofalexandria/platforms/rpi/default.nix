@@ -12,5 +12,12 @@ nodeConfig:
     };
     raspberry-pi-nix.board = "bcm2712"; # pi 5
     security.rtkit.enable = true;
+
+    # required for kubernetes on rpi
+    boot.kernelParams = [
+      "cgroup_enable=cpuset"
+      "cgroup_enable=memory"
+      "cgroup_memory=1"
+    ];
   };
 }
