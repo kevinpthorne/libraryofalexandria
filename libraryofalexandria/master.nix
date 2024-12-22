@@ -6,11 +6,16 @@ with k8s; {
         networking.extraHosts = "${masterIp} ${masterHostname}";
 
         # packages for administration tasks
-        environment.systemPackages = with pkgs; [
-            kompose
-            kubectl
-            kubernetes
-        ];
+        environment = {
+            variables = {
+                "KUBECONFIG" = "/etc/kubernetes/cluster-admin.kubeconfig";
+            };
+            systemPackages = with pkgs; [
+                kompose
+                kubectl
+                kubernetes
+            ];
+        };
 
         services.kubernetes = {
             roles = ["master" "node"];
