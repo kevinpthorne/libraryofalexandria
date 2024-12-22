@@ -3,7 +3,7 @@ if isEntering then
     nodeConfig:
     {
         k8s = {
-            masterIp = "10.69.69.100";
+            masterIp = "172.24.1.178";
             masterHostname = nodeConfig.hostname;
             masterPort = 6443;
         };
