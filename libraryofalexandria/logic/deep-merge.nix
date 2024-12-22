@@ -8,9 +8,28 @@
 #   attrSet3 = { d = 8; c = { x = 9; } };
 # in
 #   deepMerge [ attrSet1 attrSet2 attrSet3 ];
+# lib:
+# let
+#     merge = 
+#         acc: new: lib.recursiveUpdate new acc;
+# in
+#     builtins.foldl' merge {}
 lib:
+with lib;
 let
-    merge = 
-        acc: new: lib.recursiveUpdate new acc;
+    recursiveMerge = attrList:
+    let 
+        f = attrPath:
+            zipAttrsWith (n: values:
+                if tail values == []
+                    then head values
+                else if all isList values
+                    then unique (concatLists values)
+                else if all isAttrs values
+                    then f (attrPath ++ [n]) values
+                else last values
+            );
+    in 
+        f [] attrList;
 in
-    builtins.foldl' merge {}
+    recursiveMerge
