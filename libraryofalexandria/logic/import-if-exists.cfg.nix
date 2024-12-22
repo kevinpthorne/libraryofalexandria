@@ -10,5 +10,5 @@
 #   myConditionalImport = importIfExists ./path/to/somewhere.nix {} {}
 # in
 #    # ....
-path: config:
-if (builtins.pathExists path) then import path config else {}
+path: isEntering: config:
+if (builtins.pathExists path) then import path isEntering config else {}
