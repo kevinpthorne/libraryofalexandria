@@ -12,8 +12,5 @@ nodeConfig:
                 extraGroups = [ "wheel" "networkmanager" ];
             };
         };
-        nixos-boot = {
-            enable  = true;
-        };
     };
 }
