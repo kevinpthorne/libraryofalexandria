@@ -18,7 +18,6 @@ let
                 modules = [ 
                     nixosModules.raspberry-pi 
                     nixosModules.sd-image
-                    srcs.nixos-boot.nixosModules.default
                     nMaster
                 ];
                 extraModules = [ srcs.colmena.nixosModules.deploymentOptions ];
@@ -36,7 +35,6 @@ let
                 modules = [ 
                     nixosModules.raspberry-pi 
                     nixosModules.sd-image
-                    srcs.nixos-boot.nixosModules.default
                     nWorker
                 ];
                 extraModules = [ srcs.colmena.nixosModules.deploymentOptions ];
