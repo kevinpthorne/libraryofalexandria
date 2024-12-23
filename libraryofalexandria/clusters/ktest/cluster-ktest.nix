@@ -1,15 +1,15 @@
 { srcs, nixosModules }:
 let
-    nodeConfig = clusterLabel: n: {
-        lib = srcs.nixpkgs.lib;
-        platform = "x86_64";
-        clusterLabel = clusterLabel;
-        nodeNumber = n;
-    };
     master = clusterLabel: n:
         let 
             nStr = toString n;
-            nMasterBaseConfig = (nodeConfig clusterLabel n) // { nodeType = "master"; };
+            nMasterBaseConfig = {
+                lib = srcs.nixpkgs.lib;
+                platform = "x86_64";
+                clusterLabel = clusterLabel;
+                nodeNumber = n;
+                nodeType = "master";
+            };
             nMasterConfig = import ../../node.cfg.nix nMasterBaseConfig;
             nMaster = import ../../node.nix nMasterConfig;
         in {
@@ -27,7 +27,13 @@ let
     worker = clusterLabel: n:
         let 
             nStr = toString n;
-            nWorkerBaseConfig = (nodeConfig clusterLabel n) // { nodeType = "worker"; };
+            nWorkerBaseConfig = {
+                lib = srcs.nixpkgs.lib;
+                platform = "rpi";
+                clusterLabel = clusterLabel;
+                nodeNumber = n;
+                nodeType = "worker";
+            };
             nWorkerConfig = import ../../node.cfg.nix nWorkerBaseConfig;
             nWorker = import ../../node.nix nWorkerBaseConfig;
         in {
