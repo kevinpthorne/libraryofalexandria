@@ -2,7 +2,7 @@ nodeConfig:
 { pkgs, lib, ... }:
 {
     config = {
-        time.timeZone = "America/New_York";
+        time.timeZone = "America/Boise";
 
         users.users = {
             root.initialPassword = "root";
