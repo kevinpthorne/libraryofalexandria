@@ -23,6 +23,7 @@ let
                         ];
                     })
                     nMaster
+                    srcs.disko.nixosModules.disko
                 ];
                 extraModules = [ srcs.colmena.nixosModules.deploymentOptions ];
             };

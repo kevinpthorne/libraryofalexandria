@@ -47,6 +47,8 @@
       };
     };
     nixos-boot.url = "github:Melkor333/nixos-boot";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = srcs@{ self, ... }:
