@@ -22,6 +22,12 @@ deepMerge [ clusterOverrides platformBase {
         time.timeZone = "Etc/UTC";
         users.users = allHostUsers;  # IAM + colmena
 
+        # containerd requirement
+        boot.kernelParams = [
+            "cgroup_enable=cpuset"
+            "cgroup_enable=memory"
+        ];
+
         # colmena means of deployment
         deployment = {
             targetHost = hostname;
