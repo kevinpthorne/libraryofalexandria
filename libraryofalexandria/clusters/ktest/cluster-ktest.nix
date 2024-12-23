@@ -17,7 +17,10 @@ let
                 system = "x86_64-linux";
                 modules = [
                     ({ modulesPath, ... }: {
-                        imports = [ (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix") ];
+                        imports = [ 
+                            (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
+                            (modulesPath + "/installer/cd-dvd/channel.nix")
+                        ];
                     })
                     nMaster
                 ];
