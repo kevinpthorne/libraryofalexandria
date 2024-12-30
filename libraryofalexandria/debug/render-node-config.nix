@@ -3,7 +3,7 @@ let
     startingConfig = {
         lib = pkgs.lib;
         platform = "rpi";
-        clusterLabel = "test";
+        clusterLabel = "k";
         nodeNumber = 0;
         nodeType = "master";
     };

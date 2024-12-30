@@ -10,6 +10,7 @@ let
     base = import ../libraryofalexandria/defaults.nix finalConfig args;
     nodeTypeBase = importIfExists  ../libraryofalexandria/${nodeType}.nix finalConfig args;
     platformOverrides = importIfExists  ../libraryofalexandria/platforms/${platform}/${nodeType}.nix finalConfig args;
+    clusterOverrides = importIfExists ../libraryofalexandria/clusters/${clusterLabel}/default.nix finalConfig args;
     nodeTypeOverrides = importIfExists ../libraryofalexandria/clusters/${clusterLabel}/${nodeType}.nix finalConfig args;
     n = toString nodeNumber;
     nodeOverrides = importIfExists ../libraryofalexandria/clusters/${clusterLabel}/${nodeType}-${n}.nix finalConfig args;
@@ -17,6 +18,7 @@ in
 deepMerge [ 
     nodeOverrides
     nodeTypeOverrides
+    clusterOverrides
     platformOverrides
     nodeTypeBase 
     base

@@ -1,0 +1,7 @@
+nodeConfig:
+{ pkgs, lib, ... }:
+{
+    config = {
+        
+    };
+}
