@@ -19,12 +19,7 @@ nodeConfig:
       "cgroup_enable=memory"
       "cgroup_memory=1"
     ];
-
-    systemd.services.etcd = {
-      environment = {
-        ETCD_UNSUPPORTED_ARCH = "arm64";
-      };
-    };
+    
     services.kubernetes = {
       addons.dns = {
         enable = true;

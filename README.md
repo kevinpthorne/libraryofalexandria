@@ -1,6 +1,3 @@
 # libraryofalexandria
 
-TODO
-
-- [ ] sudo nopasswd for deployment (maybe separate account too?)
-- [ ] enable flakes
+-  [ ] how do I not tell the entire world host/Nix-level secrets?
