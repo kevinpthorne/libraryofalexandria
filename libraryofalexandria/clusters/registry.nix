@@ -10,6 +10,6 @@
 # in
 # directoryNames
 [
-    # "k"
+    "k"
     "ktest"
 ]
