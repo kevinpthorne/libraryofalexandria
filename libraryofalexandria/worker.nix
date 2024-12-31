@@ -1,8 +1,8 @@
 { k8s, ...} @ nodeConfig:
 { pkgs, lib, ... }:
-{
+with k8s; {
     config = {
-        networking.extraHosts = "${kubeMasterIP} ${kubeMasterHostname}";
+        networking.extraHosts = "${masterIp} ${masterHostname}";
 
         # packages for administration tasks
         environment.systemPackages = with pkgs; [
@@ -12,11 +12,11 @@
         ];
 
         services.kubernetes = let
-            api = "https://${kubeMasterHostname}:${toString kubeMasterAPIServerPort}";
+            api = "https://${masterHostname}:${toString masterPort}";
         in
         {
             roles = ["node"];
-            masterAddress = kubeMasterHostname;
+            masterAddress = masterHostname;
             easyCerts = true;
 
             # point kubelet and other services to kube-apiserver
