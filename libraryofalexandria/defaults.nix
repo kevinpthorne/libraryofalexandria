@@ -17,7 +17,7 @@ let
 in
 deepMerge [ clusterOverrides platformBase {
     config = {
-        system.stateVersion = "24.05";
+        system.stateVersion = "24.11";
 
         time.timeZone = "Etc/UTC";
         users.users = allHostUsers;  # IAM + colmena
