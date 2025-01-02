@@ -11,5 +11,5 @@
 # directoryNames
 [
     "k"
-    "ktest"
+    #"ktest"
 ]
