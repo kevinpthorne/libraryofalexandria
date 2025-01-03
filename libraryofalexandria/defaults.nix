@@ -61,6 +61,8 @@ deepMerge [ clusterOverrides platformBase {
             curl
             htop
             k9s
+            argocd
+            argocd-vault-plugin
         ];
     };
 } ]
