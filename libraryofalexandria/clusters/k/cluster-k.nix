@@ -5,6 +5,11 @@ let
         platform = "rpi";
         clusterLabel = clusterLabel;
         nodeNumber = n;
+        k8s = {
+            masterIp = "10.69.69.100";
+            masterHostname = "master0-k"; # TODO fix this
+            masterPort = 6443;
+        };
     };
     master = clusterLabel: n:
         let 
