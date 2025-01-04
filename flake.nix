@@ -103,7 +103,7 @@
               board-attr-set;
         in
         {
-          example-sd-image = self.nixosConfigurations.rpi-example.config.system.build.sdImage;
+          # example-sd-image = self.nixosConfigurations.rpi-example.config.system.build.sdImage;
           firmware = pinned.raspberrypifw;
           libcamera = pinned.libcamera;
           wireless-firmware = pinned.raspberrypiWirelessFirmware;
