@@ -27,6 +27,8 @@ deepMerge [ clusterOverrides platformBase {
             "cgroup_enable=cpuset"
             "cgroup_enable=memory"
         ];
+        boot.kernelModules = [ "ceph" ];
+        kubelet.extraOpts = "--root-dir=/var/lib/kubelet";
 
         # colmena means of deployment
         deployment = {

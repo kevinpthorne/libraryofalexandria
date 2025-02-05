@@ -53,7 +53,7 @@
 
   outputs = srcs@{ self, ... }:
     let
-      pinned = import srcs.nixpkgs {
+      aa64_pinned = import srcs.nixpkgs {
         system = "aarch64-linux";
         overlays = with self.overlays; [ core libcamera ];
       };
@@ -72,7 +72,7 @@
       };
       nixosModules = {
         raspberry-pi = import ./rpi {
-          inherit pinned;
+          inherit aa64_pinned;
           core-overlay = self.overlays.core;
           libcamera-overlay = self.overlays.libcamera;
         };
@@ -90,31 +90,39 @@
         # };
       } // clustersConfigs;
       checks.aarch64-linux = self.packages.aarch64-linux;
-      packages.aarch64-linux = with pinned.lib;
-        let
-          kernels =
-            foldlAttrs f { } pinned.rpi-kernels;
-          f = acc: kernel-version: board-attr-set:
-            foldlAttrs
-              (acc: board-version: drv: acc // {
-                "linux-${kernel-version}-${board-version}" = drv;
-              })
-              acc
-              board-attr-set;
-        in
-        {
-          # example-sd-image = self.nixosConfigurations.rpi-example.config.system.build.sdImage;
-          firmware = pinned.raspberrypifw;
-          libcamera = pinned.libcamera;
-          wireless-firmware = pinned.raspberrypiWirelessFirmware;
-          uboot-rpi-arm64 = pinned.uboot-rpi-arm64;
-        } // kernels;
+      packages = {
+        aarch64-linux = with aa64_pinned.lib;
+          let
+            kernels =
+              foldlAttrs f { } aa64_pinned.rpi-kernels;
+            f = acc: kernel-version: board-attr-set:
+              foldlAttrs
+                (acc: board-version: drv: acc // {
+                  "linux-${kernel-version}-${board-version}" = drv;
+                })
+                acc
+                board-attr-set;
+          in
+          {
+            # example-sd-image = self.nixosConfigurations.rpi-example.config.system.build.sdImage;
+            firmware = aa64_pinned.raspberrypifw;
+            libcamera = aa64_pinned.libcamera;
+            wireless-firmware = aa64_pinned.raspberrypiWirelessFirmware;
+            uboot-rpi-arm64 = aa64_pinned.uboot-rpi-arm64;
+            runonce = import ./libraryofalexandria/pkgs/runonce {
+              pkgs = aa64_pinned;
+            };
+          } // kernels; 
+        # x86_64-linux = {
+        #     runonce = import ./libraryofalexandria/pkgs/runonce aa64_pinned.nixpkgs
+        # };
+      };
       colmena = {
         meta = {
-          nixpkgs = pinned;
+          nixpkgs = aa64_pinned;
           nodeNixpkgs = builtins.mapAttrs (_: v: v.pkgs) self.nixosConfigurations;
           nodeSpecialArgs = builtins.mapAttrs (_: v: v._module.specialArgs) self.nixosConfigurations;
-          specialArgs.lib = pinned.lib;
+          specialArgs.lib = aa64_pinned.lib;
         };
       } // builtins.mapAttrs (name: value: {
         nixpkgs.system = value.config.nixpkgs.system;
