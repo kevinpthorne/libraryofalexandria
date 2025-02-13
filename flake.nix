@@ -7,6 +7,14 @@
     raspberry-pi-nix.url = "github:nix-community/raspberry-pi-nix/master";
 
     supported-arch.url = "github:nix-systems/default-linux";  # aarch64-linux and x86_64-linux
+    
+    colmena = {
+      url = "github:zhaofengli/colmena";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        stable.follows = "nixpkgs";
+      };
+    };
   };
 
   outputs = inputs @ { self, nixpkgs, supported-arch, raspberry-pi-nix, ... }:
@@ -37,6 +45,7 @@
         nixpkgs.lib.nixosSystem {
           system = config.system;
           modules = config.masters.modules 0;
+          extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
         };
     };
 

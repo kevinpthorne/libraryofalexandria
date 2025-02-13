@@ -2,7 +2,7 @@
 {
     config = {
         libraryofalexandria.node = {
-            nodeType = "master";
+            type = "master";
         };
     };
 }

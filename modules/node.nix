@@ -8,13 +8,13 @@ in
     options.libraryofalexandria.node = {
         enable = lib.mkEnableOption "Make this NixOS configuration a node ready for being in a LoA cluster";
 
-        nodeType = lib.mkOption {
+        type = lib.mkOption {
             default = "worker";
             type = lib.types.enum [ "master" "worker" ];
             description = "Defines if this node is a master or worker";
         };
 
-        nodeId = lib.mkOption {
+        id = lib.mkOption {
             type = lib.types.ints.unsigned;
         };
 
@@ -25,7 +25,7 @@ in
         hostname = lib.mkOption {
             type = lib.types.str;
             default = with config.libraryofalexandria.node;
-                getHostname nodeType nodeId clusterName;  # e.g. worker0-k
+                getHostname type id clusterName;  # e.g. worker0-k
         };
 
         masterIps = lib.mkOption {
@@ -34,14 +34,15 @@ in
         };
 
         masterPort = lib.mkOption {
-            type = libs.types.port;
+            type = lib.types.port;
             default = 6443;
-        }
+        };
     };
 
     config = 
         let
-            isMaster = config.libraryofalexandria.nodeType == "master";
+            isMaster = config.libraryofalexandria.node.type == "master";
+            isWorker = !isMaster;
             # Master IP to String
             masterIpsToHostnames = with config.libraryofalexandria.node; builtins.listToAttrs (
                 builtins.map (ip: { 
@@ -51,19 +52,25 @@ in
             );
             extraHostEntries = map (entry: "${entry.name} ${entry.value}") (lib.attrsets.attrsToList masterIpsToHostnames);
             extraHostsStr = lib.concatStringsSep "\n" extraHostEntries;
-        in mkIf config.libraryofalexandria.node.enable {
+            # This master IP and hostname. Only use behind an `mkIf isMaster` gate
+            thisMasterIp = lib.lists.elemAt config.libraryofalexandria.node.masterIps config.libraryofalexandria.node.id;
+            thisMasterHostname = masterIpsToHostnames.${thisMasterIp};
+            # TODO make multiple masters
+            masterIp = lib.lists.elemAt config.libraryofalexandria.node.masterIps 0;
+            masterHostname = masterIpsToHostnames.${masterIp};
+        in lib.mkIf config.libraryofalexandria.node.enable {
 
             networking = {
                 hostName = config.libraryofalexandria.node.hostname;
                 extraHosts = extraHostsStr;
-                firewall = mkif isMaster {
+                firewall = lib.mkIf isMaster {
                     enable = true;
-                    allowedTCPPorts = [ 8888 6443 ];
+                    allowedTCPPorts = [ 8888 config.libraryofalexandria.node.masterPort ];
                 };
             };
 
             environment = {
-                variables = mkIf isMaster {
+                variables = lib.mkIf isMaster {
                     "KUBECONFIG" = "/etc/kubernetes/cluster-admin.kubeconfig";
                 };
                 systemPackages = with pkgs; [
@@ -79,23 +86,32 @@ in
                 ];
             };
 
-            services.kubernetes = {
-                roles = if isMaster then [ "master" "node" ] else [ "node" ];
+            services.kubernetes = if isMaster then {
+                roles = [ "master" "node" ];
 
                 masterAddress = masterHostname;
                 easyCerts = true;
                 # use coredns
                 addons.dns.enable = true;
 
-                # if master
-                apiserver = mkIf isMaster {
-                    securePort = masterPort;
-                    advertiseAddress = masterIp;
+                apiserver = {
+                    securePort = config.libraryofalexandria.node.masterPort;
+                    advertiseAddress = thisMasterIp;
                 };
-                # if node
+            } else {
+                roles = [ "node" ];
+                masterAddress = masterHostname;
+                easyCerts = true;
+
                 # TODO make multiple masters
-                kubelet.kubeconfig.server = mkIf !isMaster "https://${masterHostname}:${toString masterPort}";
-                apiserverAddress = mkIf !isMaster "https://${masterHostname}:${toString masterPort}";
+                kubelet = {
+                    enable = true;
+                    kubeconfig.server = "https://${masterHostname}:${toString config.libraryofalexandria.node.masterPort}";
+                    extraOpts = "--root-dir=/var/lib/kubelet";
+                };
+                apiserverAddress = "https://${masterHostname}:${toString config.libraryofalexandria.node.masterPort}";
+
+                addons.dns.enable = true;
             };
 
             # containerd requirement
@@ -104,12 +120,11 @@ in
                 "cgroup_enable=memory"
             ];
             boot.kernelModules = [ "ceph" ];
-            kubelet.extraOpts = "--root-dir=/var/lib/kubelet";
 
             # colmena means of deployment
             users.users.${colmenaUser} = {
                 isNormalUser = true;
-                home = "/home/${colmenaUsername}";
+                home = "/home/${colmenaUser}";
                 extraGroups = [ "wheel" "networkmanager" ];
                 openssh.authorizedKeys.keys = [
                     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICAa6gt+RvDM5hDn+GBmWnCaPo3KB6RNdG3so0q3Z8kw kevint@Laptop4.local deployment"
@@ -144,5 +159,7 @@ in
                 experimental-features = [ "nix-command" "flakes" ];
                 trusted-users = [ "root" colmenaUser ];
             };
+
+            system.stateVersion = "24.11";
         };
 }

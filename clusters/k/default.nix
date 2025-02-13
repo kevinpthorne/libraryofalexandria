@@ -3,13 +3,13 @@ rec {
     name = "k";
     system = "aarch64-linux";
 
-    defaultModule = nodeId: clusterName: masterIps: { pkgs, lib, ... }: {
+    defaultModule = id: clusterName: masterIps: { pkgs, lib, ... }: {
         config = {
             time.timeZone = "Etc/UTC";
 
             libraryofalexandria.node.enable = true;
             libraryofalexandria.node = {
-                inherit nodeId clusterName masterIps;
+                inherit id clusterName masterIps;
             };
         };
     };
@@ -19,8 +19,10 @@ rec {
         modules = nodeId: [
             inputs.raspberry-pi-nix.nixosModules.raspberry-pi
             inputs.raspberry-pi-nix.nixosModules.sd-image
-            defaultModule nodeId name masters.ips ## TODO fix me
-            import ./master.nix
+            (import ../../modules/platforms/rpi5.nix)
+            (import ../../modules/node.nix)
+            (defaultModule nodeId name masters.ips)
+            (import ./master.nix)
         ];
     };
     workers = {
@@ -28,7 +30,9 @@ rec {
         modules = nodeId: [
             inputs.raspberry-pi-nix.nixosModules.raspberry-pi
             inputs.raspberry-pi-nix.nixosModules.sd-image
-            defaultModule nodeId name masters.ips
+            (import ../../modules/platforms/rpi5.nix)
+            (import ../../modules/node.nix)
+            (defaultModule nodeId name masters.ips)
         ];
     };
 }
