@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, config, lib, ... }:
 {
     imports = [
         ../submodules/rpi/coredns-fix.nix
@@ -16,5 +16,7 @@
         };
         raspberry-pi-nix.board = "bcm2712"; # pi 5
         security.rtkit.enable = true;
+
+        sdImage.imageBaseName = config.networking.hostName;
     };
 }
