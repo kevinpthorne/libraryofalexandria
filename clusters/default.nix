@@ -1,14 +1,20 @@
+inputs @ { ... }:
 let
-    clusters = [
-        "k"
-    ];
-    ## TODO master, worker nixosSystem definitions
-    range = n: builtins.genList (x: x) n;
-    masterIds = range config.masters.count;
-    workerIds = range config.workers.count;
-    mastersList = builtins.map (n: masterDefinition n) masterIds;
-    workersList = builtins.map (n: workerDefinition n) workerIds;
-    mastersConfigs = builtins.foldl' (prev: master: prev // master) {} mastersList;
-    workersConfigs = builtins.foldl' (prev: worker: prev // worker) {} workersList;
+    # Manual registration
+    # clusters = [
+    #     "k"
+    # ];
+    # Auto registration -- assumes any directory is a cluster definition
+    folderContents = builtins.readDir ./.;
+    folderDirectories = inputs.nixpkgs.lib.filterAttrs (path: type: type == "directory") folderContents;
+    # TODO validate that all nix-modules are valid cluster definitions
+    clusters = inputs.nixpkgs.lib.mapAttrsToList (path: type: path) folderDirectories;
+
+    clusterConfigsSet = builtins.listToAttrs (
+        builtins.map (clusterName: {
+            name = clusterName;
+            value = import ./${clusterName} inputs;
+        }) clusters
+    );  # { k = { name = "k"; ... }; t = {...}; ... }
 in
-mastersConfigs // workersConfigs
+{}

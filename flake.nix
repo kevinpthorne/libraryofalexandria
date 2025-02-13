@@ -47,7 +47,7 @@
           modules = config.masters.modules 0;
           extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
         };
-    };
+    } // (import ./clusters importableInputs);
 
     # TODO what if we need aarch64 specific packages?
     packages =
