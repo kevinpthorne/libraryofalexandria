@@ -1,5 +1,6 @@
 inputs @ { ... }:
 let
+    range = n: builtins.genList (x: x) n;
     # Manual registration
     # clusters = [
     #     "k"
@@ -11,41 +12,59 @@ let
     clusters = inputs.nixpkgs.lib.mapAttrsToList (path: type: path) folderDirectories;
 
     clusterConfigsSet = builtins.listToAttrs (
-        builtins.map (clusterName: {
+        builtins.map (clusterName: let
+            config = import ./${clusterName} inputs;
+        in {
             name = clusterName;
-            value = import ./${clusterName} inputs;
+            value = config;
         }) clusters
     );  # { k = { name = "k"; ... }; t = {...}; ... }
-
+    getSystem = clusterName: 
+        let
+            clusterConfig = clusterConfigsSet.${clusterName};
+        in 
+        nodeType: nodeId: {
+            "${nodeType}${toString nodeId}-${clusterName}" = inputs.nixpkgs.lib.nixosSystem {
+                system = clusterConfig.system;  # TODO some overrides should be available here, no?
+                modules = clusterConfig.${nodeType}.modules nodeId;
+                extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
+            };
+        };
+    getMasterSystem = clusterName: nodeId: getSystem clusterName "master" nodeId;
+    getWorkerSystem = clusterName: nodeId: getSystem clusterName "worker" nodeId;
 
     # foreach cluster
     #   for i in range 0, masters.count:
     #     yield nixosSystem { ... }
     #   for i in range 0, workers.count:
     #     yield nixosSystem { ... }
-    range = n: builtins.genList (x: x) n;
-    allNixosConfigsFor = configSet:
-        builtins.listToAttrs (
-            builtins.foldl' (acc: clusterName:
-            let
-                clusterConfig = configSet.${clusterName};
-                masterConfigs = builtins.map (i: {
-                    name = "master${toString i}-${clusterName}";
-                    value = inputs.nixpkgs.lib.nixosSystem {
-                        system = clusterConfig.system;
-                        modules = clusterConfig.masters.modules i;
-                        extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
-                    };
-                }) (range (clusterConfig.masters.count));
-                workerConfigs = builtins.map (i: {
-                    name = "worker${toString i}-${clusterName}";
-                    value = inputs.nixpkgs.lib.nixosSystem {
-                        system = clusterConfig.system;
-                        modules = clusterConfig.workers.modules i;
-                        extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
-                    };
-                }) (range (clusterConfig.workers.count));
-            in acc ++ masterConfigs ++ workerConfigs) [] (builtins.attrNames configSet)
-        );
+    nixosConfigurations = builtins.foldl' (acc: clusterName:
+        let
+            clusterConfig = clusterConfigsSet.${clusterName};
+            masterSystems = builtins.foldl' (acc: i: acc // (getMasterSystem clusterName i)) {} (range clusterConfig.masters.count);
+            workerSystems = builtins.foldl' (acc: i: acc // (getWorkerSystem clusterName i)) {} (range clusterConfig.workers.count);
+        in
+            acc // masterSystems // workerSystems
+    ) {} (builtins.attrNames clusterConfigsSet);
+
+    # allSystemsBuilder = clusterName: inputs.nixpkgs.stdenv.mkDerivation {
+    #     name = "build-all-${clusterName}";
+        
+    #     buildPhase = ''
+    #         mkdir -p $out/sd-images
+    #         ${builtins.concatStringsSep "\n" (builtins.mapAttrs (name: v: ''
+    #             echo "Building ${name}..."
+    #             ${v.system}/bin/nixos build .#nixosConfigurations.${name}.config.system.build.sdImage
+    #         '') systems)}
+
+    #         echo "All systems built!"
+    #     '';
+    # };
+
+    packages = {
+        aarch64-linux = {};
+    };
 in
-    allNixosConfigsFor clusterConfigsSet
+{
+    inherit nixosConfigurations;
+}
