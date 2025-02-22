@@ -31,14 +31,7 @@
     };
 
     nixosConfigurations = {
-      rpi-example = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [ 
-          raspberry-pi-nix.nixosModules.raspberry-pi
-          raspberry-pi-nix.nixosModules.sd-image
-          # ./example
-        ];
-      };
+      rpi-example = inputs.raspberry-pi-nix.nixosConfigurations.rpi-example;
 
       test = let 
         config = import ./clusters/k importableInputs; 
@@ -70,6 +63,7 @@
           runonce = systemPkgs.runonce;
         })
       )
+      clusters.packages
     ];
 
   };

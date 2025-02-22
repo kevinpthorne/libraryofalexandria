@@ -19,19 +19,22 @@ let
             value = config;
         }) clusters
     );  # { k = { name = "k"; ... }; t = {...}; ... }
-    getSystem = clusterName: 
+    getNixosSystemName = clusterName: nodeType: nodeId: "${nodeType}${toString nodeId}-${clusterName}";
+    getNixosSystem = clusterName: 
         let
             clusterConfig = clusterConfigsSet.${clusterName};
         in 
         nodeType: nodeId: {
-            "${nodeType}${toString nodeId}-${clusterName}" = inputs.nixpkgs.lib.nixosSystem {
+            "${(getNixosSystemName clusterName nodeType nodeId)}" = inputs.nixpkgs.lib.nixosSystem {
                 system = clusterConfig.system;  # TODO some overrides should be available here, no?
                 modules = clusterConfig."${nodeType}s".modules nodeId;
                 extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
             };
         };
-    getMasterSystem = clusterName: nodeId: getSystem clusterName "master" nodeId;
-    getWorkerSystem = clusterName: nodeId: getSystem clusterName "worker" nodeId;
+    getMasterSystem = clusterName: nodeId: getNixosSystem clusterName "master" nodeId;
+    getWorkerSystem = clusterName: nodeId: getNixosSystem clusterName "worker" nodeId;
+    getMasterIds = clusterConfig: range clusterConfig.masters.count;  # [ 0, 1, ...]
+    getWorkerIds = clusterConfig: range clusterConfig.workers.count;
 
     # foreach cluster
     #   for i in range 0, masters.count:
@@ -41,30 +44,44 @@ let
     nixosConfigurations = builtins.foldl' (acc: clusterName:
         let
             clusterConfig = clusterConfigsSet.${clusterName};
-            masterSystems = builtins.foldl' (acc: i: acc // (getMasterSystem clusterName i)) {} (range clusterConfig.masters.count);
-            workerSystems = builtins.foldl' (acc: i: acc // (getWorkerSystem clusterName i)) {} (range clusterConfig.workers.count);
+            masterSystems = builtins.foldl' (acc: i: acc // (getMasterSystem clusterName i)) {} (getMasterIds clusterConfig);
+            workerSystems = builtins.foldl' (acc: i: acc // (getWorkerSystem clusterName i)) {} (getWorkerIds clusterConfig);
         in
             acc // masterSystems // workerSystems
     ) {} (builtins.attrNames clusterConfigsSet);
 
-    # allSystemsBuilder = clusterName: inputs.nixpkgs.stdenv.mkDerivation {
-    #     name = "build-all-${clusterName}";
+    allSystemsSdBuilder = clusterName: pkgs: let 
+            masterIds = getMasterIds clusterConfigsSet.${clusterName};
+            workerIds = getWorkerIds clusterConfigsSet.${clusterName};
+            allMasterNames = builtins.map (i: getNixosSystemName clusterName "master" i) masterIds;
+            allWorkerNames = builtins.map (i: getNixosSystemName clusterName "worker" i) workerIds;
+            allSystemNames = allMasterNames ++ allWorkerNames;
+            sdDerivations = builtins.map (name: nixosConfigurations.${name}.config.system.build.sdImage) allSystemNames;
+            mapDerivation = builtins.break (func: builtins.map func sdDerivations);
+            concatCommands = commands: builtins.concatStringsSep "\n" commands;
+    in 
+    pkgs.stdenv.mkDerivation {
+        name = "build-all-${clusterName}";
+        src = ./.;
         
-    #     buildPhase = ''
-    #         mkdir -p $out/sd-images
-    #         ${builtins.concatStringsSep "\n" (builtins.mapAttrs (name: v: ''
-    #             echo "Building ${name}..."
-    #             ${v.system}/bin/nixos build .#nixosConfigurations.${name}.config.system.build.sdImage
-    #         '') systems)}
+        buildInputs = sdDerivations;
+        
+        buildPhase = ''
+            mkdir -p $out/sd-images
+            ${concatCommands (mapDerivation (drv: "ln -s -t $out/sd-images ${drv}/sd-image/*"))}
 
-    #         echo "All systems built!"
-    #     '';
-    # };
+            echo "All systems of cluster ${clusterName} available in $out/sd-images/ (i.e. result/sd-images/)"
+        '';
+    };
 
     packages = {
-        aarch64-linux = {};
+        aarch64-linux = {
+            build-all-k = allSystemsSdBuilder "k" (import inputs.nixpkgs { system = "aarch64-linux"; });
+            master0-k-sd-image = nixosConfigurations.master0-k.config.system.build.sdImage;
+        };
     };
 in
 {
     inherit nixosConfigurations;
+    inherit packages;
 }
