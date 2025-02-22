@@ -1,6 +1,9 @@
+raspberry-pi-nix:
 { pkgs, config, lib, ... }:
 {
     imports = [
+        raspberry-pi-nix.nixosModules.raspberry-pi
+        raspberry-pi-nix.nixosModules.sd-image
         ../submodules/rpi/coredns-fix.nix
         ../submodules/rpi/etcd-fix.nix
         ../submodules/rpi/cgroup.nix
