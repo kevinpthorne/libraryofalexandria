@@ -56,21 +56,21 @@ let
             allMasterNames = builtins.map (i: getNixosSystemName clusterName "master" i) masterIds;
             allWorkerNames = builtins.map (i: getNixosSystemName clusterName "worker" i) workerIds;
             allSystemNames = allMasterNames ++ allWorkerNames;
-            sdDerivations = builtins.map (name: nixosConfigurations.${name}.config.system.build.sdImage) allSystemNames;
-            mapDerivation = builtins.break (func: builtins.map func sdDerivations);
+            allSystems = builtins.map (name: nixosConfigurations.${name}) allSystemNames;
+            derivations = builtins.map (system: system.config.system.builder.package) allSystems;
             concatCommands = commands: builtins.concatStringsSep "\n" commands;
     in 
     pkgs.stdenv.mkDerivation {
         name = "build-all-${clusterName}";
         src = ./.;
         
-        buildInputs = sdDerivations;
+        buildInputs = derivations;
         
         buildPhase = ''
-            mkdir -p $out/sd-images
-            ${concatCommands (mapDerivation (drv: "ln -s -t $out/sd-images ${drv}/sd-image/*"))}
+            mkdir -p $out/images
+            ${concatCommands (builtins.map (system: "ln -s -t $out/images ${system.config.system.builder.package}/${system.config.system.builder.outputDir}/*") allSystems)}
 
-            echo "All systems of cluster ${clusterName} available in $out/sd-images/ (i.e. result/sd-images/)"
+            echo "All systems of cluster ${clusterName} available in $out/images/ (i.e. result/images/)"
         '';
     };
 

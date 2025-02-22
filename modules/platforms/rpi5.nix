@@ -4,6 +4,7 @@ raspberry-pi-nix:
     imports = [
         raspberry-pi-nix.nixosModules.raspberry-pi
         raspberry-pi-nix.nixosModules.sd-image
+        ../submodules/imageable.nix
         ../submodules/rpi/coredns-fix.nix
         ../submodules/rpi/etcd-fix.nix
         ../submodules/rpi/cgroup.nix
@@ -21,5 +22,9 @@ raspberry-pi-nix:
         security.rtkit.enable = true;
 
         sdImage.imageBaseName = config.networking.hostName;
+        system.builder = {
+            package = config.system.build.sdImage;
+            outputDir = "sd-image";
+        };
     };
 }
