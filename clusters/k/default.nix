@@ -1,7 +1,10 @@
 inputs @ { ... }:
+let
+    importIfExists = import ../../lib/import-if-exists.nix;
+in
 rec {
     name = "k";
-    system = "aarch64-linux";
+    system = "aarch64-linux";  # TODO make this a node-level override
 
     defaultModule = id: clusterName: masterIps: { pkgs, lib, ... }: {
         config = {
@@ -20,7 +23,8 @@ rec {
             (import ../../modules/platforms/rpi5.nix inputs.raspberry-pi-nix)
             (import ../../modules/node.nix)
             (defaultModule nodeId name masters.ips)
-            (import ./master.nix)
+            (importIfExists ./master.nix)
+            (importIfExists ./master-${toString nodeId}.nix)
         ];
     };
     workers = {
@@ -29,6 +33,8 @@ rec {
             (import ../../modules/platforms/rpi5.nix inputs.raspberry-pi-nix)
             (import ../../modules/node.nix)
             (defaultModule nodeId name masters.ips)
+            (importIfExists ./worker.nix)
+            (importIfExists ./worker-${toString nodeId}.nix)
         ];
     };
 }
