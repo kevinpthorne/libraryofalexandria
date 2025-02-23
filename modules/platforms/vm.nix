@@ -23,23 +23,21 @@ disko:
 
     config = {
         # disko.imageBuilder.enableBinfmt = true;  # TODO this needs to be enabled for cross compilation
-        disko.devices.disk.main.imageSize = "5G";
+        disko.devices.disk.main.imageSize = "7G";  # disk is called 'main'
 
+        vmImage.baseName = config.networking.hostName;
         system.builder = {
             package = pkgs.callPackage ({ stdenv }:
                 stdenv.mkDerivation {
                     name = config.vmImage.name;
                     src = ./.;
 
-                    buildInputs = [
-                        config.system.build.diskoImagesScript
-                    ];
-
                     buildPhase = ''
                         mkdir -p $out/raw-image
                         cd $out/raw-image
-                        sudo ${config.system.build.diskoImagesScript}
+                        ${config.system.build.diskoImagesScript} --build-memory 4096
                     '';
+                    # https://github.com/nix-community/disko/blob/v1.11.0/docs/disko-images.md
                     # nix build .#nixosConfigurations.myhost.config.system.build.diskoImagesScript
                     # sudo ./result --build-memory 2048
                 }
