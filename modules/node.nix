@@ -2,9 +2,12 @@
 let 
     indexOf = val: lib.lists.findFirstIndex (x: x == val) null;
     getHostname = nodeType: nodeId: clusterName: nodeType + toString nodeId + "-" + clusterName;
-    colmenaUser = "colmena";
 in
 {
+    imports = [
+        ./submodules/deployment/colmena.nix
+    ];
+
     options.libraryofalexandria.node = {
         enable = lib.mkEnableOption "Make this NixOS configuration a node ready for being in a LoA cluster";
 
@@ -122,31 +125,7 @@ in
             boot.kernelModules = [ "ceph" ];
 
             # colmena means of deployment
-            users.users.${colmenaUser} = {
-                isNormalUser = true;
-                home = "/home/${colmenaUser}";
-                extraGroups = [ "wheel" "networkmanager" ];
-                openssh.authorizedKeys.keys = [
-                    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICAa6gt+RvDM5hDn+GBmWnCaPo3KB6RNdG3so0q3Z8kw kevint@Laptop4.local deployment"
-                ];
-            };
-            deployment = {
-                targetHost = config.libraryofalexandria.node.hostname;
-                targetPort = 22;
-                targetUser = colmenaUser;
-            };
-            services.openssh.enable = true;
-            security.sudo.extraRules = [
-                {  
-                    users = [ colmenaUser ];
-                    commands = [
-                        { 
-                            command = "ALL";
-                            options= [ "NOPASSWD" ]; # "SETENV" # Adding the following could be a good idea
-                        }
-                    ];
-                }
-            ];
+            libraryofalexandria.node.deployment.colmena.enable = true;
 
             users.users.kevint = {
                 isNormalUser = true;
@@ -157,7 +136,7 @@ in
 
             nix.settings = {
                 experimental-features = [ "nix-command" "flakes" ];
-                trusted-users = [ "root" colmenaUser ];
+                trusted-users = [ "root" ];
             };
 
             system.stateVersion = "24.11";
