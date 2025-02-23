@@ -15,6 +15,13 @@
         stable.follows = "nixpkgs";
       };
     };
+
+    disko = {
+      url = "github:nix-community/disko/latest";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
   };
 
   outputs = inputs @ { self, nixpkgs, supported-arch, raspberry-pi-nix, ... }:

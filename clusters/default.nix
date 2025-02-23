@@ -50,7 +50,7 @@ let
             acc // masterSystems // workerSystems
     ) {} (builtins.attrNames clusterConfigsSet);
 
-    allSystemsSdBuilder = clusterName: pkgs: let 
+    allSystemsBuilder = clusterName: pkgs: let 
             masterIds = getMasterIds clusterConfigsSet.${clusterName};
             workerIds = getWorkerIds clusterConfigsSet.${clusterName};
             allMasterNames = builtins.map (i: getNixosSystemName clusterName "master" i) masterIds;
@@ -76,8 +76,9 @@ let
 
     packages = {
         aarch64-linux = {
-            build-all-k = allSystemsSdBuilder "k" (import inputs.nixpkgs { system = "aarch64-linux"; });
+            build-all-k = allSystemsBuilder "k" (import inputs.nixpkgs { system = "aarch64-linux"; });
             master0-k-sd-image = nixosConfigurations.master0-k.config.system.build.sdImage;
+            build-all-test = allSystemsBuilder "test" (import inputs.nixpkgs { system = "aarch64-linux"; });
         };
     };
 in
