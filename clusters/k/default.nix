@@ -4,10 +4,10 @@ let
 in
 rec {
     name = "k";
-    system = "aarch64-linux";  # TODO make this a node-level override
 
     defaultModule = id: clusterName: masterIps: { pkgs, lib, ... }: {
         config = {
+            nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
             time.timeZone = "Etc/UTC";
 
             libraryofalexandria.node.enable = true;

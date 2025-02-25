@@ -26,7 +26,6 @@ let
         in 
         nodeType: nodeId: {
             "${(getNixosSystemName clusterName nodeType nodeId)}" = inputs.nixpkgs.lib.nixosSystem {
-                system = clusterConfig.system;  # TODO some overrides should be available here, no?
                 modules = clusterConfig."${nodeType}s".modules nodeId;
                 extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
             };
