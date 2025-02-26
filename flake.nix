@@ -30,7 +30,9 @@
     importableInputs = (builtins.removeAttrs inputs [ "self" ]);
     deepMerge = import ./lib/deep-merge.nix nixpkgs.lib;
     # clusters = import ./clusters importableInputs;
-    clustersNew = import ./new-clusters importableInputs;
+    clustersNew = import ./new-clusters (importableInputs // {
+      inherit eachArch;
+    });
   in {
 
     overlays = {
@@ -74,6 +76,7 @@
         })
       )
       # clusters.packages
+      clustersNew.packages
     ];
 
   };

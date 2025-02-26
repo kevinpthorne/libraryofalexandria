@@ -14,7 +14,7 @@ let
     };
 in {
     config.libraryofalexandria.cluster = {
-        name = "k-new";
+        name = "k";
 
         masters = {
             count = 1;
