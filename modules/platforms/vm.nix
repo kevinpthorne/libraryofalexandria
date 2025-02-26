@@ -1,8 +1,7 @@
-disko:
-{ pkgs, config, lib, ... }:
+{ pkgs, config, lib, inputs, ... }:
 {
     imports = [
-        disko.nixosModules.disko
+        inputs.disko.nixosModules.disko
         ../submodules/imageable.nix
         ../submodules/simple-efi.nix
     ];
@@ -22,6 +21,8 @@ disko:
     };
 
     config = {
+        nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+
         # disko.imageBuilder.enableBinfmt = true;  # TODO this needs to be enabled for cross compilation
         disko.devices.disk.main.imageSize = "7G";  # disk is called 'main'
 

@@ -7,7 +7,6 @@ rec {
 
     defaultModule = id: clusterName: masterIps: { pkgs, lib, ... }: {
         config = {
-            nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
             time.timeZone = "Etc/UTC";
 
             libraryofalexandria.node.enable = true;
@@ -20,7 +19,7 @@ rec {
         count = 1;
         ips = [ "192.168.67.3" ];
         modules = nodeId: [
-            (import ../../modules/platforms/vm.nix inputs.disko)
+            (import ../../modules/platforms/vm.nix)
             (import ../../modules/node.nix)
             (defaultModule nodeId name masters.ips)
             (importIfExists ./master.nix)
@@ -30,7 +29,7 @@ rec {
     workers = {
         count = 1;
         modules = nodeId: [
-            (import ../../modules/platforms/vm.nix inputs.disko)
+            (import ../../modules/platforms/vm.nix)
             (import ../../modules/node.nix)
             (defaultModule nodeId name masters.ips)
             (importIfExists ./worker.nix)

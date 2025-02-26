@@ -1,9 +1,8 @@
-raspberry-pi-nix:
-{ pkgs, config, lib, ... }:
+{ pkgs, config, lib, inputs, ... }:
 {
     imports = [
-        raspberry-pi-nix.nixosModules.raspberry-pi
-        raspberry-pi-nix.nixosModules.sd-image
+        inputs.raspberry-pi-nix.nixosModules.raspberry-pi
+        inputs.raspberry-pi-nix.nixosModules.sd-image
         ../submodules/imageable.nix
         ../submodules/rpi/coredns-fix.nix
         ../submodules/rpi/etcd-fix.nix
@@ -11,6 +10,8 @@ raspberry-pi-nix:
     ];
 
     config = {
+        nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
+
         networking = {
             useDHCP = false;
             interfaces = {

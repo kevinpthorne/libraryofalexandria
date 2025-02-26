@@ -7,7 +7,6 @@ rec {
 
     defaultModule = id: clusterName: masterIps: { pkgs, lib, ... }: {
         config = {
-            nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
             time.timeZone = "Etc/UTC";
 
             libraryofalexandria.node.enable = true;
@@ -20,7 +19,7 @@ rec {
         count = 1;
         ips = [ "10.69.69.100" ];
         modules = nodeId: [
-            (import ../../modules/platforms/rpi5.nix inputs.raspberry-pi-nix)
+            (import ../../modules/platforms/rpi5.nix)
             (import ../../modules/node.nix)
             (defaultModule nodeId name masters.ips)
             (importIfExists ./master.nix)
@@ -30,7 +29,7 @@ rec {
     workers = {
         count = 1;
         modules = nodeId: [
-            (import ../../modules/platforms/rpi5.nix inputs.raspberry-pi-nix)
+            (import ../../modules/platforms/rpi5.nix)
             (import ../../modules/node.nix)
             (defaultModule nodeId name masters.ips)
             (importIfExists ./worker.nix)

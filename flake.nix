@@ -29,7 +29,8 @@
     eachArch = nixpkgs.lib.genAttrs (import supported-arch);
     importableInputs = (builtins.removeAttrs inputs [ "self" ]);
     deepMerge = import ./lib/deep-merge.nix nixpkgs.lib;
-    clusters = import ./clusters importableInputs;
+    # clusters = import ./clusters importableInputs;
+    clustersNew = import ./new-clusters importableInputs;
   in {
 
     overlays = {
@@ -48,7 +49,9 @@
           modules = config.masters.modules 0;
           extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
         };
-    } // clusters.nixosConfigurations;
+    } 
+    # // clusters.nixosConfigurations 
+    // clustersNew.nixosConfigurations;
 
     # TODO what if we need aarch64 specific packages?
     packages =
@@ -70,7 +73,7 @@
           runonce = systemPkgs.runonce;
         })
       )
-      clusters.packages
+      # clusters.packages
     ];
 
   };

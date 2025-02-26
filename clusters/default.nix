@@ -27,6 +27,9 @@ let
         nodeType: nodeId: {
             "${(getNixosSystemName clusterName nodeType nodeId)}" = inputs.nixpkgs.lib.nixosSystem {
                 modules = clusterConfig."${nodeType}s".modules nodeId;
+                specialArgs = {
+                    inherit inputs;
+                };
                 extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
             };
         };
@@ -83,5 +86,6 @@ let
 in
 {
     inherit nixosConfigurations;
-    inherit packages;
+    # inherit packages;
+    packages = {};
 }
