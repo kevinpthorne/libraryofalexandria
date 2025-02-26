@@ -1,7 +1,4 @@
-{ config, lib, inputs, eachArch, ... }:
-let
-    range = n: builtins.genList (x: x) n;
-in
+{ config, lib, inputs, lib2, ... }:
 {
     imports = [
         ./masters.nix
@@ -46,6 +43,7 @@ in
             extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
             specialArgs = {
                 inherit inputs;
+                inherit lib2;
             };
         };
         wrapNixosSystem = nixosSystem: {
@@ -53,8 +51,8 @@ in
         };
         getMasterSystem = nodeId: getNixosSystem "master" nodeId;
         getWorkerSystem = nodeId: getNixosSystem "worker" nodeId;
-        masterIds = range config.libraryofalexandria.cluster.masters.count;  # [ 0, 1, ...]
-        workerIds = range config.libraryofalexandria.cluster.workers.count;
+        masterIds = lib2.range config.libraryofalexandria.cluster.masters.count;  # [ 0, 1, ...]
+        workerIds = lib2.range config.libraryofalexandria.cluster.workers.count;
         masterSystems = builtins.map (id: getMasterSystem id) masterIds;
         workerSystems = builtins.map (id: getWorkerSystem id) workerIds;
         allSystems = masterSystems ++ workerSystems;
@@ -103,8 +101,7 @@ in
         nixosConfigurations = config.nodes;
         # packages
         # ..build-all-${clusterName}
-        # packages = {};
-        packages = eachArch (arch: let 
+        packages = lib2.eachArch (arch: let 
             pkgs = import inputs.nixpkgs {
                 system = arch;
             };
