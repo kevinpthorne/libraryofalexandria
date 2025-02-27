@@ -7,7 +7,7 @@ let
     #
     folderContents = builtins.readDir ./.;
     folderDirectories = inputs.nixpkgs.lib.filterAttrs (
-        path: type: type == "directory" && !(inputs.nixpkgs.lib.strings.hasPrefix path "_")
+        path: type: (type == "directory") && !(inputs.nixpkgs.lib.strings.hasPrefix "_" path)
     ) folderContents;
     clusterFolders = inputs.nixpkgs.lib.mapAttrsToList (path: type: path) folderDirectories;
     clusters = builtins.listToAttrs (
