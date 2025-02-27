@@ -1,6 +1,7 @@
 { pkgs, config, lib, inputs, ... }:
 {
     imports = [
+        ../platform.nix
         inputs.raspberry-pi-nix.nixosModules.raspberry-pi
         inputs.raspberry-pi-nix.nixosModules.sd-image
         ../submodules/imageable.nix
@@ -10,6 +11,7 @@
     ];
 
     config = {
+        libraryofalexandria.node.platform = "rpi5";
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
         networking = {

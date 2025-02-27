@@ -1,6 +1,7 @@
 { pkgs, config, lib, inputs, ... }:
 {
     imports = [
+        ../platform.nix
         inputs.disko.nixosModules.disko
         ../submodules/imageable.nix
         ../submodules/simple-efi.nix
@@ -21,6 +22,7 @@
     };
 
     config = {
+        libraryofalexandria.node.platform = "vm";
         nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
         # disko.imageBuilder.enableBinfmt = true;  # TODO this needs to be enabled for cross compilation
