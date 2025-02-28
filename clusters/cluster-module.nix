@@ -82,8 +82,10 @@
             buildInputs = derivations;
             
             buildPhase = ''
-                mkdir -p $out/images
-                ${concatCommands (builtins.map (system: "ln -s -t $out/images ${system.config.system.builder.package}/${system.config.system.builder.outputDir}/*") allSystems)}
+                # Make directories
+                ${concatCommands (builtins.map (system: "mkdir -p $out/images/${system.config.libraryofalexandria.node.hostname}/") allSystems)}
+
+                ${concatCommands (builtins.map (system: "ln -s -t $out/images/${system.config.libraryofalexandria.node.hostname}/ ${system.config.system.builder.package}/${system.config.system.builder.outputDir}/*") allSystems)}
 
                 echo "All systems of cluster ${clusterName} available in $out/images/ (i.e. result/images/)"
             '';
@@ -110,7 +112,9 @@
                 system = arch;
             };
         in {
-            "build-all-${config.libraryofalexandria.cluster.name}" = allSystemsBuilder pkgs;  # TODO this technically names the package twice - why not once?
+            packages = {
+                "build-all-${config.libraryofalexandria.cluster.name}" = allSystemsBuilder pkgs;  # TODO this technically names the package twice - why not once?
+            };
         });
     };
 }
