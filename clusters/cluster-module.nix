@@ -39,7 +39,11 @@
 
     config = let 
         getNixosSystem = nodeType: nodeId: lib.nixosSystem {
-            modules = config.libraryofalexandria.cluster."${nodeType}s".modules nodeId;
+            modules = [
+                (import ./_defaults/node.nix config.libraryofalexandria.cluster nodeId)
+                (if (nodeType == "master") then (lib2.pathIfExists ./_defaults/master.nix) else {})
+                (if (nodeType == "worker") then (lib2.pathIfExists ./_defaults/worker.nix) else {})
+            ] ++ (config.libraryofalexandria.cluster."${nodeType}s".modules nodeId);
             extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
             specialArgs = {
                 inherit inputs;

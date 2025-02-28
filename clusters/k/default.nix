@@ -1,13 +1,8 @@
 { lib, config, lib2, ... }:
 let
-    defaultModule = id: clusterName: masterIps: { pkgs, lib, ... }: {
+    defaultModule = id: { pkgs, lib, ... }: {
         config = {
             time.timeZone = "Etc/UTC";
-
-            libraryofalexandria.node.enable = true;
-            libraryofalexandria.node = {
-                inherit id clusterName masterIps;
-            };
         };
     };
 in {
@@ -19,11 +14,7 @@ in {
             ips = [ "10.69.69.100" ];
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/rpi5.nix)
-                (import ../../modules/node.nix)
-                (defaultModule nodeId name masters.ips)
-                ({ ... }: {
-                    config.libraryofalexandria.node.type = "master";
-                })
+                (defaultModule nodeId)
                 (lib2.importIfExists ./master.nix)
                 (lib2.importIfExists ./master-${toString nodeId}.nix)
             ];
@@ -32,8 +23,7 @@ in {
             count = 1;
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/rpi5.nix)
-                (import ../../modules/node.nix)
-                (defaultModule nodeId name masters.ips)
+                (defaultModule nodeId)
                 (lib2.importIfExists ./worker.nix)
                 (lib2.importIfExists ./worker-${toString nodeId}.nix)
             ];
