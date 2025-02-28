@@ -7,23 +7,29 @@
         ../submodules/simple-efi.nix
     ];
 
-    options.vmImage = {
-        name = lib.mkOption {
-            default = "${config.vmImage.baseName}-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.raw";
-            description = "Name of the generated image file.";
-            type = lib.types.str;
+    options = {
+        vmHostPlatform = lib.mkOption {
+            default = "x86_64-linux";
+            type = lib.types.enum [ "x86_64-linux" "aarch64-linux" ];
         };
+        vmImage = {
+            name = lib.mkOption {
+                default = "${config.vmImage.baseName}-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.raw";
+                description = "Name of the generated image file.";
+                type = lib.types.str;
+            };
 
-        baseName = lib.mkOption {
-            default = "nixos-vm-image";
-            description = "Prefix of the name of the generated image file.";
-            type = lib.types.str;
+            baseName = lib.mkOption {
+                default = "nixos-vm-image";
+                description = "Prefix of the name of the generated image file.";
+                type = lib.types.str;
+            };
         };
     };
 
     config = {
         libraryofalexandria.node.platform = "vm";
-        nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+        nixpkgs.hostPlatform = lib.mkDefault config.vmHostPlatform;
 
         # disko.imageBuilder.enableBinfmt = true;  # TODO this needs to be enabled for cross compilation
         disko.devices.disk.main.imageSize = "7G";  # disk is called 'main'

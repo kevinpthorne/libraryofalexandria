@@ -18,7 +18,7 @@
             useDHCP = false;
             interfaces = {
                 wlan0.useDHCP = false;
-                eth0.useDHCP = true;
+                eth0.useDHCP = true;  # master IPs need to be reserved in DHCP server
             };
         };
         raspberry-pi-nix.board = "bcm2712"; # pi 5

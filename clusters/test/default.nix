@@ -3,6 +3,7 @@ let
     defaultModule = id: { pkgs, lib, ... }: {
         config = {
             time.timeZone = "Etc/UTC";
+            vmHostPlatform = "aarch64-linux";
         };
     };
 in {
@@ -14,7 +15,7 @@ in {
             ips = [ "192.168.67.3" ];
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/vm.nix)
-                (defaultModule nodeId) 
+                (defaultModule nodeId)
                 (lib2.importIfExists ./master.nix)
                 (lib2.importIfExists ./master-${toString nodeId}.nix)
             ];
