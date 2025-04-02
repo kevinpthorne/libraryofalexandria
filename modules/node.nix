@@ -77,16 +77,18 @@ in
                     "KUBECONFIG" = "/etc/kubernetes/cluster-admin.kubeconfig";
                 };
                 systemPackages = with pkgs; [
-                    kompose
-                    kubectl
-                    kubernetes
                     vim
                     curl
                     htop
+                ] ++ (if isMaster then [
+                    kompose
+                    kubectl
+                    kubernetes
+                    kubernetes-helm
                     k9s
                     argocd
                     argocd-vault-plugin
-                ];
+                ] else []);
             };
 
             services.kubernetes = if isMaster then {

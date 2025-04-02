@@ -41,8 +41,8 @@
         getNixosSystem = nodeType: nodeId: lib.nixosSystem {
             modules = [
                 (import ./_defaults/node.nix config.libraryofalexandria.cluster nodeId)
-                (if (nodeType == "master") then (lib2.pathIfExists ./_defaults/master.nix) else {})
-                (if (nodeType == "worker") then (lib2.pathIfExists ./_defaults/worker.nix) else {})
+                (lib2.pathIfExists ./_defaults/${nodeType}.nix)
+                (lib2.pathIfExists ./_defaults/${nodeType}-${toString nodeId}.nix)
             ] ++ (config.libraryofalexandria.cluster."${nodeType}s".modules nodeId);
             extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
             specialArgs = {
@@ -69,10 +69,10 @@
             acc // attrGenerator id
         ) {};
         
-
+        systemBuilder = system: system.config.system.builder.package;  # defined by imageable
         allSystemsBuilder = pkgs: let 
             clusterName = config.libraryofalexandria.cluster.name;
-            derivations = builtins.map (system: system.config.system.builder.package) allSystems;
+            derivations = builtins.map (system: systemBuilder system) allSystems;
             concatCommands = commands: builtins.concatStringsSep "\n" commands;
         in 
         pkgs.stdenv.mkDerivation {
@@ -112,9 +112,7 @@
                 system = arch;
             };
         in {
-            packages = {
-                "build-all-${config.libraryofalexandria.cluster.name}" = allSystemsBuilder pkgs;  # TODO this technically names the package twice - why not once?
-            };
+            "build-all-${config.libraryofalexandria.cluster.name}" = allSystemsBuilder pkgs;  # TODO this technically names the package twice - why not once?
         });
     };
 }
