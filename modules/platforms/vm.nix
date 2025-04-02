@@ -4,7 +4,7 @@
         ../platform.nix
         inputs.disko.nixosModules.disko
         ../submodules/imageable.nix
-        ../submodules/simple-efi.nix
+        ../submodules/disko-layouts/simple-efi.nix
     ];
 
     options = {
@@ -40,7 +40,17 @@
         nixpkgs.hostPlatform = lib.mkDefault config.vmHostPlatform;
 
         # disko.imageBuilder.enableBinfmt = true;  # TODO this needs to be enabled for cross compilation
-        disko.devices.disk.main.imageSize = "7G";  # disk is called 'main'
+        disko.devices.disk.main = { # disk is called 'main'
+            imageSize = "7G";
+            device = "/dev/sda";
+        };
+ 
+        boot.loader.grub = {
+            enable = true;
+            efiSupport = true;
+            efiInstallAsRemovable = true;
+        };
+        boot.loader.efi.canTouchEfiVariables = false;
 
         vmImage.baseName = config.networking.hostName;
         system.builder = {
@@ -55,8 +65,8 @@
                         mkdir -p $out/raw-image
                         cd $out/raw-image
                         ${config.system.build.diskoImagesScript} --build-memory 4096
-                        ${pkgs.qemu}/bin/qemu-img convert -p -f raw -O qcow2 ${compressArgs} main.raw main.qcow2
-                        rm main.raw
+                        # ${pkgs.qemu}/bin/qemu-img convert -p -f raw -O qcow2 ${compressArgs} main.raw main.qcow2
+                        # rm main.raw
                     '';
                     # https://github.com/nix-community/disko/blob/v1.11.0/docs/disko-images.md
                     # nix build .#nixosConfigurations.myhost.config.system.build.diskoImagesScript
