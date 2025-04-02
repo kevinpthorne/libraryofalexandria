@@ -2,6 +2,7 @@
 {
     imports = [
         ../platform.nix
+        # TODO use https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/profiles/qemu-guest.nix
         inputs.disko.nixosModules.disko
         ../submodules/imageable.nix
         ../submodules/disko-layouts/simple-efi.nix
@@ -14,7 +15,7 @@
         };
         vmImage = {
             name = lib.mkOption {
-                default = "${config.vmImage.baseName}-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.qcow2";
+                default = "${config.vmImage.baseName}-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.${config.vmImage.format}";
                 description = "Name of the generated image file.";
                 type = lib.types.str;
             };
@@ -30,6 +31,11 @@
                 description = "Whether to compress the VM image";
                 type = lib.types.bool;
             };
+
+            format = lib.mkOption {
+                default = "vmdk";
+                type = lib.types.enum [ "vmdk" "qcow2" ];
+            };
         };
     };
 
@@ -42,7 +48,7 @@
         # disko.imageBuilder.enableBinfmt = true;  # TODO this needs to be enabled for cross compilation
         disko.devices.disk.main = { # disk is called 'main'
             imageSize = "7G";
-            device = "/dev/sda";
+            device = "/dev/vda";
         };
  
         boot.loader.grub = {
@@ -51,6 +57,25 @@
             efiInstallAsRemovable = true;
         };
         boot.loader.efi.canTouchEfiVariables = false;
+
+        boot.initrd.availableKernelModules = [
+            "virtio_net"
+            "virtio_pci"
+            "virtio_mmio"
+            "virtio_blk"
+            "virtio_scsi"
+            "9p"
+            "9pnet_virtio"
+        ];
+        boot.initrd.kernelModules = [
+            "virtio_balloon"
+            "virtio_console"
+            "virtio_rng"
+            "virtio_gpu"
+        ];
+
+        boot.initrd.systemd.enable = true;
+        boot.initrd.systemd.emergencyAccess = "$y$j9T$OdulIrdyeBIGiV8LaqL5l.$gY8IdefCxljU00.jJY9lfUIfz509nywS2AQKomQcac2";
 
         vmImage.baseName = config.networking.hostName;
         system.builder = {
@@ -62,18 +87,18 @@
                     buildInputs = [ qemu ];
 
                     buildPhase = ''
-                        mkdir -p $out/raw-image
-                        cd $out/raw-image
+                        mkdir -p $out/${config.system.builder.outputDir}
+                        cd $out/${config.system.builder.outputDir}
                         ${config.system.build.diskoImagesScript} --build-memory 4096
-                        # ${pkgs.qemu}/bin/qemu-img convert -p -f raw -O qcow2 ${compressArgs} main.raw main.qcow2
-                        # rm main.raw
+                        ${pkgs.qemu}/bin/qemu-img convert -p -f raw -O ${config.vmImage.format} ${compressArgs} main.raw main.${config.vmImage.format}
+                        rm main.raw
                     '';
                     # https://github.com/nix-community/disko/blob/v1.11.0/docs/disko-images.md
                     # nix build .#nixosConfigurations.myhost.config.system.build.diskoImagesScript
                     # sudo ./result --build-memory 2048
                 }
             ) {};
-            outputDir = "raw-image";
+            outputDir = "${config.vmImage.format}-images";
         };
     };
 }
