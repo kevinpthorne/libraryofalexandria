@@ -32,6 +32,9 @@
         nixosConfigurations = lib.mkOption {
             readOnly = true;
         };
+        colmena = lib.mkOption {
+            readOnly = true;
+        };
         packages = lib.mkOption {
             readOnly = true;
         };
@@ -105,6 +108,8 @@
         #  
         # nixosConfigurations = nodes
         nixosConfigurations = config.nodes;
+        # colmena
+        colmena = config.nodes; # FIXME not all nodes use colmena
         # packages
         # ..build-all-${clusterName}
         packages = lib2.eachArch (arch: let 

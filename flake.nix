@@ -51,7 +51,15 @@
           extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
         };
     } 
-    // clusters.nixosConfigurations; 
+    // clusters.nixosConfigurations;
+    colmena = {
+      meta = {
+        nixpkgs = import nixpkgs {
+          system = "aarch64-linux";
+          overlays = [];
+        };
+      };
+    } // clusters.colmena;
 
     # TODO what if we need aarch64 specific packages?
     packages =
