@@ -109,7 +109,23 @@
         # nixosConfigurations = nodes
         nixosConfigurations = config.nodes;
         # colmena
-        colmena = config.nodes; # FIXME not all nodes use colmena
+        colmena = {
+            meta = {
+                nixpkgs = import inputs.nixpkgs {
+                    system = "aarch64-linux"; # FIXME this will cause issues on x86 builder hosts
+                };
+                nodeNixpkgs = builtins.mapAttrs (_: v: v.pkgs) config.nodes;
+                nodeSpecialArgs = builtins.mapAttrs (_: v: v._module.specialArgs) config.nodes;
+                specialArgs = {
+                    inherit lib;
+                    inherit inputs;
+                    inherit lib2;
+                };
+            };
+        } // builtins.mapAttrs (name: value: {
+            nixpkgs.system = value.config.nixpkgs.system;
+            imports = value._module.args.modules;
+        }) (config.nodes); # FIXME not all nodes use colmena
         # packages
         # ..build-all-${clusterName}
         packages = lib2.eachArch (arch: let 
