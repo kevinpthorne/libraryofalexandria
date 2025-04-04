@@ -32,7 +32,7 @@
                 "type=${config.libraryofalexandria.node.type}"
                 "host=${config.libraryofalexandria.node.hostname}"
             ];
-            targetHost = config.libraryofalexandria.node.hostname;
+            targetHost = lib.mkDefault config.libraryofalexandria.node.hostname;
             targetPort = 22;
             targetUser = colmenaConfig.userName;
         };
