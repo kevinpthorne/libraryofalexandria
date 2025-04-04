@@ -4,6 +4,10 @@ let
         config = {
             time.timeZone = "Etc/UTC";
             vmHostPlatform = "aarch64-linux";
+
+            deployment = {
+                targetHost = lib.mkForce "localhost";
+            };
         };
     };
 in {
