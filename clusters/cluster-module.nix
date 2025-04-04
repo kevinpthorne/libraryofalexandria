@@ -11,6 +11,11 @@
                 type = lib.types.str;
             };
 
+            deploymentMethod = lib.mkOption {
+                type = lib.types.enum [ "colmena" ];
+                default = "colmena"
+            };
+
             masters = lib.mkOption {
                 type = lib.types.submodule (import ./masters.nix); # ??
             };
@@ -58,6 +63,7 @@
         };
         getMasterSystem = nodeId: getNixosSystem "master" nodeId;
         getWorkerSystem = nodeId: getNixosSystem "worker" nodeId;
+        lib.assertMsg (config.libraryofalexandria.cluster.masters.count != 2) "Cannot have 2 master nodes for etcd. There must be 1 or 3+";
         masterIds = lib2.range config.libraryofalexandria.cluster.masters.count;  # [ 0, 1, ...]
         workerIds = lib2.range config.libraryofalexandria.cluster.workers.count;
         masterSystems = builtins.map (id: getMasterSystem id) masterIds;
@@ -109,7 +115,7 @@
         # nixosConfigurations = nodes
         nixosConfigurations = config.nodes;
         # colmena
-        colmena = {
+        colmena = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "colmena") {
             meta = {
                 nixpkgs = import inputs.nixpkgs {
                     system = "aarch64-linux"; # FIXME this will cause issues on x86 builder hosts
@@ -125,7 +131,7 @@
         } // builtins.mapAttrs (name: value: {
             nixpkgs.system = value.config.nixpkgs.system;
             imports = value._module.args.modules;
-        }) (config.nodes); # FIXME not all nodes use colmena
+        }) (config.nodes);
         # packages
         # ..build-all-${clusterName}
         packages = lib2.eachArch (arch: let 
