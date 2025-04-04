@@ -31,7 +31,6 @@
             default = [
                 "cluster=${config.libraryofalexandria.node.clusterName}"
                 "type=${config.libraryofalexandria.node.type}"
-                "host=${config.libraryofalexandria.node.hostname}"
             ];
         };
     };

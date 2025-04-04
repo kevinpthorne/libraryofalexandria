@@ -81,6 +81,7 @@ in
                     vim
                     curl
                     htop
+                    # cri-o
                 ] ++ (if isMaster then [
                     kompose
                     kubectl
@@ -127,9 +128,6 @@ in
                 "cgroup_enable=memory"
             ];
             boot.kernelModules = [ "ceph" ];
-
-            # colmena means of deployment
-            libraryofalexandria.node.deployment.colmena.enable = true;
 
             users.users.kevint = {
                 isNormalUser = true;

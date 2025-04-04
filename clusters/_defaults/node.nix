@@ -11,6 +11,8 @@ clusterConfig: nodeId:
             clusterName = clusterConfig.name;
             masterIps = clusterConfig.masters.ips;
             id = nodeId;
+
+            deployment.colmena.enable = (clusterConfig.deploymentMethod == "colmena");
         };
     };
 }

@@ -12,8 +12,8 @@
             };
 
             deploymentMethod = lib.mkOption {
-                type = lib.types.enum [ "colmena" ];
-                default = "colmena"
+                type = lib.types.enum [ "colmena" "manual" ];
+                default = "colmena";
             };
 
             masters = lib.mkOption {
@@ -46,6 +46,9 @@
     };
 
     config = let 
+        # TODO why didn't lib.asserts.assertMsg work here?
+        _ = config.libraryofalexandria.cluster.masters.count != 2 || builtins.throw "Cannot have 2 master nodes for etcd. There must be 1 or 3+";
+
         getNixosSystem = nodeType: nodeId: lib.nixosSystem {
             modules = [
                 (import ./_defaults/node.nix config.libraryofalexandria.cluster nodeId)
@@ -63,7 +66,6 @@
         };
         getMasterSystem = nodeId: getNixosSystem "master" nodeId;
         getWorkerSystem = nodeId: getNixosSystem "worker" nodeId;
-        lib.assertMsg (config.libraryofalexandria.cluster.masters.count != 2) "Cannot have 2 master nodes for etcd. There must be 1 or 3+";
         masterIds = lib2.range config.libraryofalexandria.cluster.masters.count;  # [ 0, 1, ...]
         workerIds = lib2.range config.libraryofalexandria.cluster.workers.count;
         masterSystems = builtins.map (id: getMasterSystem id) masterIds;
@@ -115,7 +117,7 @@
         # nixosConfigurations = nodes
         nixosConfigurations = config.nodes;
         # colmena
-        colmena = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "colmena") {
+        colmena = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "colmena") ({
             meta = {
                 nixpkgs = import inputs.nixpkgs {
                     system = "aarch64-linux"; # FIXME this will cause issues on x86 builder hosts
@@ -131,7 +133,7 @@
         } // builtins.mapAttrs (name: value: {
             nixpkgs.system = value.config.nixpkgs.system;
             imports = value._module.args.modules;
-        }) (config.nodes);
+        }) (config.nodes));
         # packages
         # ..build-all-${clusterName}
         packages = lib2.eachArch (arch: let 
