@@ -30,6 +30,7 @@
             tags = [
                 "cluster=${config.libraryofalexandria.node.clusterName}"
                 "type=${config.libraryofalexandria.node.type}"
+                "host=${config.libraryofalexandria.node.hostname}"
             ];
             targetHost = config.libraryofalexandria.node.hostname;
             targetPort = 22;
