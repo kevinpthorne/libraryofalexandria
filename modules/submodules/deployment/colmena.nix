@@ -23,7 +23,7 @@
 
         port = lib.mkOption {
             type = lib.types.port;
-            defaut = 22;
+            default = 22;
         };
 
         tags = lib.mkOption {
