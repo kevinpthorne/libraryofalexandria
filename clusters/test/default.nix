@@ -5,8 +5,8 @@ let
             time.timeZone = "Etc/UTC";
             vmHostPlatform = "aarch64-linux";
 
-            deployment = {
-                targetHost = lib.mkForce "localhost";
+            libraryofalexandria.node.deployment.colmena = {
+                hostName = "localhost";
             };
         };
     };

@@ -15,6 +15,25 @@
                 "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICAa6gt+RvDM5hDn+GBmWnCaPo3KB6RNdG3so0q3Z8kw kevint@Laptop4.local deployment"
             ];
         };
+
+        hostName = lib.mkOption {
+            type = lib.types.str;
+            default = config.libraryofalexandria.node.hostname;
+        };
+
+        port = lib.mkOption {
+            type = lib.types.port;
+            defaut = 22;
+        };
+
+        tags = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [
+                "cluster=${config.libraryofalexandria.node.clusterName}"
+                "type=${config.libraryofalexandria.node.type}"
+                "host=${config.libraryofalexandria.node.hostname}"
+            ];
+        };
     };
 
     config = let 
@@ -27,13 +46,9 @@
             openssh.authorizedKeys.keys = colmenaConfig.authorizedKeys;
         };
         deployment = {
-            tags = [
-                "cluster=${config.libraryofalexandria.node.clusterName}"
-                "type=${config.libraryofalexandria.node.type}"
-                "host=${config.libraryofalexandria.node.hostname}"
-            ];
-            targetHost = lib.mkDefault config.libraryofalexandria.node.hostname;
-            targetPort = 22;
+            tags = colmenaConfig.tags;
+            targetHost = colmenaConfig.hostName;
+            targetPort = colmenaConfig.port;
             targetUser = colmenaConfig.userName;
         };
         services.openssh.enable = true;

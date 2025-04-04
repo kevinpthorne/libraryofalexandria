@@ -1,8 +1,8 @@
 { lib, ... }:
 {
     config = {
-        deployment = {
-            targetPort = 3122;
+        libraryofalexandria.node.deployment.colmena = {
+            port = 3122;
         };
     };
 }
