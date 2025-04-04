@@ -27,13 +27,13 @@
             openssh.authorizedKeys.keys = colmenaConfig.authorizedKeys;
         };
         deployment = {
-            # tags = [
-            #     "cluster=${config.libraryofalexandria.node.clusterName}"
-            #     "type=${config.libraryofalexandria.node.type}"
-            # ];
-            targetHost = ""; #config.libraryofalexandria.node.hostname;
+            tags = [
+                "cluster=${config.libraryofalexandria.node.clusterName}"
+                "type=${config.libraryofalexandria.node.type}"
+            ];
+            targetHost = config.libraryofalexandria.node.hostname;
             targetPort = 22;
-            targetUser = "colmena"; #colmenaConfig.userName;
+            targetUser = colmenaConfig.userName;
         };
         services.openssh.enable = true;
         security.sudo.extraRules = [   # colmena currently requires non-interactive auth
