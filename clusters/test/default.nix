@@ -16,7 +16,7 @@ in {
 
         masters = {
             count = 1;
-            ips = [ "169.254.188.234" ];
+            ips = [ "192.168.56.2" ];
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/vm.nix)
                 (defaultModule nodeId)

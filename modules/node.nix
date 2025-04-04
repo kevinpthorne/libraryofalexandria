@@ -70,6 +70,7 @@ in
                     enable = true;
                     allowedTCPPorts = [ 8888 config.libraryofalexandria.node.masterPort ];
                 };
+                # TODO maybe set ip statically?
             };
 
             environment = {
@@ -99,6 +100,7 @@ in
                 # use coredns
                 addons.dns.enable = true;
 
+                apiserverAddress = "https://${masterHostname}:${toString config.libraryofalexandria.node.masterPort}";
                 apiserver = {
                     securePort = config.libraryofalexandria.node.masterPort;
                     advertiseAddress = thisMasterIp;

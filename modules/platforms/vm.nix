@@ -6,6 +6,8 @@
         inputs.disko.nixosModules.disko
         ../submodules/imageable.nix
         ../submodules/disko-layouts/simple-efi.nix
+        ../submodules/arm64/coredns-fix.nix
+        ../submodules/arm64/etcd-fix.nix
     ];
 
     options = {

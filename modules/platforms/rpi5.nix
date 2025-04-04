@@ -5,8 +5,8 @@
         inputs.raspberry-pi-nix.nixosModules.raspberry-pi
         inputs.raspberry-pi-nix.nixosModules.sd-image
         ../submodules/imageable.nix
-        ../submodules/rpi/coredns-fix.nix
-        ../submodules/rpi/etcd-fix.nix
+        ../submodules/arm64/coredns-fix.nix
+        ../submodules/arm64/etcd-fix.nix
         ../submodules/rpi/cgroup.nix
     ];
 

@@ -1,6 +1,6 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, config, ... }:
 {
-    config = {
+    config = lib.mkIf (config.nixpkgs.hostPlatform == "aarch64-linux") {
         services.kubernetes.addons.dns = {
             coredns = {
                 finalImageTag = "1.10.1";
