@@ -75,13 +75,13 @@ in
 
             environment = {
                 variables = lib.mkIf isMaster {
-                    "KUBECONFIG" = "/etc/kubernetes/cluster-admin.kubeconfig";
+                    "KUBECONFIG" = "/etc/kubernetes/cluster-admin.kubeconfig";  # must match helm chart installer
                 };
                 systemPackages = with pkgs; [
                     vim
                     curl
                     htop
-                    # cri-o
+                    cri-o
                 ] ++ (if isMaster then [
                     kompose
                     kubectl

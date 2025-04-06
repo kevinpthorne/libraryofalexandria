@@ -1,6 +1,6 @@
 { lib, ... }: 
 {
     imports = [
-    #    ../../modules/control-plane.nix 
+       ../../modules/control-plane.nix 
     ];
 }
