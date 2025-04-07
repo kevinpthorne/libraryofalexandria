@@ -49,7 +49,7 @@
 
                     ${concatCommands (forEachChartModule (chart: (
                         concatCommands [
-                            "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.config.name} ${chart.config.chart} --version ${chart.config.version} -f ${chart.config.package}/hc-${chart.config.name}-values.yaml ${lib.optionalString (chart.config.namespace != null) "--namespace ${chart.config.namespace} --create-namespace"} --kubeconfig /etc/kubernetes/cluster-admin.kubeconfig"
+                            "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.config.name} ${chart.config.chart} --version ${chart.config.version} -f ${chart.config.package}/hc-${chart.config.name}-values.yaml ${lib.optionalString (chart.config.namespace != null) "--namespace ${chart.config.namespace} --create-namespace"} --kubeconfig /etc/kubernetes/cluster-admin.kubeconfig --wait"
                         ]
                     )))}
                 '';
