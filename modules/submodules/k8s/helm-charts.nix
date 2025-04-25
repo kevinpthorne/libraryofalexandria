@@ -13,7 +13,7 @@
 
     config = 
     let
-        helmChartValuesModules =  (builtins.map (chart: 
+        helmChartValuesModules = (builtins.map (chart: 
             let 
                 chartModule = inputs.nixpkgs.lib.evalModules {
                     modules = [ ./helm-chart.nix {
@@ -46,6 +46,8 @@
                     ${concatCommands (forEachChartModule (chart: (
                         "${lib.optionalString (chart.config.repo != null) "${pkgs.kubernetes-helm}/bin/helm repo add ${chart.config.name} ${chart.config.repo}"}"
                     )))}
+
+                    ${pkgs.kubernetes-helm}/bin/helm repo update
 
                     ${concatCommands (forEachChartModule (chart: (
                         concatCommands [
