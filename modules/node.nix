@@ -136,6 +136,10 @@ in
                 ];
             };
 
+            # show IP on login screen
+            environment.etc."issue.d/ip.issue".text = "\\4\n";
+            networking.dhcpcd.runHook = "${pkgs.utillinux}/bin/agetty --reload";
+
             nix.settings = {
                 experimental-features = [ "nix-command" "flakes" ];
                 trusted-users = [ "root" ];
