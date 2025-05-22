@@ -6,9 +6,7 @@ let
             vmHostPlatform = "aarch64-linux";
             # vmImage.size = "20G";
 
-            libraryofalexandria.node.deployment.colmena = {
-                hostName = "localhost";
-            };
+            libraryofalexandria.node.deployment.colmena.hostName = "localhost";
         };
     };
 in {
@@ -17,7 +15,7 @@ in {
 
         masters = {
             count = 1;
-            ips = [ "192.168.56.4" ];
+            ips = [ "10.0.2.15" ];
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/vm.nix)
                 (defaultModule nodeId)
@@ -33,6 +31,9 @@ in {
                 (lib2.importIfExists ./worker.nix)
                 (lib2.importIfExists ./worker-${toString nodeId}.nix)
             ];
+        };
+        apps = {
+            rook-ceph.devMode = true;
         };
     };
 }

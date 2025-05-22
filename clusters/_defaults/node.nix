@@ -1,18 +1,20 @@
-clusterConfig: nodeId:
-{ pkgs, lib, ... }:
+{ pkgs, lib, cluster, nodeId, ... }:
 {
     imports = [
         ../../modules/node.nix
     ];
 
     config = {
-        libraryofalexandria.node = {
-            enable = true;
-            clusterName = clusterConfig.name;
-            masterIps = clusterConfig.masters.ips;
-            id = nodeId;
+        libraryofalexandria = {
+            inherit cluster;
+            node = {
+                enable = true;
+                clusterName = cluster.name;
+                masterIps = cluster.masters.ips;
+                id = nodeId;
 
-            deployment.colmena.enable = (clusterConfig.deploymentMethod == "colmena");
+                deployment.colmena.enable = (cluster.deploymentMethod == "colmena");
+            };
         };
     };
 }

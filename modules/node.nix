@@ -42,6 +42,10 @@ in
         };
     };
 
+    options.libraryofalexandria.cluster = lib.mkOption {
+        type = lib.types.attrs;
+    };
+
     config = 
         let
             isMaster = config.libraryofalexandria.node.type == "master";
@@ -105,6 +109,7 @@ in
                 apiserver = {
                     securePort = config.libraryofalexandria.node.masterPort;
                     advertiseAddress = thisMasterIp;
+                    allowPrivileged = true; # ceph requires this
                 };
             } else {
                 roles = [ "node" ];

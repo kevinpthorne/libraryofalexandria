@@ -10,10 +10,16 @@
             type = lib.types.str;
         };
 
-        # values = lib.mkOption {
-        #     default = {};
-        #     type = lib.types.attrs;
-        # };
+        devMode = lib.mkOption {
+            default = false;
+            type = lib.types.bool;
+            description = "Disable replication";
+        };
+
+        values = lib.mkOption {
+            default = {};
+            type = lib.types.attrs;
+        };
     };
 
     config = lib.mkIf config.libraryofalexandria.apps.rook-ceph.enable {
@@ -61,6 +67,7 @@
                         ];
                     };
                     # TODO rook-ceph guide says crds.enabled = false needs to be set
+                    pspEnable = true;
                 };
                 namespace = "rook-ceph";
                 repo = "https://charts.rook.io/release";
@@ -71,7 +78,31 @@
                 version = config.libraryofalexandria.apps.rook-ceph.version;
                 values = {
                     operatorNamespace = "rook-ceph";
-                    # TODO allow overrides - idk how disks are being decided currently and rpis shouldnt use sd cards
+                    cephClusterSpec = {
+                        mgr.count = 
+                            let
+                                mgrCount = if config.libraryofalexandria.apps.rook-ceph.devMode then 1 else 3;
+                            in
+                            mgrCount;
+                        mon = {
+                            allowMultiplePerNode = config.libraryofalexandria.apps.rook-ceph.devMode;
+                            count = 
+                            let
+                                morCount = if config.libraryofalexandria.apps.rook-ceph.devMode then 1 else 3;
+                            in
+                            monCount;
+                        };
+                        network.connections.encryption.enabled = true;
+                        resources.osd.requests = {
+                            cpu = "500m";  # 1000m default
+                            memory = "1Gi"; # 4Gi default, 4Gi limit
+                        };
+                        storage = {
+                            useAllNodes = true;
+                            useAllDevices = true;
+                        };
+                    };
+                    pspEnable = true;
                 };
                 namespace = "rook-ceph";
             }

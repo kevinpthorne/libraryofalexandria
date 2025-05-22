@@ -23,6 +23,12 @@
             workers = lib.mkOption {
                 type = lib.types.submodule (import ./workers.nix);
             };
+
+            apps = lib.mkOption {
+                type = lib.types.attrs;
+                description = "Overrides for apps, usually placed in master0's config";
+                default = {};
+            };
         };
         # rendered options, never given outside this module
         masters = lib.mkOption {
@@ -51,14 +57,16 @@
 
         getNixosSystem = nodeType: nodeId: lib.nixosSystem {
             modules = [
-                (import ./_defaults/node.nix config.libraryofalexandria.cluster nodeId)
+                (lib2.pathIfExists ./_defaults/node.nix)
                 (lib2.pathIfExists ./_defaults/${nodeType}.nix)
                 (lib2.pathIfExists ./_defaults/${nodeType}-${toString nodeId}.nix)
             ] ++ (config.libraryofalexandria.cluster."${nodeType}s".modules nodeId);
             extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
-            specialArgs = {
+            specialArgs = with config.libraryofalexandria; {
                 inherit inputs;
                 inherit lib2;
+                inherit cluster;
+                inherit nodeId;
             };
         };
         wrapNixosSystem = nixosSystem: {
