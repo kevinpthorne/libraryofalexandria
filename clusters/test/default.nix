@@ -18,6 +18,7 @@ in {
             ips = [ "10.0.2.15" ];
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/vm.nix)
+                (import ../../modules/submodules/stig.nix)
                 (defaultModule nodeId)
                 (lib2.importIfExists ./master.nix)
                 (lib2.importIfExists ./master-${toString nodeId}.nix)
@@ -27,6 +28,7 @@ in {
             count = 1;
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/vm.nix)
+                (import ../../modules/submodules/stig.nix)
                 (defaultModule nodeId)
                 (lib2.importIfExists ./worker.nix)
                 (lib2.importIfExists ./worker-${toString nodeId}.nix)
