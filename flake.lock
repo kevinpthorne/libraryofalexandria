@@ -133,6 +133,21 @@
         "type": "github"
       }
     },
+    "nixos-stig": {
+      "locked": {
+        "lastModified": 1750219679,
+        "narHash": "sha256-ockSzCXZmAYehe1gKXSa3PnNZHyuRWhQEd9v47acToY=",
+        "owner": "kevinpthorne",
+        "repo": "nixos-stig",
+        "rev": "971f4da6d2570221615b54706f13ea0d27839784",
+        "type": "github"
+      },
+      "original": {
+        "owner": "kevinpthorne",
+        "repo": "nixos-stig",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1741862977,
@@ -197,6 +212,7 @@
       "inputs": {
         "colmena": "colmena",
         "disko": "disko",
+        "nixos-stig": "nixos-stig",
         "nixpkgs": "nixpkgs",
         "raspberry-pi-nix": "raspberry-pi-nix",
         "supported-arch": "supported-arch"

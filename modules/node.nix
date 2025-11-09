@@ -6,6 +6,8 @@ in
 {
     imports = [
         ./submodules/deployment/colmena.nix
+        ./submodules/k8s/engines/rke2.nix
+        ./submodules/k8s/engines/kubernetes.nix
     ];
 
     options.libraryofalexandria.node = {
@@ -59,80 +61,28 @@ in
             );
             extraHostEntries = map (entry: "${entry.name} ${entry.value}") (lib.attrsets.attrsToList masterIpsToHostnames);
             extraHostsStr = lib.concatStringsSep "\n" extraHostEntries;
-            # This master IP and hostname. Only use behind an `mkIf isMaster` gate
-            thisMasterIp = lib.lists.elemAt config.libraryofalexandria.node.masterIps config.libraryofalexandria.node.id;
-            thisMasterHostname = masterIpsToHostnames.${thisMasterIp};
-            # TODO make multiple masters
-            masterIp = lib.lists.elemAt config.libraryofalexandria.node.masterIps 0;
-            masterHostname = masterIpsToHostnames.${masterIp};
         in lib.mkIf config.libraryofalexandria.node.enable {
 
             networking = {
                 hostName = config.libraryofalexandria.node.hostname;
                 extraHosts = extraHostsStr;
-                firewall = lib.mkIf isMaster {
-                    enable = true;
-                    allowedTCPPorts = [ 8888 config.libraryofalexandria.node.masterPort ];
-                };
+                firewall.enable = false;
+                # firewall done by cilium
+                # firewall = lib.mkIf isMaster {
+                #     enable = true;
+                #     allowedTCPPorts = [ 8888 config.libraryofalexandria.node.masterPort ];
+                # };
                 # TODO maybe set ip statically?
+                enableIPv6  = false;  # rke2 etcd prefers ipv6 over v4 but v4 is easier for humans
             };
 
             environment = {
-                variables = lib.mkIf isMaster {
-                    "KUBECONFIG" = "/etc/kubernetes/cluster-admin.kubeconfig";  # must match helm chart installer
-                };
                 systemPackages = with pkgs; [
                     vim
                     curl
                     htop
-                    cri-o
-                ] ++ (if isMaster then [
-                    kompose
-                    kubectl
-                    kubernetes
-                    kubernetes-helm
-                    k9s
-                    argocd
-                    argocd-vault-plugin
-                ] else []);
+                ];
             };
-
-            services.kubernetes = if isMaster then {
-                roles = [ "master" "node" ];
-
-                masterAddress = masterHostname;
-                easyCerts = true;
-                # use coredns
-                addons.dns.enable = true;
-
-                apiserverAddress = "https://${masterHostname}:${toString config.libraryofalexandria.node.masterPort}";
-                apiserver = {
-                    securePort = config.libraryofalexandria.node.masterPort;
-                    advertiseAddress = thisMasterIp;
-                    allowPrivileged = true; # ceph requires this
-                };
-            } else {
-                roles = [ "node" ];
-                masterAddress = masterHostname;
-                easyCerts = true;
-
-                # TODO make multiple masters
-                kubelet = {
-                    enable = true;
-                    kubeconfig.server = "https://${masterHostname}:${toString config.libraryofalexandria.node.masterPort}";
-                    extraOpts = "--root-dir=/var/lib/kubelet";
-                };
-                apiserverAddress = "https://${masterHostname}:${toString config.libraryofalexandria.node.masterPort}";
-
-                addons.dns.enable = true;
-            };
-
-            # containerd requirement
-            boot.kernelParams = [
-                "cgroup_enable=cpuset"
-                "cgroup_enable=memory"
-            ];
-            boot.kernelModules = [ "ceph" ];
 
             users.users.kevint = {
                 isNormalUser = true;

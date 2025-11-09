@@ -28,8 +28,8 @@
         warnings = [''Only use this if helm charts are somehow unsuitable for the task.''];
 
         systemd.services.manifest-installer = {
-            wantedBy = [ "kubernetes.service" ];
-            after = [ "kubernetes.service" ];
+            wantedBy = [ "${config.libraryofalexandria.cluster.k8sEngine}.service" ];
+            after = [ "${config.libraryofalexandria.cluster.k8sEngine}.service" ];
             script = ''
                 ${pkgs.kubectl}/bin/kubectl apply -f ${chart.config.package}/manifest.json
             '';

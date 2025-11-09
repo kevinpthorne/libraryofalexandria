@@ -1,9 +1,7 @@
 inputs @ { eachArch, ... }:
 let
-    range = n: builtins.genList (x: x) n;
-    importIfExists = import ../lib/import-if-exists.nix;
-    pathIfExists = import ../lib/path-if-exists.nix;
-    deepMerge = import ../lib/deep-merge.nix inputs.nixpkgs.lib;
+    lib2Pre = import ../lib // { inherit eachArch; };
+    lib2 = lib2Pre // { deepMerge = lib2Pre.deepMerge inputs.nixpkgs.lib; };
     #
     folderContents = builtins.readDir ./.;
     folderDirectories = inputs.nixpkgs.lib.filterAttrs (
@@ -19,13 +17,7 @@ let
                 ];
                 specialArgs = {
                     inherit inputs;
-                    lib2 = {
-                        inherit range;
-                        inherit importIfExists;
-                        inherit pathIfExists;
-                        inherit deepMerge;
-                        inherit eachArch;
-                    };
+                    inherit lib2;
                 };
             };
         in {
@@ -38,7 +30,7 @@ let
        acc // (getter (clusters.${clusterName}))
     ) {} (builtins.attrNames clusters);
     mergeAll = getter: builtins.foldl' (acc: clusterName:
-        deepMerge [ acc (getter (clusters.${clusterName})) ]
+        lib2.deepMerge [ acc (getter (clusters.${clusterName})) ]
     ) {} (builtins.attrNames clusters);
     
     nixosConfigurations = collectAll (cluster: cluster.nixosConfigurations);
@@ -46,6 +38,7 @@ let
     packages = mergeAll (cluster: cluster.packages);
 in
 {
+    by_name = clusters;
     inherit nixosConfigurations;
     inherit colmena;
     inherit packages;

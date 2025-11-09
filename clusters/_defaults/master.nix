@@ -1,4 +1,14 @@
+{ cluster, nodeId }:
 { lib, ... }: 
 {
-    config.libraryofalexandria.node.type = "master";
+    imports = [
+       ../../modules/control-plane.nix 
+    ];
+
+    config = {
+        libraryofalexandria = {
+            node.type = "master";
+            apps = cluster.apps;
+        };
+    };
 }

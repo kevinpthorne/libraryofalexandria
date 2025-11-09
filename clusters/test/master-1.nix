@@ -3,7 +3,7 @@
 {
     config = {
         libraryofalexandria.node.deployment.colmena = {
-            port = 3022;
+            port = 3122;
         };
     };
 }

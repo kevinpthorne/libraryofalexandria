@@ -10,8 +10,8 @@ in {
         name = "k";
 
         masters = {
-            count = 1;
-            ips = [ "10.69.69.100" ];
+            count = 3;
+            ips = [ "10.69.69.100" "10.69.69.101" "10.69.69.102" ];
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/rpi5.nix)
                 (defaultModule nodeId)
@@ -20,7 +20,7 @@ in {
             ];
         };
         workers = {
-            count = 1;
+            count = 2;
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/rpi5.nix)
                 (defaultModule nodeId)

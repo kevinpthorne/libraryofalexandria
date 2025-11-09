@@ -1,3 +1,4 @@
+{ cluster, nodeId }:
 { lib, ... }:
 {
     config = {

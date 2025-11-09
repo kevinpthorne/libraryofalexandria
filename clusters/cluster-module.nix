@@ -11,6 +11,11 @@
                 type = lib.types.str;
             };
 
+            k8sEngine = lib.mkOption {
+                type = lib.types.enum [ "rke2" "kubernetes" ];  # must match systemd service name
+                default = "rke2";
+            };
+
             deploymentMethod = lib.mkOption {
                 type = lib.types.enum [ "colmena" "manual" ];
                 default = "colmena";
@@ -43,6 +48,9 @@
         nixosConfigurations = lib.mkOption {
             readOnly = true;
         };
+        modules = lib.mkOption {
+            readOnly = true;
+        };
         colmena = lib.mkOption {
             readOnly = true;
         };
@@ -55,27 +63,49 @@
         # TODO why didn't lib.asserts.assertMsg work here?
         _ = config.libraryofalexandria.cluster.masters.count != 2 || builtins.throw "Cannot have 2 master nodes for etcd. There must be 1 or 3+";
 
-        getNixosSystem = nodeType: nodeId: lib.nixosSystem {
-            modules = [
-                (lib2.pathIfExists ./_defaults/node.nix)
-                (lib2.pathIfExists ./_defaults/${nodeType}.nix)
-                (lib2.pathIfExists ./_defaults/${nodeType}-${toString nodeId}.nix)
+        # Testing requires using modules directly, instead of a nixosSystem
+        getNixosMegaModule = nodeType: nodeId: {...}: {
+            imports = [
+                (lib2.importIfExistsArgs ./_defaults/node.nix (
+                    with config.libraryofalexandria;
+                        {inherit cluster nodeId;}
+                ))
+                (lib2.importIfExistsArgs ./_defaults/${nodeType}.nix (
+                    with config.libraryofalexandria;
+                        {inherit cluster nodeId;}
+                ))
+                (lib2.importIfExistsArgs ./_defaults/${nodeType}-${toString nodeId}.nix (
+                    with config.libraryofalexandria;
+                        {inherit cluster nodeId;}
+                ))
             ] ++ (config.libraryofalexandria.cluster."${nodeType}s".modules nodeId);
+        };
+        wrapNixosModule = name: megaModule: {
+            name = megaModule;
+        };
+        systemSpecialArgs = nodeId: with config.libraryofalexandria; {
+            inherit inputs;
+            inherit lib2;
+            inherit cluster;
+            inherit nodeId;
+        };
+
+        # For building (flake nixosConfigurations), we'll stack everything as nixosSystems
+        getNixosSystem = nodeId: nodeModule: lib.nixosSystem {
+            modules = [ nodeModule ];
             extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
-            specialArgs = with config.libraryofalexandria; {
-                inherit inputs;
-                inherit lib2;
-                inherit cluster;
-                inherit nodeId;
-            };
+            specialArgs = systemSpecialArgs nodeId;
         };
         wrapNixosSystem = nixosSystem: {
            "${nixosSystem.config.libraryofalexandria.node.hostname}" = nixosSystem; 
         };
-        getMasterSystem = nodeId: getNixosSystem "master" nodeId;
-        getWorkerSystem = nodeId: getNixosSystem "worker" nodeId;
+        getMasterMegaModule = nodeId: getNixosMegaModule "master" nodeId;
+        getMasterSystem = nodeId: getNixosSystem nodeId (getMasterMegaModule nodeId);
+        getWorkerMegaModule = nodeId: getNixosMegaModule "worker" nodeId;
+        getWorkerSystem = nodeId: getNixosSystem nodeId (getWorkerMegaModule nodeId);
         masterIds = lib2.range config.libraryofalexandria.cluster.masters.count;  # [ 0, 1, ...]
         workerIds = lib2.range config.libraryofalexandria.cluster.workers.count;
+        
         masterSystems = builtins.map (id: getMasterSystem id) masterIds;
         workerSystems = builtins.map (id: getWorkerSystem id) workerIds;
         allSystems = masterSystems ++ workerSystems;
@@ -83,6 +113,22 @@
         collectSystems = systemsList: builtins.foldl' (otherSystemsSet: systemSet: 
             otherSystemsSet // systemSet
         ) {} (builtins.map (system: wrapNixosSystem system) systemsList); 
+
+        masterModulesAttrSets = builtins.map (id: 
+            let
+                moduleName = "master${id}";
+                module = getMasterMegaModule id;
+                moduleAsAttrSet = wrapNixosModule moduleName module;
+            in moduleAsAttrSet) masterIds;
+        workerModulesAttrSets = builtins.map (id: 
+            let
+                moduleName = "worker${id}";
+                module = getWorkerMegaModule id;
+                moduleAsAttrSet = wrapNixosModule moduleName module;
+            in moduleAsAttrSet) workerIds;
+        collectModules = modulesAttrsetList: builtins.foldl' (otherModulesSet: moduleAttrSet: 
+            otherModulesSet // moduleAttrSet
+        ) {} modulesAttrsetList; 
 
         collectAll = attrGenerator: builtins.foldl' (acc: id:
             acc // attrGenerator id
@@ -124,6 +170,8 @@
         #  
         # nixosConfigurations = nodes
         nixosConfigurations = config.nodes;
+        # modules-only, for nixosTest
+        modules = (collectModules masterModulesAttrSets) // (collectModules workerModulesAttrSets);
         # colmena
         colmena = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "colmena") ({
             meta = {

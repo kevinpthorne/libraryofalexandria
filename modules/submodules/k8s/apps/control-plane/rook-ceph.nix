@@ -88,7 +88,7 @@
                             allowMultiplePerNode = config.libraryofalexandria.apps.rook-ceph.devMode;
                             count = 
                             let
-                                morCount = if config.libraryofalexandria.apps.rook-ceph.devMode then 1 else 3;
+                                monCount = if config.libraryofalexandria.apps.rook-ceph.devMode then 1 else 3;
                             in
                             monCount;
                         };

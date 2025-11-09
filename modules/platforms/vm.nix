@@ -49,7 +49,7 @@
 
         # disko.imageBuilder.enableBinfmt = true;  # TODO this needs to be enabled for cross compilation
         disko.devices.disk.main = { # disk is called 'main'
-            imageSize = "20G";
+            imageSize = "30G";
             device = "/dev/vda";
         };
  

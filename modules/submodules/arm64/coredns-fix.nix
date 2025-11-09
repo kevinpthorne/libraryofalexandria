@@ -1,6 +1,7 @@
+# on nixos kubernetes svc, arm64 image is needed instead of x86 default
 { pkgs, lib, config, ... }:
 {
-    config = lib.mkIf (config.nixpkgs.hostPlatform == "aarch64-linux") {
+    config = {
         services.kubernetes.addons.dns = {
             coredns = {
                 finalImageTag = "1.10.1";

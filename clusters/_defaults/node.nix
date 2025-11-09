@@ -1,4 +1,5 @@
-{ pkgs, lib, cluster, nodeId, ... }:
+{ cluster, nodeId }:
+{ pkgs, lib, ... }:
 {
     imports = [
         ../../modules/node.nix

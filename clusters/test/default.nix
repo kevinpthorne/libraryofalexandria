@@ -14,28 +14,25 @@ in {
         name = "test";
 
         masters = {
-            count = 1;
-            ips = [ "10.0.2.15" ];
-            modules = with config.libraryofalexandria.cluster; nodeId: [
+            count = 3;
+            ips = [ "192.168.56.11" "192.168.56.9" "192.168.56.8" ];
+            modules = let cluster = config; in with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/vm.nix)
-                (import ../../modules/submodules/stig.nix)
+                # (import ../../modules/submodules/stig.nix)
                 (defaultModule nodeId)
-                (lib2.importIfExists ./master.nix)
-                (lib2.importIfExists ./master-${toString nodeId}.nix)
+                (lib2.importIfExistsArgs ./master.nix { inherit cluster nodeId; })
+                (lib2.importIfExistsArgs ./master-${toString nodeId}.nix { inherit cluster nodeId; })
             ];
         };
         workers = {
-            count = 1;
+            count = 0;
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/vm.nix)
-                (import ../../modules/submodules/stig.nix)
+                # (import ../../modules/submodules/stig.nix)
                 (defaultModule nodeId)
-                (lib2.importIfExists ./worker.nix)
-                (lib2.importIfExists ./worker-${toString nodeId}.nix)
+                (lib2.importIfExistsArgs ./worker.nix { inherit cluster nodeId; })
+                (lib2.importIfExistsArgs ./worker-${toString nodeId}.nix { inherit cluster nodeId; })
             ];
-        };
-        apps = {
-            rook-ceph.devMode = true;
         };
     };
 }

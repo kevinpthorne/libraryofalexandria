@@ -32,16 +32,23 @@
             in
                 chartModule
         ) config.libraryofalexandria.helmCharts.charts);
+        helmChartValuesPackages = builtins.map (chartModule: chartModule.config.package) helmChartValuesModules;
+        k8sSystemdService = if config.libraryofalexandria.cluster.k8sEngine == "rke2" then "rke2-server" else "kubernetes";
+        isMaster = config.libraryofalexandria.node.type == "master";
+        isMaster0 = isMaster && config.libraryofalexandria.node.id == 0;
     in
-        lib.mkIf config.libraryofalexandria.helmCharts.enable {
-            environment.systemPackages = builtins.map (chartModule: chartModule.config.package) helmChartValuesModules;
+        lib.mkIf (config.libraryofalexandria.helmCharts.enable && isMaster0) {
+            environment.systemPackages = helmChartValuesPackages ++ (with pkgs; [
+                kubernetes-helm
+            ]);
 
             systemd.services.helm-chart-installer = {
-                wantedBy = [ "kubernetes.service" ];
-                after = [ "kubernetes.service" ];
+                wantedBy = [ "${k8sSystemdService}.service" ];
+                after = [ "${k8sSystemdService}.service" ];
                 script = let
                     forEachChartModule = func: builtins.map (chart: func chart) helmChartValuesModules;
                     concatCommands = commands: builtins.concatStringsSep "\n" commands;
+                    kubeconfig = config.environment.variables."KUBECONFIG";
                 in ''
                     ${concatCommands (forEachChartModule (chart: (
                         "${lib.optionalString (chart.config.repo != null) "${pkgs.kubernetes-helm}/bin/helm repo add ${chart.config.name} ${chart.config.repo}"}"
@@ -51,7 +58,7 @@
 
                     ${concatCommands (forEachChartModule (chart: (
                         concatCommands [
-                            "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.config.name} ${chart.config.chart} --version ${chart.config.version} -f ${chart.config.package}/hc-${chart.config.name}-values.yaml ${lib.optionalString (chart.config.namespace != null) "--namespace ${chart.config.namespace} --create-namespace"} --kubeconfig /etc/kubernetes/cluster-admin.kubeconfig --wait"
+                            "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.config.name} ${chart.config.chart} --version ${chart.config.version} -f ${chart.config.package}/hc-${chart.config.name}-values.yaml ${lib.optionalString (chart.config.namespace != null) "--namespace ${chart.config.namespace} --create-namespace"} --kubeconfig ${kubeconfig} --wait"
                         ]
                     )))}
                 '';

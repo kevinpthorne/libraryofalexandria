@@ -22,13 +22,16 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
+
+    nixos-stig.url = "github:kevinpthorne/nixos-stig";
   };
 
-  outputs = inputs @ { self, nixpkgs, supported-arch, raspberry-pi-nix, ... }:
+  outputs = inputs @ { self, nixpkgs, supported-arch, raspberry-pi-nix, nixos-stig, ... }:
   let
     eachArch = nixpkgs.lib.genAttrs (import supported-arch);
-    importableInputs = (builtins.removeAttrs inputs [ "self" ]);
-    deepMerge = import ./lib/deep-merge.nix nixpkgs.lib;
+    importableInputs = (builtins.removeAttrs inputs [ "self" "config" ]);
+    customLib = import ./lib;
+    deepMerge = customLib.deepMerge nixpkgs.lib;
     clusters = import ./clusters (importableInputs // {
       inherit eachArch;
     });
@@ -42,22 +45,20 @@
     nixosConfigurations = {
       rpi-example = inputs.raspberry-pi-nix.nixosConfigurations.rpi-example;
 
-      test = let 
-        config = import ./clusters/k importableInputs; 
-      in 
-        nixpkgs.lib.nixosSystem {
-          system = config.system;
-          modules = config.masters.modules 0;
-          extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
-        };
+      # test = let 
+      #   config = import ./clusters/k importableInputs; 
+      # in 
+      #   nixpkgs.lib.nixosSystem {
+      #     system = config.system;
+      #     modules = config.masters.modules 0;
+      #     extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
+      #   };
     } 
     // clusters.nixosConfigurations;
 
     colmena = clusters.colmena;
 
-    # TODO what if we need aarch64 specific packages?
-    packages =
-     deepMerge [ 
+    packages = deepMerge [ 
       # system-specific packages  
       {
         aarch64-linux = {};
@@ -77,6 +78,22 @@
       )
       clusters.packages
     ];
+
+    # checks = deepMerge [
+    #    (eachArch (system:
+    #     let
+    #       systemPkgs = import nixpkgs {
+    #         inherit system;
+    #         overlays = with self.overlays; [ runonce ];
+    #       };
+    #     in
+    #     {
+    #       helloTest = systemPkgs.callPackage ./tests/clusters/test/k8s-boot.nix { 
+    #         cluster = clusters.by_name.test;
+    #       };
+    #     })
+    #    ) 
+    # ];
 
   };
 }
