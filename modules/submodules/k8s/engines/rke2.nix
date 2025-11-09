@@ -25,22 +25,25 @@
                 ] else []);
             };
 
-            services.rke2 = if isMaster then {
+            services.rke2 = let 
+                tlsSanFlags = builtins.map (ip: "--tls-san=${ip}") config.libraryofalexandria.node.masterIps;
+            in {
                 enable = true;
+                serverAddr = if isMaster0 then "" else "https://${master0Ip}:9345";  # default rke2 port
+            } // (if isMaster then {
                 role = "server";
                 cni = "cilium";
                 nodeIP = thisMasterIp;
-                serverAddr = if isMaster0 then "" else "https://${master0Ip}:9345";  # default rke2 port
                 token = "test";
                 extraFlags = [
-                    #"--profile=cis"
-                    "--tls-san=${thisMasterIp}"
-                ];
+                    # "--profile=cis"
+                ] ++ tlsSanFlags;
             } else {
-                enable = true;
                 role = "agent";
-                # cisHardening = true;
-            };
+                extraFlags = [
+                    # "--profile=cis"
+                ] ++ tlsSanFlags;
+            });
 
             users = if isMaster then {
                 groups.etcd = { }; # create an 'etcd' group
