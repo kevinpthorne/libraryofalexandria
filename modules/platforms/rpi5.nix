@@ -5,8 +5,8 @@
         inputs.raspberry-pi-nix.nixosModules.raspberry-pi
         inputs.raspberry-pi-nix.nixosModules.sd-image
         ../submodules/imageable.nix
-        # ../submodules/arm64/coredns-fix.nix  # TODO enable if kubernetes engine is picked. this isn't needed for rke2
-        # ../submodules/arm64/etcd-fix.nix
+        ../submodules/arm64/coredns-fix.nix
+        ../submodules/arm64/etcd-fix.nix
         ../submodules/rpi/cgroup.nix
         inputs.disko.nixosModules.disko
         ../submodules/disko-layouts/one-data-partition.nix

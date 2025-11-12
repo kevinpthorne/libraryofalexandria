@@ -1,7 +1,7 @@
 # on nixos kubernetes svc, arm64 image is needed instead of x86 default
 { pkgs, lib, config, ... }:
 {
-    config = {
+    config = lib.mkIf (config.libraryofalexandria.cluster.k8sEngine == "kubernetes" && config.libraryofalexandria.node.platform == "rpi5") {
         services.kubernetes.addons.dns = {
             coredns = {
                 finalImageTag = "1.10.1";
