@@ -25,6 +25,21 @@
                 ] else []);
             };
 
+            deployment.keys = {
+                "token.key" = lib.mkIf isMaster {
+                    keyFile = builtins.trace "/var/keys/clusters/${config.libraryofalexandria.cluster.name}/token.key" "/var/keys/clusters/${config.libraryofalexandria.cluster.name}/token.key";
+                    destDir = "/var/keys";
+                    permissions = "0600";
+                    uploadAt = "pre-activation";
+                };
+                "agent-token.key" = lib.mkIf isWorker {
+                    keyFile = "/var/keys/clusters/${config.libraryofalexandria.cluster.name}/agent-token.key";
+                    destDir = "/var/keys";
+                    permissions = "0600";
+                    uploadAt = "pre-activation";
+                };
+            };
+
             services.rke2 = let 
                 tlsSanFlags = builtins.map (ip: "--tls-san=${ip}") config.libraryofalexandria.node.masterIps;
             in {
@@ -34,14 +49,15 @@
                 role = "server";
                 cni = "cilium";
                 nodeIP = thisMasterIp;
-                token = "test";
+                tokenFile = "/var/keys/token.key";
                 extraFlags = [
-                    # "--profile=cis"
+                    "--profile=cis"
                 ] ++ tlsSanFlags;
             } else {
                 role = "agent";
+                agentTokenFile = "/var/keys/agent-token.key";
                 extraFlags = [
-                    # "--profile=cis"
+                    "--profile=cis"
                 ] ++ tlsSanFlags;
             });
 
