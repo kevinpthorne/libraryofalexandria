@@ -15,6 +15,8 @@
                 systemPackages = with pkgs; [
                     rke2
                     cri-o
+                    rke2-images
+                    rke2-images-cilium
                 ] ++ (if isMaster then [
                     kompose
                     kubectl
@@ -39,6 +41,12 @@
                     uploadAt = "pre-activation";
                 };
             };
+
+            # TODO: image copier
+            # https://docs.rke2.io/install/airgap?airgap-load-images=Manually+Deploy+Images
+            # sudo mkdir -p /var/lib/rancher/rke2/agent/images/
+            # sudo cp rke2-images.linux-amd64.tar.zst /var/lib/rancher/rke2/agent/images/rke2-images.linux-amd64.tar.zst"
+            # # I'd prefer linking to nix store instead
 
             services.rke2 = let 
                 tlsSanFlags = builtins.map (ip: "--tls-san=${ip}") config.libraryofalexandria.node.masterIps;

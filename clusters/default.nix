@@ -1,4 +1,4 @@
-inputs @ { eachArch, ... }:
+inputs @ { eachArch, localPkgs, ... }:
 let
     lib2Pre = import ../lib // { inherit eachArch; };
     lib2 = lib2Pre // { deepMerge = lib2Pre.deepMerge inputs.nixpkgs.lib; };
@@ -18,6 +18,7 @@ let
                 specialArgs = {
                     inherit inputs;
                     inherit lib2;
+                    inherit localPkgs;
                 };
             };
         in {

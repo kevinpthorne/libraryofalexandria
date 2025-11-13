@@ -1,4 +1,4 @@
-{ config, lib, inputs, lib2, ... }:
+{ config, lib, inputs, lib2, localPkgs, ... }:
 {
     imports = [
         ./masters.nix
@@ -79,6 +79,8 @@
                         {inherit cluster nodeId;}
                 ))
             ] ++ (config.libraryofalexandria.cluster."${nodeType}s".modules nodeId);
+
+            nixpkgs.overlays = [ localPkgs ];
         };
         wrapNixosModule = name: megaModule: {
             name = megaModule;

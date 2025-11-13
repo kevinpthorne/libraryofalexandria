@@ -2,7 +2,7 @@
   description = "Library of Alexandria cluster definition";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
 
     raspberry-pi-nix.url = "github:nix-community/raspberry-pi-nix/master";
 
@@ -23,23 +23,29 @@
       };
     };
 
+    kubegen.url = "github:farcaller/nix-kube-generators";
+
     nixos-stig.url = "github:kevinpthorne/nixos-stig";
   };
 
   outputs = inputs @ { self, nixpkgs, supported-arch, raspberry-pi-nix, nixos-stig, ... }:
   let
+    customLib = import ./lib;
+    localPkgs = import ./pkgs nixpkgs;
     eachArch = nixpkgs.lib.genAttrs (import supported-arch);
     importableInputs = (builtins.removeAttrs inputs [ "self" "config" ]);
-    customLib = import ./lib;
     deepMerge = customLib.deepMerge nixpkgs.lib;
+    kubelib = inputs.kubegen.lib { pkgs = nixpkgs; };
     clusters = import ./clusters (importableInputs // {
       inherit eachArch;
+      inherit localPkgs;
     });
   in {
 
     overlays = {
       # runonce = import ./pkgs/runonce 
       runonce = final: prev: { runonce = import ./pkgs/runonce final; };
+      # localPkgs = final: prev: import ./pkgs nixpkgs final;
     };
 
     nixosConfigurations = {
