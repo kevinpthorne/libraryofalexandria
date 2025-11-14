@@ -4,5 +4,5 @@ let
 in
 lib2.fetchRke2Asset "rke2-images-cilium" { 
     "linux-amd64" = "BADb290f0566eff6a25ae55f2ad6aab3c581cdf1361c960e9fa017e0f8defBAD";
-    "linux-arm64" = "BADb290f0566eff6a25ae55f2ad6aab3c581cdf1361c960e9fa017e0f8defBAD";
+    "linux-arm64" = "sha256-rrplA5hRp0VGcNZkUCf81RH2MwLaZ6B87BBnrH7J8HA=";
 } args

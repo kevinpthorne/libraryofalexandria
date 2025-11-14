@@ -18,15 +18,17 @@ pkgs.stdenv.mkDerivation {
         inherit sha256;
     };
 
+    phases = [ "installPhase" ];
+
     installPhase = ''
         echo "Downloaded file path is: $src"
 
         # Create the final destination directory in $out (the output path of the derivation)
-        mkdir -p $out/artifacts
+        mkdir -p $out/asset
 
         # Copy the downloaded file from the store path ($src) to the final output ($out)
-        cp $src $out/artifacts
+        cp $src $out/asset/${name}
 
-        echo "File installed to $out/artifacts"
+        echo "File installed to $out/asset/${name}"
     '';
 }

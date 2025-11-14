@@ -1,5 +1,9 @@
 { config, pkgs, lib, ... }:
 {
+    imports = [
+        ../../nixstore-linker.nix
+    ];
+
     config = 
         let
             isMaster = config.libraryofalexandria.node.type == "master";
@@ -42,11 +46,20 @@
                 };
             };
 
-            # TODO: image copier
-            # https://docs.rke2.io/install/airgap?airgap-load-images=Manually+Deploy+Images
-            # sudo mkdir -p /var/lib/rancher/rke2/agent/images/
-            # sudo cp rke2-images.linux-amd64.tar.zst /var/lib/rancher/rke2/agent/images/rke2-images.linux-amd64.tar.zst"
-            # # I'd prefer linking to nix store instead
+            services.nixstore-linker = {
+                rke2-images = {
+                    targetPackage = pkgs.rke2-images;
+                    targetPackageSubpath = "asset/rke2-images";
+                    linkPath = "/var/lib/rancher/rke2/agent/images/";
+                    ensureDirectories = [ "/var/lib/rancher/rke2/agent/images/" ];
+                };
+                rke2-images-cilium = {
+                    targetPackage = pkgs.rke2-images-cilium;
+                    targetPackageSubpath = "asset/rke2-images-cilium";
+                    linkPath = "/var/lib/rancher/rke2/agent/images/";
+                    ensureDirectories = [ "/var/lib/rancher/rke2/agent/images/" ];
+                };
+            };
 
             services.rke2 = let 
                 tlsSanFlags = builtins.map (ip: "--tls-san=${ip}") config.libraryofalexandria.node.masterIps;
