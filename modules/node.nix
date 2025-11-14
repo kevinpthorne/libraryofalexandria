@@ -100,6 +100,19 @@ in
                 trusted-users = [ "root" ];
             };
 
+            # Use chrony and USNO servers for NTP
+            services.timesyncd.enable = false;
+            services.chrony = {
+                enable = true;
+                # Use the US Naval Observatory (USNO) NTP servers
+                servers = [
+                    "tick.usno.navy.mil"
+                    "tock.usno.navy.mil"
+                ];
+                # for faster synchronization on startup
+                serverOption = "iburst";
+            };
+
             system.stateVersion = "25.05";
         };
 }
