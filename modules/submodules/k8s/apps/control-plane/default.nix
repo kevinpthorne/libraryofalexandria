@@ -1,7 +1,7 @@
 { pkgs, config, lib, inputs, ... }:
 {
     imports = [  # top installs last
-        ./rancher.nix
+        # ./rancher.nix
         ./argocd.nix
         ./vault.nix
         ./cert-manager.nix
@@ -10,7 +10,7 @@
 
     config = {
         libraryofalexandria.apps = {
-            rancher.enable = true;
+            # rancher.enable = true;
             argocd.enable = true;
             vault.enable = true;
             cert-manager.enable = true;

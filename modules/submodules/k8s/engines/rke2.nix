@@ -47,6 +47,7 @@
             };
 
             services.nixstore-linker = {
+                # https://docs.rke2.io/install/airgap?airgap-load-images=Manually+Deploy+Images&airgap-upgrade=Manual+Upgrade&installation-methods=Script+install#1-load-images
                 rke2-images = {
                     targetPackage = pkgs.rke2-images;
                     targetPackageSubpath = "asset/rke2-images";
