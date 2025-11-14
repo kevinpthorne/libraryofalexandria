@@ -33,7 +33,7 @@
 
             deployment.keys = {
                 "token.key" = lib.mkIf isMaster {
-                    keyFile = builtins.trace "/var/keys/clusters/${config.libraryofalexandria.cluster.name}/token.key" "/var/keys/clusters/${config.libraryofalexandria.cluster.name}/token.key";
+                    keyFile = "/var/keys/clusters/${config.libraryofalexandria.cluster.name}/token.key";
                     destDir = "/var/keys";
                     permissions = "0600";
                     uploadAt = "pre-activation";
