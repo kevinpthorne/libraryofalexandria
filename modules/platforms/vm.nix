@@ -91,7 +91,7 @@
                     buildPhase = ''
                         mkdir -p $out/${config.system.builder.outputDir}
                         cd $out/${config.system.builder.outputDir}
-                        ${config.system.build.diskoImagesScript} --build-memory 8192 --pre-format-files clusters/${config.libraryofalexandria.cluster.name}/keys/ /var/keys/
+                        ${config.system.build.diskoImagesScript} --build-memory 8192
                         ${pkgs.qemu}/bin/qemu-img convert -p -f raw -O ${config.vmImage.format} ${compressArgs} main.raw main.${config.vmImage.format}
                         rm main.raw
                     '';

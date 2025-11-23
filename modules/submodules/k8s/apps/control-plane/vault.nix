@@ -1,4 +1,4 @@
-{ lib, lib2, config, ... }:
+{ lib, lib2, config, pkgs, ... }:
 {
     imports = [ ../../helm-charts.nix ];
 
@@ -18,23 +18,33 @@
 
     config = lib.mkIf config.libraryofalexandria.apps.vault.enable {
         libraryofalexandria.helmCharts.enable = true;
-        libraryofalexandria.helmCharts.charts = [{
-            name = "vault";
-            chart = "vault/vault";
-            version = config.libraryofalexandria.apps.vault.version;
-            values = lib2.deepMerge [{
-                global = {
-                    tlsDisable = false;
-                    psp.enable = true;
+        libraryofalexandria.helmCharts.charts = [
+            {
+                name = "vault-namespace";
+                chart = "${pkgs.namespace-helm}";
+                values = {
+                    name = "vault";
+                    podSecurityLevel = {
+                        enforce = "baseline";  # IPC_LOCK (e.g. mlock)
+                    };
                 };
-                ui.enabled = true;
-                server = {
-                    dataStorage.enabled = true;
-                    standalone.enabled = false;
-                    ha = {
-                        enabled = true;
-                        replicas = 3;
-                        config = ''
+            }
+            {
+                name = "vault";
+                chart = "vault/vault";
+                version = config.libraryofalexandria.apps.vault.version;
+                values = lib2.deepMerge [{
+                    global = {
+                        tlsDisable = false;
+                    };
+                    ui.enabled = true;
+                    server = {
+                        dataStorage.enabled = true;
+                        standalone.enabled = false;
+                        ha = {
+                            enabled = true;
+                            replicas = 3;
+                            config = ''
 ui = true
 
 listener "tcp" {
@@ -53,12 +63,13 @@ storage "raft" {
 cluster_addr = "https://127.0.0.1:8201"
 
 service_registration "kubernetes" {}
-                        '';
+                            '';
+                        };
                     };
-                };
-            } config.libraryofalexandria.apps.vault.values];
-            namespace = "vault";
-            repo = "https://helm.releases.hashicorp.com";
-        }];
+                } config.libraryofalexandria.apps.vault.values];
+                namespace = "vault";
+                repo = "https://helm.releases.hashicorp.com";
+            }
+        ];
     };
 }

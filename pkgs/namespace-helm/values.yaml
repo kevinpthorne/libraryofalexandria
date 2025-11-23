@@ -1,0 +1,6 @@
+
+name: ~
+podSecurityLevel: 
+  enforce: restricted
+  audit: restricted
+  warn: restricted

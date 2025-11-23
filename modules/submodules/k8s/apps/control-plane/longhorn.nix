@@ -17,21 +17,36 @@
     };
 
     config = lib.mkIf config.libraryofalexandria.apps.longhorn.enable {
-        libraryofalexandria.helmCharts.charts = [{
-            name = "longhorn";
-            chart = "longhorn/longhorn";
-            version = config.libraryofalexandria.apps.longhorn.version;
-            # https://longhorn.io/docs/1.10.0/advanced-resources/deploy/customizing-default-settings/#using-helm
-            values = lib2.deepMerge [{
-                defaultSettings = {
-                    defaultDataLocality = "best-effort";
-                    replicaAutoBalance = "true";
-                    defaultDataPath = "/var/lib/longhorn";  # ensure to line this up with disk mounts
+        libraryofalexandria.helmCharts.charts = [
+            {
+                name = "longhorn-namespace";
+                chart = "${pkgs.namespace-helm}";
+                values = {
+                    name = "longhorn-system";
+                    podSecurityLevel = {
+                        enforce = "privileged";
+                        audit = "privileged";
+                        warn = "privileged";
+                    };
                 };
-            } config.libraryofalexandria.apps.longhorn.values];
-            namespace = "longhorn-system";
-            repo = "https://charts.longhorn.io";
-        }];
+            }
+            {
+                name = "longhorn";
+                chart = "longhorn/longhorn";
+                version = config.libraryofalexandria.apps.longhorn.version;
+                # https://longhorn.io/docs/1.10.0/advanced-resources/deploy/customizing-default-settings/#using-helm
+                values = lib2.deepMerge [{
+                    defaultSettings = {
+                        enablePSP = "true";
+                        defaultDataLocality = "best-effort";
+                        replicaAutoBalance = "true";
+                        defaultDataPath = "/var/lib/longhorn";  # ensure to line this up with disk mounts
+                    };
+                } config.libraryofalexandria.apps.longhorn.values];
+                namespace = "longhorn-system";
+                repo = "https://charts.longhorn.io";
+            }
+        ];
 
         boot.kernelModules = [ "iscsi_tcp" ];  # v1 longhorn data engine requirement
 

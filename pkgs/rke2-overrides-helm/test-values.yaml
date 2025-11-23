@@ -1,0 +1,6 @@
+valuesContent: |
+  encryption:
+    enabled: true
+    type: ipsec
+    ipsec:
+      secretName: cilium-ipsec-keys

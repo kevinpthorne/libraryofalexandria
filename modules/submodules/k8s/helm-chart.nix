@@ -7,7 +7,8 @@
             type = lib.types.str;
         };
         version = lib.mkOption {
-            type = lib.types.str;
+            type = lib.types.nullOr lib.types.str;
+            default = null;  # in case of local path
         };
         values = lib.mkOption {
             type = lib.types.attrs;

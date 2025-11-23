@@ -2,6 +2,7 @@
 {
     imports = [
         ../../nixstore-linker.nix
+        ../helm-charts.nix
     ];
 
     config = 
@@ -28,6 +29,9 @@
                     argocd
                     argocd-vault-plugin
                     jq
+                ] else []) ++ (if isMaster0 then [
+                    rke2-overrides-helm
+                    cilium-keys-gen-helm
                 ] else []);
             };
 
@@ -62,6 +66,20 @@
                 };
             };
 
+            # k8s protect kernel
+            # vm.overcommit_memory=1
+            # kernel.panic=10
+            # kernel.panic_on_oops=1
+            boot.kernelParams = [
+                "panic_on_oops=1"
+                "panic=10"
+            ];
+            boot.kernel.sysctl = {
+                "vm.overcommit_memory" = 1;
+                "kernel.panic_on_oops" = 1;
+                "kernel.panic" = 10;
+            };
+
             services.rke2 = let 
                 tlsSanFlags = builtins.map (ip: "--tls-san=${ip}") config.libraryofalexandria.node.masterIps;
             in {
@@ -83,6 +101,14 @@
                 ] ++ tlsSanFlags;
             });
 
+            systemd.services.rke2-server = {
+                unitConfig = {
+                    # The service will stay in 'inactive' state until this file exists
+                    AssertPathExists = if isMaster then "/var/keys/token.key" else "/var/keys/agent-token.key";
+                };
+            };
+
+            # etcd hardening
             users = if isMaster then {
                 groups.etcd = { }; # create an 'etcd' group
 
@@ -94,5 +120,28 @@
                     createHome = true;      # ensures directory exists
                 };
             } else {};
+
+            # cilium hardening
+            libraryofalexandria.helmCharts.enable = true;
+            libraryofalexandria.helmCharts.charts = [
+                {
+                    name = "cilium-keys-gen-helm";
+                    chart = "${pkgs.cilium-keys-gen-helm}";
+                    namespace = "kube-system";
+                }
+                {
+                    name = "cilium-overrides";
+                    chart = "${pkgs.rke2-overrides-helm}";
+                    values = {
+                        valuesContent = ''encryption:
+  enabled: true
+  type: ipsec
+  ipsec:
+    secretName: cilium-ipsec-keys
+'';
+                    };
+                    namespace = "kube-system";
+                }
+            ];
     };
 }
