@@ -123,7 +123,7 @@
 
             # cilium hardening
             libraryofalexandria.helmCharts.enable = true;
-            libraryofalexandria.helmCharts.charts = [
+            libraryofalexandria.helmCharts.charts = lib.mkBefore [
                 {
                     name = "cilium-keys-gen-helm";
                     chart = "${pkgs.cilium-keys-gen-helm}";

@@ -1,0 +1,24 @@
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: "{{ .Values.deploymentName }}-spiffeid"
+spec:
+  # 1. The Naming Convention
+  # This creates a predictable ID for every service in your cluster.
+  # Example result: spiffe://cluster1.internal/ns/default/sa/backend-api
+  spiffeIDTemplate: "{{ .Values.spiffeIDTemplate }}"
+
+  # 2. Select the pods (Ensure these match your pod labels)
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.deploymentName }}
+      app.kubernetes.io/instance: {{ .Values.deploymentName }}
+
+  # 3. IMPORTANT: Define DNS names (SANs)
+  #    Vault needs these to verify the cert matches the service address.
+  dnsNameTemplates:
+    - "{{ .Values.deploymentName }}"
+    - "{{ .Values.deploymentName }}.{{ .Values.targetNamespace }}.svc.cluster.local"
+    - "{{ .Values.deploymentName }}-active.{{ .Values.targetNamespace }}.svc.cluster.local"
+    - "{{ .Values.deploymentName }}-standby.{{ .Values.targetNamespace }}.svc.cluster.local"
+    # - "localhost"

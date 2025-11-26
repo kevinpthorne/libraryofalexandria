@@ -1,0 +1,3 @@
+deploymentName: ~
+targetNamespace: ~
+spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodMeta.ServiceAccountName }}"

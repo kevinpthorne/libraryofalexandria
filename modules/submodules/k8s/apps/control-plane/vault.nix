@@ -30,6 +30,14 @@
                 };
             }
             {
+                name = "vault-spiffe-id";
+                chart = "${pkgs.spiffe-id-helm}";
+                values = {
+                    deploymentName = "vault";
+                    targetNamespace = "vault";
+                };
+            }
+            {
                 name = "vault";
                 chart = "vault/vault";
                 version = config.libraryofalexandria.apps.vault.version;
@@ -41,6 +49,22 @@
                     server = {
                         dataStorage.enabled = true;
                         standalone.enabled = false;
+                        volumes = [
+                            {
+                                name = "spire-secrets";
+                                csi = {
+                                    driver = "csi.spiffe.io";
+                                    readOnly = true;
+                                };
+                            }
+                        ];
+                        volumeMounts = [
+                            {
+                                name = "spire-secrets";
+                                mountPath = "/run/secrets/spire";
+                                readOnly = true;
+                            }
+                        ];
                         ha = {
                             enabled = true;
                             replicas = 3;
@@ -51,10 +75,10 @@ listener "tcp" {
     tls_disable = "false"
     address = "[::]:8200"
     cluster_address = "[::]:8201"
-    tls_cert_file = ""
-    tls_key_file = ""
-    tls_require_and_verify_client_cert = ""
-    tls_client_ca_file = ""
+    tls_cert_file = "/run/secrets/spire/svid.pem"
+    tls_key_file = "/run/secrets/spire/key.pem"
+    tls_require_and_verify_client_cert = "false"
+    tls_client_ca_file = "/run/secrets/spire/bundle.pem"
     tls_min_version = "tls13"
 }
 storage "raft" {
