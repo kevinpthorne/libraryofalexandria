@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane
+  # This resource must be in the 'argo-cd' namespace
+  # for the App of Apps pattern to work.
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  
+  source:
+    repoURL: https://charts.crossplane.io/stable
+    chart: crossplane
+    targetRevision: '2.1.1' # Pin to a specific chart version
+    helm:
+      # Values to configure Crossplane
+      values: |
+        # Installs Crossplane into the 'crossplane-system' namespace
+        namespace: crossplane-system
+        
+  destination:
+    # Deploying to the same cluster ArgoCD is in
+    server: https://kubernetes.default.svc
+    # The namespace Crossplane will be installed *into*
+    namespace: crossplane-system
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true # Automatically create the 'crossplane-system' namespace

@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: seaweedfs
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  
+  source:
+    repoURL: https://seaweedfs.github.io/seaweedfs/
+    chart: seaweedfs
+    targetRevision: '3.6.13' # Pin to a specific chart version
+    helm:
+      values: |
+        # Example values for a simple setup
+        master:
+          replicas: 1  # set to master count
+          data:
+            type: persistentVolumeClaim
+            size: 1G
+            storageClass: longhorn
+        volume:
+          replicas: 1
+          dataDirs:
+            - name: data1
+              type: persistentVolumeClaim
+              size: 250G
+              storageClass: longhorn
+
+        
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: seaweedfs-system
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rancher
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  
+  source:
+    repoURL: https://releases.rancher.com/server-charts/latest
+    chart: rancher
+    targetRevision: '2.12.1' # Pin to a specific chart version
+    helm:
+      values: |
+        # --- IMPORTANT ---
+        # You MUST set a hostname for Rancher
+        hostname: "rancher.{{ .Values.cluster.name }}.loa.local"
+
+        # Set a password for the 'admin' user
+        bootstrapPassword: {{ randAlphaNum 16 }}
+        
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rancher-system
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      
+  # Ignore diffs on secrets that Rancher manages itself
+  ignoreDifferences:
+  - group: ""
+    kind: Secret
+    jsonPointers:
+    - /data

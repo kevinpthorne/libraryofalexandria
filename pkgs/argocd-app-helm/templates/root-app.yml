@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  # Add finalizer to ensure child apps are deleted before this parent app
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.project }}
+  
+  # Source repository configuration
+  source:
+    repoURL: {{ .Values.source.repoURL }}
+    chart: {{ .Values.source.chart }}
+    targetRevision: {{ .Values.source.targetRevision }}
+    helm:
+      values: |
+        cluster: {{ .Values.cluster }}
+    
+  # Destination cluster
+  destination:
+    # This deploys the child 'Application' resources to the same
+    # cluster where ArgoCD is running.
+    server: https://kubernetes.default.svc
+    # The namespace for the child 'Application' resources (usually 'argocd')
+    namespace: {{ .Release.Namespace }}
+    
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    # This ensures child 'Application' resources are created/deleted
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true

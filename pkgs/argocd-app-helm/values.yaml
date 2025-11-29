@@ -1,0 +1,8 @@
+project: default
+
+source:
+  repoURL: ~
+  targetRevision: HEAD
+  path: '.'
+
+cluster: {}
