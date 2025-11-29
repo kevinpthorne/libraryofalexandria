@@ -1,4 +1,4 @@
-{ lib, lib2, config, ... }:
+{ lib, lib2, config, pkgs, ... }:
 {
     imports = [ ../helm-charts.nix ];
 
@@ -6,7 +6,7 @@
         enable = lib.mkEnableOption "";
 
         toInclude = lib.mkOption {
-            type = lib.types.listOf lib.types.enum [ "core" ];
+            type = lib.types.listOf (lib.types.enum [ "core" ]);
             default = [ "core" ];
         };
     };
@@ -18,7 +18,7 @@
             shared-app-types = {
                 core = {
                     name = "loa-core-app";
-                    chart = "${pkgs.root-app-helm}";
+                    chart = "${pkgs.argocd-app-helm}";
                     namespace = "argo-cd";
                     values = {
                         source = {

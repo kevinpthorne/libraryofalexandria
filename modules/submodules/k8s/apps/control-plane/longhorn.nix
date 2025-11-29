@@ -39,7 +39,7 @@
                     defaultSettings = {
                         enablePSP = "true";
                         defaultDataLocality = "best-effort";
-                        defaultReplicaCount = 2;
+                        defaultReplicaCount = "2";
                         replicaAutoBalance = "true";
                         defaultDataPath = "/var/lib/longhorn";  # ensure to line this up with disk mounts
                     };
