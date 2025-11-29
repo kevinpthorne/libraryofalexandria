@@ -23,7 +23,7 @@ spec:
               - ALL
         podSecurityContextCrossplane:
           runAsNonRoot: true
-          seccompPorfile:
+          seccompProfile:
             type: RuntimeDefault
         securityContextRBACManager:
           capabilities:
@@ -31,7 +31,7 @@ spec:
               - ALL
         podSecurityContextRBACManager:
           runAsNonRoot: true
-          seccompPorfile:
+          seccompProfile:
             type: RuntimeDefault
         
   destination:

@@ -41,7 +41,7 @@ spec:
                 - ALL
           podSecurityContext:
             runAsNonRoot: true
-            seccompPorfile:
+            seccompProfile:
               type: RuntimeDefault
         filer:
           containerSecurityContext:
@@ -50,7 +50,7 @@ spec:
                 - ALL
           podSecurityContext:
             runAsNonRoot: true
-            seccompPorfile:
+            seccompProfile:
               type: RuntimeDefault
           s3:
             enabled: true
@@ -62,7 +62,7 @@ spec:
                 - ALL
           podSecurityContext:
             runAsNonRoot: true
-            seccompPorfile:
+            seccompProfile:
               type: RuntimeDefault
         csi:
           enabled: false
