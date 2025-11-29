@@ -24,7 +24,7 @@
                         source = {
                             repoURL = "https://kevinpthorne.github.io/libraryofalexandria/apps";
                             chart = "loa-core";
-                            targetRevision = "0.1.0";
+                            targetRevision = "0.1.1";
                         };
                     };
                 };

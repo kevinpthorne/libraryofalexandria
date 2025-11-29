@@ -3,7 +3,17 @@ entries:
   loa-core:
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2025-11-28T23:15:23.083953462-05:00"
+    created: "2025-11-29T09:39:34.488400569-05:00"
+    description: Library of Alexandria Core ArgoCD applications
+    digest: 6c684ea910cbc80a512df99720b5e3635634d580b77005835d1c86358e8bb736
+    name: loa-core
+    type: application
+    urls:
+    - https://kevinpthorne.github.io/libraryofalexandria/apps/loa-core-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-11-29T09:39:34.487731882-05:00"
     description: Library of Alexandria Core ArgoCD applications
     digest: 107b024b867e15dda9601fd92929ccc7e03228f0851cd1a7ef2a51e43f03f67c
     name: loa-core
@@ -14,7 +24,7 @@ entries:
   loa-extras:
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2025-11-28T23:15:23.084758381-05:00"
+    created: "2025-11-29T09:39:34.488961628-05:00"
     description: Library of Alexandria Extras ArgoCD applications
     digest: 8ad879bdf925c87587913aaa0ef278757670faa5fa0582f6dfa6293419722c49
     name: loa-extras
@@ -22,4 +32,4 @@ entries:
     urls:
     - https://kevinpthorne.github.io/libraryofalexandria/apps/loa-extras-0.1.0.tgz
     version: 0.1.0
-generated: "2025-11-28T23:15:23.082380957-05:00"
+generated: "2025-11-29T09:39:34.486349547-05:00"

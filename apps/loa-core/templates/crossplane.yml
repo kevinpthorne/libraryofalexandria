@@ -17,6 +17,22 @@ spec:
       values: |
         # Installs Crossplane into the 'crossplane-system' namespace
         namespace: crossplane-system
+        securityContextCrossplane:
+          capabilities:
+            drop:
+              - ALL
+        podSecurityContextCrossplane:
+          runAsNonRoot: true
+          seccompPorfile:
+            type: RuntimeDefault
+        securityContextRBACManager:
+          capabilities:
+            drop:
+              - ALL
+        podSecurityContextRBACManager:
+          runAsNonRoot: true
+          seccompPorfile:
+            type: RuntimeDefault
         
   destination:
     # Deploying to the same cluster ArgoCD is in

@@ -12,13 +12,22 @@ spec:
     targetRevision: '3.6.13' # Pin to a specific chart version
     helm:
       values: |
-        # Example values for a simple setup
+        global:
+          enableSecurity: true
         master:
           replicas: 1  # set to master count
           data:
             type: persistentVolumeClaim
             size: 1G
             storageClass: longhorn
+          containerSecurityContext:
+            capabilities:
+              drop:
+                - ALL
+          podSecurityContext:
+            runAsNonRoot: true
+            seccompPorfile:
+              type: RuntimeDefault
         volume:
           replicas: 1
           dataDirs:
@@ -26,7 +35,37 @@ spec:
               type: persistentVolumeClaim
               size: 250G
               storageClass: longhorn
-
+          containerSecurityContext:
+            capabilities:
+              drop:
+                - ALL
+          podSecurityContext:
+            runAsNonRoot: true
+            seccompPorfile:
+              type: RuntimeDefault
+        filer:
+          containerSecurityContext:
+            capabilities:
+              drop:
+                - ALL
+          podSecurityContext:
+            runAsNonRoot: true
+            seccompPorfile:
+              type: RuntimeDefault
+          s3:
+            enabled: true
+        sftp:
+          enabled: true
+          containerSecurityContext:
+            capabilities:
+              drop:
+                - ALL
+          podSecurityContext:
+            runAsNonRoot: true
+            seccompPorfile:
+              type: RuntimeDefault
+        csi:
+          enabled: false
         
   destination:
     server: https://kubernetes.default.svc
