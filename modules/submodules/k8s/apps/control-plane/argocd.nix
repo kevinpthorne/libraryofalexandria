@@ -6,7 +6,7 @@
         enable = lib.mkEnableOption "";
 
         version = lib.mkOption {
-            default = "7.8.23";
+            default = "9.1.4";
             type = lib.types.str;
         };
 
