@@ -21,10 +21,13 @@ spec:
             size: 1G
             storageClass: longhorn
           containerSecurityContext:
+            enabled: true
+            allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
           podSecurityContext:
+            enabled: true
             runAsNonRoot: true
             seccompPorfile:
               type: RuntimeDefault
@@ -36,19 +39,25 @@ spec:
               size: 250G
               storageClass: longhorn
           containerSecurityContext:
+            enabled: true
+            allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
           podSecurityContext:
+            enabled: true
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
         filer:
           containerSecurityContext:
+            enabled: true
+            allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
           podSecurityContext:
+            enabled: true
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
