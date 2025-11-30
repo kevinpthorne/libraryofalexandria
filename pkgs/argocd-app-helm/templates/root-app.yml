@@ -12,7 +12,7 @@ spec:
   # Source repository configuration
   source:
     repoURL: {{ .Values.source.repoURL }}
-    chart: {{ .Values.source.chart }}
+    path: {{ .Values.source.path }}
     targetRevision: {{ .Values.source.targetRevision }}
     helm:
       values: |

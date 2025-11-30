@@ -2,7 +2,7 @@ project: default
 
 source:
   repoURL: ~
-  chart: ~
+  path: ~
   targetRevision: HEAD
 
 cluster: {}

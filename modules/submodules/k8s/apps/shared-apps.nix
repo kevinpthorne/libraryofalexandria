@@ -22,9 +22,8 @@
                     namespace = "argo-cd";
                     values = {
                         source = {
-                            repoURL = "https://kevinpthorne.github.io/libraryofalexandria/apps";
-                            chart = "loa-core";
-                            targetRevision = "0.1.3";
+                            repoURL = "https://github.com/kevinpthorne/libraryofalexandria.git";
+                            path = "apps/loa-core";
                         };
                     };
                 };
