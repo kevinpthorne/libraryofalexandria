@@ -68,7 +68,7 @@ spec:
           s3:
             enabled: true
         sftp:
-          enabled: true
+          enabled: false
           logs:
             type: to-stderr-thing
           containerSecurityContext:
