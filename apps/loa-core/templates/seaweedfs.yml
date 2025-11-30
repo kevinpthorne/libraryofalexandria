@@ -57,10 +57,12 @@ spec:
         sftp:
           enabled: true
           containerSecurityContext:
+            enabled: true
             capabilities:
               drop:
                 - ALL
           podSecurityContext:
+            enabled: true
             runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
