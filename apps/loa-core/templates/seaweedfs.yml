@@ -20,6 +20,10 @@ spec:
             type: persistentVolumeClaim
             size: 1G
             storageClass: longhorn
+          logs:
+            type: persistentVolumeClaim
+            size: 1G
+            storageClass: longhorn
           containerSecurityContext:
             enabled: true
             allowPrivilegeEscalation: false
@@ -64,7 +68,20 @@ spec:
           s3:
             enabled: true
         sftp:
-          enabled: false
+          enabled: true
+          logs:
+            type: to-stderr-thing
+          containerSecurityContext:
+            enabled: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          podSecurityContext:
+            enabled: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
         csi:
           enabled: false
         
