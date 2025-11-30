@@ -55,18 +55,7 @@ spec:
           s3:
             enabled: true
         sftp:
-          enabled: true
-          containerSecurityContext:
-            enabled: true
-            capabilities:
-              drop:
-                - ALL
-          podSecurityContext:
-            enabled: true
-            runAsNonRoot: true
-            allowPrivilegeEscalation: false
-            seccompProfile:
-              type: RuntimeDefault
+          enabled: false
         csi:
           enabled: false
         
