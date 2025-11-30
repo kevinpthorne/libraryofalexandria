@@ -6,7 +6,7 @@
         enable = lib.mkEnableOption "";
 
         toInclude = lib.mkOption {
-            type = lib.types.listOf (lib.types.enum [ "core" ]);
+            type = lib.types.listOf (lib.types.enum [ "core" "extras" ]);
             default = [ "core" ];
         };
     };
@@ -24,6 +24,17 @@
                         source = {
                             repoURL = "https://github.com/kevinpthorne/libraryofalexandria.git";
                             path = "apps/loa-core";
+                        };
+                    };
+                };
+                extras = {
+                    name = "loa-extras-app";
+                    chart = "${pkgs.argocd-app-helm}";
+                    namespace = "argo-cd";
+                    values = {
+                        source = {
+                            repoURL = "https://github.com/kevinpthorne/libraryofalexandria.git";
+                            path = "apps/loa-extras";
                         };
                     };
                 };

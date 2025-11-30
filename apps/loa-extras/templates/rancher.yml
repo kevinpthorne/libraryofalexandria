@@ -18,6 +18,32 @@ spec:
 
         # Set a password for the 'admin' user
         bootstrapPassword: {{ randAlphaNum 16 }}
+
+        # General Pod Security Context
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+
+        # Container-Specific Security Context
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false # Set to true only if you mount tmp volumes
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+              - ALL
+
+        # If you are running on K8s 1.25+ (PSP is deprecated), disable PSPs
+        # and rely on the security contexts above.
+        global:
+          cattle:
+            psp:
+              enabled: false
         
   destination:
     server: https://kubernetes.default.svc

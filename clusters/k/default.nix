@@ -3,6 +3,8 @@ let
     defaultModule = id: { pkgs, lib, ... }: {
         config = {
             time.timeZone = "Etc/UTC";
+
+            libraryofalexandria.apps.shared-apps.toInclude = [ "core" "extras" ];
         };
     };
 in {
