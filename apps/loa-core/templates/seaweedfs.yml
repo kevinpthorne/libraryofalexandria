@@ -64,6 +64,7 @@ spec:
           podSecurityContext:
             enabled: true
             runAsNonRoot: true
+            allowPrivilegeEscalation: false
             seccompProfile:
               type: RuntimeDefault
         csi:
