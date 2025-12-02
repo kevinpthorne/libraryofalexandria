@@ -16,7 +16,8 @@ spec:
     targetRevision: {{ .Values.source.targetRevision }}
     helm:
       values: |
-        cluster: {{ .Values.cluster }}
+        cluster:
+          {{- toYaml .Values.cluster | nindent 10 }}
     
   # Destination cluster
   destination:

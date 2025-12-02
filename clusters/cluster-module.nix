@@ -34,6 +34,12 @@
                 description = "Overrides for apps, usually placed in master0's config";
                 default = {};
             };
+
+            shared-apps = lib.mkOption {
+                type = lib.types.listOf (lib.types.enum [ "core" "extras" ]);
+                description = "Specifies what shared-apps bundles to include";
+                default = [ "core" ];
+            };
         };
         # rendered options, never given outside this module
         masters = lib.mkOption {

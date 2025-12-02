@@ -34,5 +34,7 @@ in {
                 (lib2.importIfExistsArgs ./worker-${toString nodeId}.nix { inherit cluster nodeId; })
             ];
         };
+
+        shared-apps = [ "core" "extras" ];
     };
 }

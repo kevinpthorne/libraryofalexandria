@@ -12,5 +12,6 @@ rec {
     pathIfExists = import ./path-if-exists.nix;
     fetchRke2Asset = import ./fetch-rke2-asset.nix;
     getRke2Arch = import ./get-rke2-arch.nix;
+    getClusterConfig = import ./get-cluster-config.nix;
     range = n: builtins.genList (x: x) n;
 }

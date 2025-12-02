@@ -1,5 +1,5 @@
 { cluster, nodeId }:
-{ pkgs, lib, ... }:
+{ pkgs, lib, lib2, ... }:
 {
     imports = [
         ../../modules/node.nix
@@ -7,7 +7,7 @@
 
     config = {
         libraryofalexandria = {
-            inherit cluster;
+            cluster = lib2.getClusterConfig lib cluster;
             node = {
                 enable = true;
                 clusterName = cluster.name;

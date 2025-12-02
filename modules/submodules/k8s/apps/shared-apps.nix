@@ -2,16 +2,7 @@
 {
     imports = [ ../helm-charts.nix ];
 
-    options.libraryofalexandria.apps.shared-apps = {
-        enable = lib.mkEnableOption "";
-
-        toInclude = lib.mkOption {
-            type = lib.types.listOf (lib.types.enum [ "core" "extras" ]);
-            default = [ "core" ];
-        };
-    };
-
-    config = lib.mkIf (config.libraryofalexandria.apps.argocd.enable && config.libraryofalexandria.apps.shared-apps.enable)
+    config = lib.mkIf (config.libraryofalexandria.apps.argocd.enable)
      {
         libraryofalexandria.helmCharts.enable = true;
         libraryofalexandria.helmCharts.charts = let 
@@ -25,6 +16,7 @@
                             repoURL = "https://github.com/kevinpthorne/libraryofalexandria.git";
                             path = "apps/loa-core";
                         };
+                        cluster = config.libraryofalexandria.cluster;
                     };
                 };
                 extras = {
@@ -36,10 +28,11 @@
                             repoURL = "https://github.com/kevinpthorne/libraryofalexandria.git";
                             path = "apps/loa-extras";
                         };
+                        cluster = config.libraryofalexandria.cluster;
                     };
                 };
             };
-            apps = builtins.map (app-type: shared-app-types.${app-type}) config.libraryofalexandria.apps.shared-apps.toInclude;
+            apps = builtins.map (app-type: shared-app-types.${app-type}) config.libraryofalexandria.cluster.shared-apps;
         in lib.mkAfter apps;
     };
 }
