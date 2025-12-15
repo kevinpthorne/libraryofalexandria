@@ -21,9 +21,7 @@ spec:
             size: 1G
             storageClass: longhorn
           logs:
-            type: persistentVolumeClaim
-            size: 1G
-            storageClass: longhorn
+            type: to-stderr
           containerSecurityContext:
             enabled: true
             allowPrivilegeEscalation: false
@@ -40,8 +38,8 @@ spec:
           dataDirs:
             - name: data1
               type: persistentVolumeClaim
-              size: 250G
-              storageClass: longhorn
+              size: {{ .Values.seaweedfs.size }}
+              storageClass: {{ .Values.seaweedfs.storageClass }}
           containerSecurityContext:
             enabled: true
             allowPrivilegeEscalation: false
@@ -70,7 +68,7 @@ spec:
         sftp:
           enabled: false
           logs:
-            type: to-stderr-thing
+            type: to-stderr
           containerSecurityContext:
             enabled: true
             allowPrivilegeEscalation: false

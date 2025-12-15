@@ -2,7 +2,7 @@
 { lib, ... }: 
 {
     imports = [
-       ../../modules/control-plane.nix 
+       ../../modules/apps.nix 
     ];
 
     config = {

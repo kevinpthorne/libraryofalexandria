@@ -35,6 +35,7 @@ in {
             ];
         };
 
-        shared-apps = [ "core" "extras" ];
+        apps.loa-core.overrides.seaweedfs.size = "1G";
+        apps.loa-extras.enable = true;
     };
 }

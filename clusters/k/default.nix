@@ -29,6 +29,6 @@ in {
             ];
         };
 
-        shared-apps = [ "core" "extras" ];
+        apps.loa-extras.enable = true;
     };
 }

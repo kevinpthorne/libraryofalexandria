@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana-loki
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: loki
+    targetRevision: 6.x.x
+    helm:
+      values: |
+        deploymentMode: SingleBinary
+        loki:
+          auth_enabled: false
+          commonConfig:
+            replication_factor: 1
+          schemaConfig:
+            configs:
+              - from: 2024-01-01
+                store: tsdb
+                object_store: s3
+                schema: v13
+                index:
+                  prefix: index_
+                  period: 24h
+          storage:
+            type: s3
+            bucketNames:
+              chunks: loki-logs-bucket
+              ruler: loki-logs-bucket
+            s3:
+              endpoint: https://seaweedfs-s3.seaweedfs.svc:8333 # Update to your local Seaweed S3 endpoint
+              s3ForcePathStyle: true
+        # Read credentials from the Crossplane secret
+        serviceAccount:
+          name: loki-sa
+        # Map the secret to env vars if not using IRSA/PodIdentity
+        extraEnvFrom:
+          - secretRef:
+              name: loki-object-store-secret
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
