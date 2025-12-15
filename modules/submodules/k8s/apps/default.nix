@@ -7,7 +7,7 @@
 
     config = {
         libraryofalexandria.apps = {
-            loa-extras.enable = false;
+            loa-extras.enable = lib.mkDefault false;
             loa-core.enable = true;
         };
     };
