@@ -31,7 +31,7 @@ spec:
           podSecurityContext:
             enabled: true
             runAsNonRoot: true
-            seccompPorfile:
+            seccompProfile:
               type: RuntimeDefault
             runAsUser: 1001
             runAsGroup: 1001
