@@ -10,13 +10,36 @@ spec:
     chart: openldap-stack-ha
     targetRevision: 4.x.x
     helm:
-      parameters:
-        # Define the domain
-        - name: global.ldapDomain
-          value: "{{ .Values.cluster.name }}.loa.internal"
-        # Admin password
-        - name: global.adminPassword
-          value: "devPasswordForAMoment!"
+      values: |
+        global:
+          ldapDomain: "{{ .Values.cluster.name }}.loa.internal"
+          adminPassword: "devPasswordForAMoment!"
+
+        # 1. Pod Level Security
+        podSecurityContext:
+          enabled: true
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+
+        # 2. Container Level Security (The "Restricted" Standard)
+        containerSecurityContext:
+          enabled: true
+          runAsUser: 1002
+          runAsGroup: 1002
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+
+        # 3. Handle Read-Only Filesystem Requirements
+        # When readOnlyRootFilesystem is true, we must mount a tmp volume
+        # because OpenLDAP tries to write temporary lock files.
+        extraVolumes:
+          - name: temp-volume
+            emptyDir: {}
   destination:
     server: https://kubernetes.default.svc
     namespace: openldap
