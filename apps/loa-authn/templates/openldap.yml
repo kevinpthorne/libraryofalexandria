@@ -13,7 +13,7 @@ spec:
       parameters:
         # Define the domain
         - name: global.ldapDomain
-          value: "{{ .Values.domain }}"
+          value: "{{ .Values.cluster.name }}.loa.internal"
         # Admin password
         - name: global.adminPassword
           value: "devPasswordForAMoment!"
