@@ -40,6 +40,62 @@ spec:
         extraVolumes:
           - name: temp-volume
             emptyDir: {}
+        extraVolumeMounts:
+          - name: ldap-temp
+            mountPath: /tmp
+          - name: ldap-temp
+            mountPath: /opt/bitnami/openldap/var/run
+
+        # --- phpLDAPadmin Configuration ---
+        phpldapadmin:
+          enabled: true
+          # Force the container to run as non-root (usually 1001 or 33 depending on image)
+          # Bitnami images use 1001.
+          containerSecurityContext:
+            runAsUser: 1001
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+
+          # Apache/PHP needs these writable areas to start in ReadOnly mode
+          extraVolumes:
+            - name: pla-temp
+              emptyDir: {}
+          extraVolumeMounts:
+            - name: pla-temp
+              mountPath: /tmp
+            - name: pla-temp
+              mountPath: /opt/bitnami/phpldapadmin/tmp
+            - name: pla-temp
+              mountPath: /opt/bitnami/apache/var/run
+            - name: pla-temp
+              mountPath: /opt/bitnami/apache/logs
+
+        # --- LTB-Passwd (Self Service Password) Configuration ---
+        ltb-passwd:
+          enabled: true
+          containerSecurityContext:
+            runAsUser: 1001
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+
+          # PHP needs to write session data and apache PIDs
+          extraVolumes:
+            - name: ltb-temp
+              emptyDir: {}
+          extraVolumeMounts:
+            - name: ltb-temp
+              mountPath: /tmp
+            - name: ltb-temp
+              mountPath: /opt/bitnami/apache/var/run
+            - name: ltb-temp
+              mountPath: /opt/bitnami/apache/logs
+            # Specific to LTB/PHP sessions
+            - name: ltb-temp
+              mountPath: /var/lib/php/sessions
   destination:
     server: https://kubernetes.default.svc
     namespace: openldap
