@@ -1,4 +1,4 @@
 argoNamespace: argo-cd
 cluster: {}
 
-domain: "{{ .Values.cluster.name }}.loa.internal"
+domain: "{{ tpl .Values.cluster.name }}.loa.internal"
