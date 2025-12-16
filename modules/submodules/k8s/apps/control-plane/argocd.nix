@@ -2,20 +2,6 @@
 {
     imports = [ ../../helm-charts.nix ];
 
-    options.libraryofalexandria.apps.argocd = {
-        enable = lib.mkEnableOption "";
-
-        version = lib.mkOption {
-            default = "9.1.4";
-            type = lib.types.str;
-        };
-
-        values = lib.mkOption {
-            default = {};
-            type = lib.types.attrs;
-        };
-    };
-
     config = lib.mkIf config.libraryofalexandria.apps.argocd.enable {
         libraryofalexandria.helmCharts.enable = true;
         libraryofalexandria.helmCharts.charts = [

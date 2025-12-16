@@ -4,25 +4,6 @@
 {
     imports = [ ../../helm-charts.nix ];
 
-    options.libraryofalexandria.apps.spire = {
-        enable = lib.mkEnableOption "";
-
-        version = lib.mkOption {
-            default = "0.27.0";
-            type = lib.types.str;
-        };
-
-        crdsVersion = lib.mkOption {
-            default = "0.5.0";
-            type = lib.types.str;
-        };
-
-        values = lib.mkOption {
-            default = {};
-            type = lib.types.attrs;
-        };
-    };
-
     config = lib.mkIf config.libraryofalexandria.apps.spire.enable {
         libraryofalexandria.helmCharts.enable = true;
         libraryofalexandria.helmCharts.charts = [

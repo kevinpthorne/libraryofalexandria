@@ -1,5 +1,5 @@
 { cluster, nodeId }:
-{ lib, ... }: 
+{ lib, config, ... }: 
 {
     imports = [
        ../../modules/apps.nix 

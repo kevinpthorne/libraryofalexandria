@@ -2,20 +2,6 @@
 {
     imports = [ ../../helm-charts.nix ];
 
-    options.libraryofalexandria.apps.cert-manager = {
-        enable = lib.mkEnableOption "";
-
-        version = lib.mkOption {
-            default = "v1.17.0";
-            type = lib.types.str;
-        };
-
-        values = lib.mkOption {
-            default = {};
-            type = lib.types.attrs;
-        };
-    };
-
     config = lib.mkIf config.libraryofalexandria.apps.cert-manager.enable {
         libraryofalexandria.helmCharts.enable = true;
         libraryofalexandria.helmCharts.charts = [

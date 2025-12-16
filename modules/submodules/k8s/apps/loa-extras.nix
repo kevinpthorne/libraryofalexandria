@@ -2,15 +2,6 @@
 {
     imports = [ ../helm-charts.nix ];
 
-    options.libraryofalexandria.apps.loa-extras = {
-        enable = lib.mkEnableOption "";
-
-        values = lib.mkOption {
-            default = {};
-            type = lib.types.attrs;
-        };
-    };
-
     config = lib.mkIf (config.libraryofalexandria.apps.argocd.enable && config.libraryofalexandria.apps.loa-extras.enable) {
         libraryofalexandria.helmCharts.enable = true;
         libraryofalexandria.helmCharts.charts = lib.mkAfter [

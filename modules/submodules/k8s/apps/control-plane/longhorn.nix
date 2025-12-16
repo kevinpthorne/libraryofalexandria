@@ -2,20 +2,6 @@
 {
     imports = [ ../../helm-charts.nix ];
 
-    options.libraryofalexandria.apps.longhorn = {
-        enable = lib.mkEnableOption "";
-
-        version = lib.mkOption {
-            default = "1.10.0";
-            type = lib.types.str;
-        };
-
-        values = lib.mkOption {
-            default = {};
-            type = lib.types.attrs;
-        };
-    };
-
     config = lib.mkIf config.libraryofalexandria.apps.longhorn.enable {
         libraryofalexandria.helmCharts.charts = [
             {
