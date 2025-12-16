@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openldap-ha
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://jp-gouin.github.io/helm-openldap/
+    chart: openldap-stack-ha
+    targetRevision: 4.x.x
+    helm:
+      parameters:
+        # Define the domain
+        - name: global.ldapDomain
+          value: "{{ .Values.domain }}"
+        # Admin password
+        - name: global.adminPassword
+          value: "devPasswordForAMoment!"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openldap
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
