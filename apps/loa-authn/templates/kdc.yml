@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kdc-server
+  namespace: {{ .Values.argoNamespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  
+  # Source of the Helm Chart
+  source:
+    repoURL: https://jeffgrunewald.github.io/kuberos/
+    chart: kuberos
+    targetRevision: 0.2.0  # Pin a specific version for stability
+    
+    # Helm Configuration
+    helm:
+      parameters:
+        - name: realm
+          value: "{{ .Values.cluster.name | upper }}.LOA.INTERNAL"
+        # Use ExternalSecrets or an existing Secret and reference it in the chart if supported.
+        - name: admin_princ.password
+          value: "mySuperSecretAdminPassword"
+
+  # Destination Cluster
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openldap
+
+  # Sync Policy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
