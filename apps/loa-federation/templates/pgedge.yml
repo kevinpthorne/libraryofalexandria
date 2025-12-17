@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pgedge-restricted
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/pgEdge/pgedge-helm'
+    targetRevision: main
+    path: .
+    helm:
+      # We override the values to enforce a restricted security context
+      values: |
+        pgEdge:
+          appName: pgedge-cluster
+          nodes:
+            - name: {{ .Values.cluster.name }}-data
+              clusterSpec:
+                instances: 1
+                # CloudNativePG Security Context Injection
+                image:
+                  podSecurityContext:
+                    runAsNonRoot: true
+                    runAsUser: 26        # Standard Postgres UID
+                    runAsGroup: 26       # Standard Postgres GID
+                    fsGroup: 26
+                    seccompProfile:
+                      type: RuntimeDefault
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    readOnlyRootFilesystem: true
+                    capabilities:
+                      drop:
+                        - ALL
+                # Required for readOnlyRootFilesystem to work (Postgres needs tmp write access)
+                storage:
+                  size: 1Gi
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: pgedge
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
