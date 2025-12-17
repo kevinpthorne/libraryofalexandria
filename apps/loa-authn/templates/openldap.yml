@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://jp-gouin.github.io/helm-openldap/
     chart: openldap-stack-ha
-    targetRevision: 4.x.x
+    targetRevision: 4.3.3
     helm:
       values: |
         global:
