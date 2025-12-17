@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openldap-slapd
+  namespace: openldap
+data:
+  slapd.conf: |
+    # 1. Schema Includes
+    # These paths exist in the immutable image
+    include   /opt/bitnami/openldap/etc/schema/core.schema
+    include   /opt/bitnami/openldap/etc/schema/cosine.schema
+    include   /opt/bitnami/openldap/etc/schema/inetorgperson.schema
+    
+    # 2. Runtime Files (MUST point to our writable emptyDir mount)
+    pidfile   /opt/bitnami/openldap/var/run/slapd.pid
+    argsfile  /opt/bitnami/openldap/var/run/slapd.args
+    
+    # 3. Modules
+    modulepath /opt/bitnami/openldap/lib/openldap
+    moduleload back_mdb.so
+    # Load Argon2 or SHA2 if available, otherwise standard hashing works
+    moduleload pw-sha2.so 
+
+    # 4. Database Definition
+    database  mdb
+    suffix    "dc={{ .Values.cluster.name }},dc=loa,dc=internal"
+    rootdn    "cn=admin,dc={{ .Values.cluster.name }},dc=loa,dc=internal"
+    # In production, use a hash here (slappasswd) instead of cleartext
+    rootpw    "ChangeMe123!"
+    
+    # The data directory (Backed by PVC)
+    directory /bitnami/openldap/data
+    maxsize   1073741824
+    
+    # 5. Access Control & Indexes
+    index objectClass eq
+    index cn,sn,uid pres,eq,approx,sub
+    
+    access to *
+        by self write
+        by dn.base="cn=admin,dc={{ .Values.cluster.name }},dc=loa,dc=internal" write
+        by * read

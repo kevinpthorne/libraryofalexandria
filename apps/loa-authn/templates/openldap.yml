@@ -25,8 +25,8 @@ spec:
         # 2. Container Level Security (The "Restricted" Standard)
         containerSecurityContext:
           enabled: true
-          runAsUser: 1000
-          runAsGroup: 1000
+          runAsUser: 1001
+          runAsGroup: 1001
           runAsNonRoot: true
           allowPrivilegeEscalation: false
           capabilities:
@@ -39,11 +39,17 @@ spec:
         extraVolumes:
           - name: ldap-temp
             emptyDir: {}
+          - name: custom-config
+            configMap:
+              name: openldap-slapd
         extraVolumeMounts:
           - name: ldap-temp
             mountPath: /tmp
           - name: ldap-temp
             mountPath: /opt/bitnami/openldap/var/run
+          - name: custom-config
+            mountPath: /opt/bitnami/openldap/etc/slapd.conf
+            subPath: slapd.conf
 
         # --- phpLDAPadmin Configuration ---
         phpldapadmin:
