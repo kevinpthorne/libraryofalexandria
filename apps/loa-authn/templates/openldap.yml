@@ -18,7 +18,7 @@ spec:
         # 1. Pod Level Security
         podSecurityContext:
           enabled: true
-          fsGroup: 1000
+          fsGroup: 1001
           seccompProfile:
             type: RuntimeDefault
 
