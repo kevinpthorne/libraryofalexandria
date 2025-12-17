@@ -33,6 +33,13 @@ spec:
             drop:
               - ALL
 
+        # --- Environment Variables ---
+        env:
+          # Tell the startup script to use our custom config
+          LDAP_CONFIG_FILE: "/opt/bitnami/openldap/etc/slapd.conf"
+          # Skip default tree generation (since we defined it in slapd.conf)
+          LDAP_SKIP_DEFAULT_TREE: "yes"
+
         # 3. Handle Read-Only Filesystem Requirements
         # When readOnlyRootFilesystem is true, we must mount a tmp volume
         # because OpenLDAP tries to write temporary lock files.
