@@ -28,10 +28,10 @@ spec:
           runAsUser: 1001
           runAsGroup: 1001
           runAsNonRoot: true
-          allowPrivilegeEscalation: false
+          allowPrivilegeEscalation: true
           capabilities:
             drop:
-              - ALL
+              - ["SYS_ADMIN"]
 
         command: ["/opt/bitnami/openldap/sbin/slapd"]
         args: 

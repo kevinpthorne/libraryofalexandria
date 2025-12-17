@@ -33,7 +33,7 @@
         loa-extras.enable = false;
         loa-observability.enable = true;
         loa-federation.enable = true;
-        loa-authn.enable = true;
+        loa-authn.enable = false;  # openldap is too crusty and old
         loa-core.enable = true;
         argocd = {
             enable = true;
