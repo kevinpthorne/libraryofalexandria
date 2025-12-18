@@ -16,8 +16,9 @@ spec:
           appName: pgedge-cluster
           nodes:
             - name: {{ .Values.cluster.name }}-data
+              hostname: pgedge-{{ .Values.cluster.name }}-data-0
               clusterSpec:
-                instances: 1
+                instances: {{ tpl .Values.pgedge.instances . }}
                 # CloudNativePG Security Context Injection
                 image:
                   podSecurityContext:
@@ -33,6 +34,20 @@ spec:
                     capabilities:
                       drop:
                         - ALL
+                # SPOCK MULTI-MASTER CONFIG (Required)
+                postgresql:
+                  parameters:
+                    wal_level: "logical"
+                    max_worker_processes: "20"
+                    max_replication_slots: "20"
+                    max_wal_senders: "20"
+                    track_commit_timestamp: "on"
+                    shared_preload_libraries: "spock"
+                  
+                  # Allow replication traffic from the other cluster (Cluster B)
+                  pg_hba:
+                    - host all all 10.0.0.0/8 md5
+                    - host replication all 10.0.0.0/8 md5
                 # Required for readOnlyRootFilesystem to work (Postgres needs tmp write access)
                 storage:
                   size: 1Gi

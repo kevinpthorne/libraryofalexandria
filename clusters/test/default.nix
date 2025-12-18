@@ -37,5 +37,6 @@ in {
 
         apps.loa-core.values.overrides.seaweedfs.size = "1G";
         apps.loa-extras.enable = lib.mkForce true;
+        apps.loa-federation.values.overrides.pgedge.instances = 1;
     };
 }
