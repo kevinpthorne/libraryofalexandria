@@ -2,4 +2,4 @@ argoNamespace: argo-cd
 cluster: {}
 
 pgedge:
-  instances: "{{ .Values.cluster.workers.count | default 3 }}"
+  instances: "{{ .Values.cluster.workers.count | default \"3\" }}"
