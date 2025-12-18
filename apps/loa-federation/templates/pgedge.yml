@@ -42,7 +42,6 @@ spec:
                     max_replication_slots: "20"
                     max_wal_senders: "20"
                     track_commit_timestamp: "on"
-                    shared_preload_libraries: "pg_stat_statements,spock"
                   
                   # Allow replication traffic from the other cluster (Cluster B)
                   pg_hba:
