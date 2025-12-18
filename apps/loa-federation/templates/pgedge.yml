@@ -18,7 +18,7 @@ spec:
             - name: {{ .Values.cluster.name }}-data
               hostname: pgedge-{{ .Values.cluster.name }}-data-0
               clusterSpec:
-                instances: {{ tpl .Values.pgedge.instances . }}
+                instances: "{{ tpl .Values.pgedge.instances . }}"
                 # CloudNativePG Security Context Injection
                 image:
                   podSecurityContext:
