@@ -16,13 +16,18 @@
                     type = lib.types.str;
                 };
 
+                values = lib.mkOption {
+                    default = {};
+                    type = lib.types.attrs;
+                };
+
+                # used by some helm charts
                 crdsVersion = lib.mkOption {
                     type = lib.types.str;
                 };
 
-                values = lib.mkOption {
-                    default = {};
-                    type = lib.types.attrs;
+                csiVersion = lib.mkOption {
+                    type = lib.types.str;
                 };
             };
         });
@@ -43,14 +48,10 @@
             enable = true;
             version = "0.30.1";
         };
-        spire = {
-            enable = true;
-            version = "0.27.0";
-            crdsVersion = "0.5.0";
-        };
         cert-manager = {
             enable = true;
             version = "v1.17.0";
+            csiVersion = "0.12.0";
         };
         longhorn = {
             enable = true;

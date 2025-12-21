@@ -16,14 +16,6 @@
                 };
             }
             {
-                name = "vault-spiffe-id";
-                chart = "${pkgs.spiffe-id-helm}";
-                values = {
-                    deploymentName = "vault";
-                    targetNamespace = "vault";
-                };
-            }
-            {
                 name = "vault";
                 chart = "vault/vault";
                 version = config.libraryofalexandria.apps.vault.version;
@@ -37,17 +29,23 @@
                         standalone.enabled = false;
                         volumes = [
                             {
-                                name = "spire-secrets";
+                                name = "tls-volume";
                                 csi = {
-                                    driver = "csi.spiffe.io";
+                                    driver = "csi.cert-manager.io";
                                     readOnly = true;
+                                    volumeAttributes = {
+                                        "csi.cert-manager.io/issuer-kind" = "ClusterIssuer";
+                                        "csi.cert-manager.io/issuer-name" = "pki-bootstrap";
+                                        "csi.cert-manager.io/fs-group" = "1000";
+                                        "csi.cert-manager.io/dns-names" =  "\${POD_NAME}.\${POD_NAMESPACE}.svc.cluster.local";
+                                    };
                                 };
                             }
                         ];
                         volumeMounts = [
                             {
-                                name = "spire-secrets";
-                                mountPath = "/run/secrets/spire";
+                                name = "tls-volume";
+                                mountPath = "/run/secrets/certs";
                                 readOnly = true;
                             }
                         ];
@@ -61,10 +59,10 @@ listener "tcp" {
     tls_disable = "false"
     address = "[::]:8200"
     cluster_address = "[::]:8201"
-    tls_cert_file = "/run/secrets/spire/svid.pem"
-    tls_key_file = "/run/secrets/spire/key.pem"
+    tls_cert_file = "/run/secrets/certs/tls.crt"
+    tls_key_file = "/run/secrets/certs/tls.key"
     tls_require_and_verify_client_cert = "false"
-    tls_client_ca_file = "/run/secrets/spire/bundle.pem"
+    tls_client_ca_file = "/run/secrets/certs/ca.crt"
     tls_min_version = "tls13"
 }
 storage "raft" {

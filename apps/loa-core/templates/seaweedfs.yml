@@ -14,6 +14,21 @@ spec:
       values: |
         global:
           enableSecurity: true
+        securityConfig: |
+          [grpc]
+          ca = "/run/secrets/certs/ca.crt"
+          
+          [grpc.master]
+          cert = "/run/secrets/certs/tls.crt"
+          key  = "/run/secrets/certs/tls.key"
+          
+          [grpc.volume]
+          cert = "/run/secrets/certs/tls.crt"
+          key  = "/run/secrets/certs/tls.key"
+          
+          [grpc.filer]
+          cert = "/run/secrets/certs/tls.crt"
+          key  = "/run/secrets/certs/tls.key"
         master:
           replicas: 1  # set to master count
           data:
@@ -36,6 +51,21 @@ spec:
             runAsUser: 1001
             runAsGroup: 1001
             fsGroup: 1000
+          extraVolumes:
+          - name: tls-volume
+            csi:
+              driver: csi.cert-manager.io
+              readOnly: true
+              volumeAttributes:
+                issuerRef: |
+                  name: pki-bootstrap
+                  kind: ClusterIssuer
+                  group: cert-manager.io
+                dnsNames: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local"
+          extraVolumeMounts:
+          - name: tls-volume
+            mountPath: "/run/secrets/certs"
+            readOnly: true
         volume:
           replicas: 1
           dataDirs:

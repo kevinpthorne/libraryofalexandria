@@ -15,6 +15,15 @@
                 namespace = "cert-manager";
                 repo = "https://charts.jetstack.io";
             }
+            # helm upgrade cert-manager-csi-driver oci://quay.io/jetstack/charts/cert-manager-csi-driver
+            {
+                name = "cert-manager-csi-driver";
+                chart = "cert-manager/cert-manager-csi-driver";
+                version = config.libraryofalexandria.apps.cert-manager.csiVersion;
+                values = {};
+                namespace = "cert-manager";
+                repo = "https://charts.jetstack.io";
+            }
             {
                 name = "pki-bootstrap";
                 chart = "${pkgs.pki-bootstrap-helm}";
