@@ -1,0 +1,34 @@
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: hardened-runtime-config
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            fsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: package-runtime
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true 
+                capabilities:
+                  drop:
+                    - ALL
+              # Some providers (like SQL or Terraform/Tofu) might need 
+              # a writable /tmp directory if they write temporary files.
+              # If you see "read-only file system" errors, uncomment the volumeMounts below:
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp-volume
+          volumes:
+            - name: tmp-volume
+              emptyDir: {}

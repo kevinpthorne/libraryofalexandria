@@ -5,3 +5,5 @@ metadata:
   name: provider-opentofu
 spec:
   package: xpkg.upbound.io/upbound/provider-opentofu:v1.0.3
+  runtimeConfigRef:
+    name: hardened-runtime-config
