@@ -17,7 +17,7 @@ spec:
           enableSuperuserAccess: true
           nodes:
             - name: {{ .Values.cluster.name }}-data
-              hostname: pgedge-{{ .Values.cluster.name }}-data-0
+              hostname: pgedge-cluster-{{ .Values.cluster.name }}-data-rw
               clusterSpec:
                 instances: {{ tpl .Values.pgedge.instances . }}
                 # CloudNativePG Security Context Injection
