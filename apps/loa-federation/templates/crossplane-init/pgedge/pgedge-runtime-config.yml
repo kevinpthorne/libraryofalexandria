@@ -1,0 +1,52 @@
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: pgedge-hardened-runtime-config
+  namespace: crossplane-system
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            fsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: package-runtime
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true 
+                capabilities:
+                  drop:
+                    - ALL
+              # Some providers (like SQL or Terraform/Tofu) might need 
+              # a writable /tmp directory if they write temporary files.
+              # If you see "read-only file system" errors, uncomment the volumeMounts below:
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp-volume
+                - mountPath: /certificates/admin
+                  name: pgadmin-admin-client-cert
+                  readOnly: true
+          volumes:
+            - name: tmp-volume
+              emptyDir: {}
+            - name: admin-client-cert
+              secret:
+                defaultMode: 420
+                items:
+                  - key: tls.crt
+                    mode: 384
+                    path: tls.crt
+                  - key: tls.key
+                    mode: 384
+                    path: tls.key
+                  - key: ca.crt
+                    mode: 384
+                    path: ca.crt
+                secretName: pgadmin-admin-client-cert

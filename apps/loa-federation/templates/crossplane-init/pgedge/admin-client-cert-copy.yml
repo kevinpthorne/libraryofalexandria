@@ -24,7 +24,7 @@ roleRef:
   name: allow-secret-read
   apiGroup: rbac.authorization.k8s.io
 ---
-apiVersion: external-secrets.io/v1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: admin-client-cert-copy
