@@ -3,6 +3,7 @@ apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
   name: provider-opentofu
+  namespace: crossplane-system
 spec:
   package: xpkg.upbound.io/upbound/provider-opentofu:v1.0.3
   runtimeConfigRef:

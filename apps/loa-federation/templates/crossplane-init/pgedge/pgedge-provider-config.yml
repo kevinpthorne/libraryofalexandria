@@ -1,0 +1,14 @@
+apiVersion: postgresql.sql.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: pgedge-provider-config
+  namespace: crossplane-system
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: pgedge-connection-config
+      key: credentials
+  # This ensures we use the PostgreSQL logic within the SQL provider
+  sslMode: verify-full

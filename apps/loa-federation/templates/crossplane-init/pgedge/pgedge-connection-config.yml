@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pgedge-connection-config
+  namespace: crossplane-system
+type: Opaque
+stringData:
+  # The key must match what the ProviderConfig expects (usually 'credentials')
+  # NOTE: We reference the MOUNTED paths, not your local paths.
+  credentials: |
+    {
+      "type": "postgresql",
+      "host": "pgedge-cluster-{{ .Values.cluster.name }}-data-rw",
+      "port": "5432",
+      "user": "admin",
+      "password": "", 
+      "database": "postgres",
+      "sslmode": "verify-full",
+      "sslrootcert": "/certificates/admin/root.crt",
+      "sslcert": "/certificates/admin/client.crt",
+      "sslkey": "/certificates/admin/client.key"
+    }

@@ -6,3 +6,5 @@ spec:
   package: xpkg.upbound.io/crossplane-contrib/provider-sql:v0.13.0
   runtimeConfigRef:
     name: hardened-runtime-config
+  controllerConfigRef:
+    name: pgedge-controller-config

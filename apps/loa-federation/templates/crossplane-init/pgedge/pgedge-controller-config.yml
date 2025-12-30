@@ -1,0 +1,26 @@
+apiVersion: pkg.crossplane.io/v1alpha1
+kind: ControllerConfig
+metadata:
+  name: pgedge-controller-config
+  namespace: crossplane-system
+spec:
+  # Mount the secret as a volume into the provider container
+  volumes:
+    - name: admin-client-cert
+      secret:
+        defaultMode: 420
+        items:
+          - key: tls.crt
+            mode: 384
+            path: tls.crt
+          - key: tls.key
+            mode: 384
+            path: tls.key
+          - key: ca.crt
+            mode: 384
+            path: ca.crt
+        secretName: pgadmin-admin-client-cert
+  volumeMounts:
+    - mountPath: /certificates/admin
+      name: pgadmin-admin-client-cert
+      readOnly: true
