@@ -2,7 +2,7 @@
 {
     imports = [  # top installs last
         ./argocd.nix
-        ./vault.nix
+        ./eso.nix
         ./cert-manager.nix
         ./longhorn.nix
     ];

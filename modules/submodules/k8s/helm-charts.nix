@@ -50,6 +50,9 @@
                     concatCommands = commands: builtins.concatStringsSep "\n" commands;
                     kubeconfig = config.environment.variables."KUBECONFIG";
                 in ''
+                    echo "pwd = $(pwd)"
+                    ${pkgs.kubernetes-helm}/bin/helm env
+
                     ${concatCommands (forEachChartModule (chart: (
                         "${lib.optionalString (chart.config.repo != null) "${pkgs.kubernetes-helm}/bin/helm repo add ${chart.config.name} ${chart.config.repo}"}"
                     )))}
@@ -58,6 +61,7 @@
 
                     ${concatCommands (forEachChartModule (chart: (
                         concatCommands [
+                            "echo \"Installing chart.config.name\""
                             "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.config.name} ${chart.config.chart} ${lib.optionalString (chart.config.version != null) "--version ${chart.config.version}"} -f ${chart.config.package}/hc-${chart.config.name}-values.yaml ${lib.optionalString (chart.config.namespace != null) "--namespace ${chart.config.namespace} --create-namespace"} --kubeconfig ${kubeconfig} --wait"
                         ]
                     )))}

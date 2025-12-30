@@ -44,14 +44,14 @@
             enable = true;
             version = "9.1.4";
         };
-        vault = {
+        external-secrets-operator = {
             enable = true;
-            version = "0.30.1";
+            version = "1.2.0";
         };
         cert-manager = {
             enable = true;
             version = "v1.17.0";
-            csiVersion = "0.12.0";
+            csiVersion = "v0.12.0";
         };
         longhorn = {
             enable = true;
