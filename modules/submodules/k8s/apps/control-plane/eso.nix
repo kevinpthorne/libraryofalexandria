@@ -13,7 +13,6 @@
                 version = config.libraryofalexandria.apps.external-secrets-operator.version;
                 values = lib2.deepMerge [{
                     installCRDs = true;
-                    crds.createClusterSecretStore = true;  # for cross-namespace access
 
                     global.securityContext = {
                         runAsUser = 1000;
