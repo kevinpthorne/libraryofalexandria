@@ -43,11 +43,6 @@ spec:
                     max_replication_slots: "20"
                     max_wal_senders: "20"
                     track_commit_timestamp: "on"
-                  
-                  # Allow replication traffic from the other cluster (Cluster B)
-                  pg_hba:
-                    - host all all 10.0.0.0/8 md5
-                    - host replication all 10.0.0.0/8 md5
                 # Required for readOnlyRootFilesystem to work (Postgres needs tmp write access)
                 storage:
                   size: 1Gi
