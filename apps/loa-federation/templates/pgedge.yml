@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/pgEdge/pgedge-helm'
+    repoURL: 'https://github.com/kevinpthorne/pgedge-helm'
     targetRevision: main
     path: .
     helm:
