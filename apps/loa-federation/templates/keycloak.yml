@@ -45,6 +45,8 @@ spec:
             value: "sslmode=verify-ca&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp/tls.fixed.key&sslrootcert=/etc/x509/db-client/ca.crt"
           - name: KC_TRUSTSTORE_PATHS
             value: "/etc/x509/db-client/"
+          - name: JAVA_OPTS_APPEND
+            values: "-Djavax.net.debug=ssl,handshake"
           # Vital for functioning behind an Ingress
           # - name: KC_PROXY
           #   value: "edge" 
