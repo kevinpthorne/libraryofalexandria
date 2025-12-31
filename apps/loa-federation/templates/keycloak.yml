@@ -17,6 +17,15 @@ spec:
         # 2. Database (Disable internal, we use Crossplane/pgEdge)
         postgres:
           enabled: false
+
+        database:
+          type: postgres
+          host: pgedge-cluster-{{ .Values.cluster.name }}-data-rw.pgedge.svc.cluster.local
+          port: 5432
+          schema: app
+          name: app
+          username: app
+          jdbcParams: "?sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/etc/x509/db-client/tls.key&sslrootcert=/etc/x509/db-client/ca.crt"
         
         # 3. Environment Variables (The "Magic Glue")
         # We inject the DB credentials and the JDBC Cert-Auth string here.
