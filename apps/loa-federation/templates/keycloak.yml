@@ -65,7 +65,7 @@ spec:
         extraVolumes:
           - name: db-client-certs
             secret:
-              secretName: app-client-cert
+              secretName: pgadmin-app-client-cert
               defaultMode: 0400 
 
         tls:
