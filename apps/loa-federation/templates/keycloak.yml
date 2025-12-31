@@ -45,6 +45,12 @@ spec:
 
         postgresql:
           enabled: false
+        externalDatabase:
+          host: "pgedge-cluster-{{ .Values.cluster.name }}-data-rw.pgedge.svc.cluster.local"
+          port: 5432
+          user: "app"
+          database: "app"
+          password: ""
 
         extraEnvVars:
           - name: KC_DB
