@@ -68,15 +68,11 @@ spec:
             secret:
               secretName: pgadmin-app-client-cert
               defaultMode: 0400
-          - name: tmp-volume
-            emptyDir: {}
 
         extraVolumeMounts:
           - name: db-client-certs
             mountPath: /etc/x509/db-client
             readOnly: true
-          - mountPath: /tmp
-            name: tmp-volume
             
         extraInitContainers:
           - name: pkcs1-to-pkcs8
@@ -100,7 +96,7 @@ spec:
               - /tmp/tls.fixed.key
               - -nocrypt
             volumeMounts:
-              - name: tmp-volume
+              - name: tmp
                 mountPath: /tmp
               - name: db-client-certs
                 mountPath: /etc/x509/db-client
