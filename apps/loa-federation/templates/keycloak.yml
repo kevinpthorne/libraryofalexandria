@@ -15,7 +15,7 @@ spec:
         replicaCount: 2
         
         # 2. Database (Disable internal, we use Crossplane/pgEdge)
-        postgresql:
+        postgres:
           enabled: false
         
         # 3. Environment Variables (The "Magic Glue")
