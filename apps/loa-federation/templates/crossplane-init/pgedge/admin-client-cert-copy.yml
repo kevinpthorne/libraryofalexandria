@@ -61,7 +61,7 @@ spec:
     name: pgedge-cluster-store
     kind: ClusterSecretStore
   target:
-    name: pgadmin-admin-client-cert
+    name: pgedge-admin-client-cert
     creationPolicy: Owner
   data:
     # `dataFrom` is cleaner but `dataFrom` support for cross-namespace references depends 
