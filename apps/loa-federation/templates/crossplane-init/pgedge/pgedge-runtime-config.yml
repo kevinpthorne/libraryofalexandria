@@ -33,6 +33,15 @@ spec:
                 - mountPath: /certificates/admin
                   name: pgadmin-admin-client-cert
                   readOnly: true
+              env:
+                - name: PGSSLMODE
+                  value: "verify-full"
+                - name: PGSSLROOTCERT
+                  value: "/certificates/admin/ca.crt"
+                - name: PGSSLCERT
+                  value: "/certificates/admin/tls.crt"
+                - name: PGSSLKEY
+                  value: "/certificates/admin/tls.key"
           volumes:
             - name: tmp-volume
               emptyDir: {}

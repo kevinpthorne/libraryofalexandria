@@ -5,10 +5,7 @@ metadata:
   namespace: crossplane-system
 spec:
   credentials:
-    source: Secret
-    secretRef:
+    source: PostgreSQLConnectionSecret
+    connectionSecretRef:
       namespace: crossplane-system
-      name: pgedge-connection-config
-      key: credentials
-  # This ensures we use the PostgreSQL logic within the SQL provider
-  sslMode: verify-full
+      name: pgedge-creds
