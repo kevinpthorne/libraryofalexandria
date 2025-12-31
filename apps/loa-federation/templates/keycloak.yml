@@ -40,28 +40,25 @@ spec:
           # - name: KC_HOSTNAME_STRICT
           #   value: "false"
 
+        tls:
+          enabled: true
+          existingSecret: keycloak-ingress-tls
+          usePem: true
+          certManager:
+            enabled: true
+            issuerRef:
+              name: pki-bootstrap
+              kind: ClusterIssuer
+
         # 4. Volumes (CSI & Secrets)
         extraVolumes:
-          # Server HTTPS Certs (via Cert-Manager CSI)
-          - name: https-certs
-            csi:
-              driver: csi.cert-manager.io
-              readOnly: true
-              volumeAttributes:
-                  csi.cert-manager.io/issuer-name: "pki-bootstrap"
-                  csi.cert-manager.io/issuer-kind: "ClusterIssuer"
-                  csi.cert-manager.io/dns-names: "idp.{{ .Values.cluster.name }}.loa.internal"
-          
           # DB Client Certs (via Crossplane/Manual Secret)
           - name: db-client-certs
             secret:
-              secretName: app-client-cert
+              secretName: pgadmin-app-client-cert
               defaultMode: 0400
 
         extraVolumeMounts:
-          - name: https-certs
-            mountPath: /etc/x509/https
-            readOnly: true
           - name: db-client-certs
             mountPath: /etc/x509/db-client
             readOnly: true
