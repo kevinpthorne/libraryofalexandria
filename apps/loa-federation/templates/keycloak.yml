@@ -12,11 +12,7 @@ spec:
     targetRevision: 0.11.3 # Check ArtifactHub for the latest version
     helm:
       values: |
-        # 1. Image & Replicas
         replicaCount: 2
-        image:
-          tag: 26.0 # Explicitly pin the Keycloak version
-          pullPolicy: IfNotPresent
         
         # 2. Database (Disable internal, we use Crossplane/pgEdge)
         postgresql:
