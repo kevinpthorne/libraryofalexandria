@@ -97,6 +97,12 @@ spec:
               - -out
               - /tmp/tls.fixed.key
               - -nocrypt
+            volumeMounts:
+              - name: tmp-volume
+                mountPath: /tmp
+              - name: db-client-certs
+                mountPath: /etc/x509/db-client
+                readOnly: true
 
         # 6. Security Context (Restricted Namespace Compliance)
         # Pod-level security
