@@ -21,7 +21,7 @@ spec:
         database:
           type: postgres
           host: pgedge-cluster-{{ .Values.cluster.name }}-data-rw.pgedge.svc.cluster.local
-          port: 5432
+          port: "5432"
           schema: app
           name: app
           username: app
