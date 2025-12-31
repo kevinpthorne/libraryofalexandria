@@ -1,0 +1,55 @@
+# allow secret replicator to read the app-client-cert secret from pgedge
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: allow-secret-read-app-client-cert
+  namespace: pgedge
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch"]
+  resourceNames: ["app-client-cert"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: allow-secret-read-binding-app-client-cert
+  namespace: pgedge
+subjects:
+- kind: ServiceAccount
+  name: secret-replicator-sa
+  namespace: external-secrets # Referencing the SA we created above
+roleRef:
+  kind: Role
+  name: allow-secret-read-app-client-cert
+  apiGroup: rbac.authorization.k8s.io
+---
+# pgedge cluster store already covered
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: app-client-cert-copy
+  namespace: crossplane-system
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: pgedge-cluster-store
+    kind: ClusterSecretStore
+  target:
+    name: pgadmin-app-client-cert
+    creationPolicy: Owner
+  data:
+    # `dataFrom` is cleaner but `dataFrom` support for cross-namespace references depends 
+    # heavily on the specific ESO version. The safest GitOps way for exact replication is explicit keys:
+    - secretKey: ca.crt
+      remoteRef:
+        key: app-client-cert # <namespace>/<secret-name> syntax
+        property: ca.crt
+    - secretKey: tls.crt
+      remoteRef:
+        key: app-client-cert
+        property: tls.crt
+    - secretKey: tls.key
+      remoteRef:
+        key: app-client-cert
+        property: tls.key
