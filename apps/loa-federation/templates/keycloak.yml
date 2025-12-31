@@ -53,28 +53,9 @@ spec:
           password: ""
 
         extraEnvVars:
-          - name: KC_DB
-            value: app
-          - name: KC_DB_URL_DATABASE
-            value: "app"
-          - name: KC_DB_URL_HOST
-            valueFrom:
-              secretKeyRef:
-                name: keycloak-pgedge-creds
-                key: endpoint
-          - name: KC_DB_URL_PORT
-            valueFrom:
-              secretKeyRef:
-                name: keycloak-pgedge-creds
-                key: port
           # JDBC Cert Auth string
           - name: KC_DB_URL_PROPERTIES
             value: "?sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/etc/x509/db-client/tls.key&sslrootcert=/etc/x509/db-client/ca.crt"
-          - name: KC_DB_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: keycloak-pgedge-creds
-                key: username
 
         extraVolumeMounts:
           - name: https-certs
