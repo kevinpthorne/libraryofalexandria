@@ -68,7 +68,7 @@ spec:
     # heavily on the specific ESO version. The safest GitOps way for exact replication is explicit keys:
     - secretKey: ca.crt
       remoteRef:
-        key: admin-client-cert # <namespace>/<secret-name> syntax
+        key: admin-client-cert
         property: ca.crt
     - secretKey: tls.crt
       remoteRef:

@@ -23,13 +23,15 @@ roleRef:
   kind: Role
   name: allow-secret-read-app-client-cert
   apiGroup: rbac.authorization.k8s.io
+# depends on pgedge-cluster-store
 ---
-# pgedge cluster store already covered
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: app-client-cert-copy
-  namespace: crossplane-system
+  namespace: keycloak
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   refreshInterval: 1m
   secretStoreRef:
@@ -43,7 +45,7 @@ spec:
     # heavily on the specific ESO version. The safest GitOps way for exact replication is explicit keys:
     - secretKey: ca.crt
       remoteRef:
-        key: app-client-cert # <namespace>/<secret-name> syntax
+        key: app-client-cert
         property: ca.crt
     - secretKey: tls.crt
       remoteRef:
