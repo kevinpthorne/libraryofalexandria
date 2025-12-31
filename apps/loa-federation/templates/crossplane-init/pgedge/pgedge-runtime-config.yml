@@ -45,7 +45,7 @@ spec:
           volumes:
             - name: tmp-volume
               emptyDir: {}
-            - name: admin-client-cert
+            - name: pgadmin-admin-client-cert
               secret:
                 defaultMode: 420
                 items:
