@@ -29,7 +29,7 @@ spec:
         
         # 3. Environment Variables (The "Magic Glue")
         # We inject the DB credentials and the JDBC Cert-Auth string here.
-        env:
+        extraEnvVars:
           - name: KC_DB
             value: app
           - name: KC_DB_URL_DATABASE
