@@ -25,7 +25,7 @@ spec:
           schema: app
           name: app
           username: app
-          jdbcParams: "?sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/etc/x509/db-client/tls.key&sslrootcert=/etc/x509/db-client/ca.crt"
+          jdbcParams: "?sslmode=verify-full&sslfactory=org.postgresql.ssl.LibPQFactory&sslcert=/etc/x509/db-client/tls.crt&sslkey=/etc/x509/db-client/tls.key&sslrootcert=/etc/x509/db-client/ca.crt"
         
         # 3. Environment Variables (The "Magic Glue")
         # We inject the DB credentials and the JDBC Cert-Auth string here.
@@ -42,7 +42,7 @@ spec:
             value: app
           # Construct the JDBC URL parameters for Mutual TLS
           - name: KC_DB_URL_PROPERTIES
-            value: "?sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/etc/x509/db-client/tls.key&sslrootcert=/etc/x509/db-client/ca.crt"
+            value: "?sslmode=verify-full&sslfactory=org.postgresql.ssl.LibPQFactory&sslcert=/etc/x509/db-client/tls.crt&sslkey=/etc/x509/db-client/tls.key&sslrootcert=/etc/x509/db-client/ca.crt"
           # Vital for functioning behind an Ingress
           # - name: KC_PROXY
           #   value: "edge" 
@@ -104,6 +104,9 @@ spec:
                   pathType: Prefix
           annotations:
             nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+        
+        keycloak:
+          production: true
 
   destination:
     server: https://kubernetes.default.svc
