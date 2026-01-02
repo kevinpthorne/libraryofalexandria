@@ -99,15 +99,15 @@ spec:
             command: ["/bin/sh", "-c"]
             args:
               - |
-                set -e
+                set -ex
 
                 echo "Converting PKCS1 private key to PKCS8 for Keycloak Java process"
                 openssl --version
-                openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /etc/x509/pkcs8/tls.fixed.keys -nocrypt
+                openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /etc/x509/pkcs8/tls.fixed.key -nocrypt
 
                 echo "Fixing perms"
-                chown 1000:1000 /etc/x509/pkcs8/tls.fixed.keys
-                chmod 400 /etc/x509/pkcs8/tls.fixed.keys
+                chown 1000:1000 /etc/x509/pkcs8/tls.fixed.key
+                chmod 400 /etc/x509/pkcs8/tls.fixed.key
 
                 echo "Complete"
             volumeMounts:
