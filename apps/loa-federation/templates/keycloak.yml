@@ -42,7 +42,7 @@ spec:
             value: app
           # Construct the JDBC URL parameters for Mutual TLS
           - name: KC_DB_URL_PROPERTIES
-            value: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp/tls.fixed.key&sslrootcert=/etc/x509/db-ca/ca.crt"
+            value: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/etc/x509/pkcs8/tls.fixed.key&sslrootcert=/etc/x509/db-ca/ca.crt"
           - name: KC_TRUSTSTORE_PATHS
             value: "/etc/x509/db-ca/ca.crt"
           - name: JAVA_OPTS_APPEND
@@ -74,6 +74,8 @@ spec:
             secret:
               secretName: pgedge-cluster-test-data-ca
               defaultMode: 0400
+          - name: tls-fixed
+            emptyDir: {}
 
         extraVolumeMounts:
           - name: db-client-certs
@@ -81,6 +83,9 @@ spec:
             readOnly: true
           - name: db-ca-cert
             mountPath: /etc/x509/db-ca
+            readOnly: true
+          - name: tls-fixed
+            mountPath: /etc/x509/pkcs8
             readOnly: true
             
         extraInitContainers:
@@ -100,16 +105,16 @@ spec:
 
                 echo "Converting PKCS1 private key to PKCS8 for Keycloak Java process"
                 openssl --version
-                openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /tmp/tls.fixed.keys -nocrypt
+                openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /etc/x509/pkcs8/tls.fixed.keys -nocrypt
 
                 echo "Fixing perms"
-                chown 1000:1000 /tmp/tls.fixed.keys
-                chmod 400 /tmp/tls.fixed.keys
+                chown 1000:1000 /etc/x509/pkcs8/tls.fixed.keys
+                chmod 400 /etc/x509/pkcs8/tls.fixed.keys
 
                 echo "Complete"
             volumeMounts:
-              - name: tmp
-                mountPath: /tmp
+              - name: tls-fixed
+                mountPath: /etc/x509/pkcs8
               - name: db-client-certs
                 mountPath: /etc/x509/db-client
                 readOnly: true
