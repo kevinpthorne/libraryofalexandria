@@ -93,10 +93,12 @@ spec:
               runAsUser: 1000
               runAsGroup: 1000
             image: alpine/openssl:3.5.4
-            command: ["/bin/sh", '-c']
-            args: |
-              openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /tmp/tls.fixed.keys nocrypt
-              chmod 400 /tmp/tls.fixed.keys
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                set -e
+                openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /tmp/tls.fixed.keys nocrypt
+                chmod 400 /tmp/tls.fixed.keys
             volumeMounts:
               - name: tmp
                 mountPath: /tmp
