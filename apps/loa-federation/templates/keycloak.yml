@@ -25,7 +25,7 @@ spec:
           schema: app
           name: app
           username: app
-          jdbcParams: "sslmode=verify-ca&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp/tls.fixed.key&sslrootcert=/etc/x509/db-client/ca.crt"
+          jdbcParams: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp/tls.fixed.key&sslrootcert=/etc/x509/db-client/ca.crt"
         
         # 3. Environment Variables (The "Magic Glue")
         # We inject the DB credentials and the JDBC Cert-Auth string here.
@@ -42,11 +42,11 @@ spec:
             value: app
           # Construct the JDBC URL parameters for Mutual TLS
           - name: KC_DB_URL_PROPERTIES
-            value: "sslmode=verify-ca&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp/tls.fixed.key&sslrootcert=/etc/x509/db-client/ca.crt"
+            value: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp/tls.fixed.key&sslrootcert=/etc/x509/db-client/ca.crt"
           - name: KC_TRUSTSTORE_PATHS
-            value: "/etc/x509/db-client/"
+            value: "/etc/x509/db-client/ca.crt,/etc/x509/db-ca/ca.crt"
           - name: JAVA_OPTS_APPEND
-            values: "-Djavax.net.debug=ssl,handshake"
+            value: "-Djavax.net.debug=ssl,handshake"
           # Vital for functioning behind an Ingress
           # - name: KC_PROXY
           #   value: "edge" 
@@ -68,12 +68,19 @@ spec:
           # DB Client Certs (via Crossplane/Manual Secret)
           - name: db-client-certs
             secret:
-              secretName: pgadmin-app-client-cert
+              secretName: pgedge-app-client-cert
+              defaultMode: 0400
+          - name: db-ca-cert
+            secret:
+              secretName: pgedge-cluster-test-data-ca
               defaultMode: 0400
 
         extraVolumeMounts:
           - name: db-client-certs
             mountPath: /etc/x509/db-client
+            readOnly: true
+          - name: db-ca-cert
+            mountPath: /etc/x509/db-ca
             readOnly: true
             
         extraInitContainers:
