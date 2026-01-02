@@ -25,7 +25,7 @@ spec:
           schema: app
           name: app
           username: app
-          jdbcParams: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp/tls.fixed.key&sslrootcert=/etc/x509/db-ca/ca.crt"
+          jdbcParams: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/etc/x509/pkcs8/tls.fixed.key&sslrootcert=/etc/x509/db-ca/ca.crt"
         
         # 3. Environment Variables (The "Magic Glue")
         # We inject the DB credentials and the JDBC Cert-Auth string here.
@@ -41,8 +41,6 @@ spec:
           - name: KC_DB_USERNAME
             value: app
           # Construct the JDBC URL parameters for Mutual TLS
-          - name: KC_DB_URL_PROPERTIES
-            value: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/etc/x509/pkcs8/tls.fixed.key&sslrootcert=/etc/x509/db-ca/ca.crt"
           - name: KC_TRUSTSTORE_PATHS
             value: "/etc/x509/db-ca/ca.crt"
           - name: JAVA_OPTS_APPEND
