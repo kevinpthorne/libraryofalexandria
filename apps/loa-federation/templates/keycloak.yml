@@ -97,12 +97,13 @@ spec:
             args:
               - |
                 set -e
-                
+
                 echo "Converting PKCS1 private key to PKCS8 for Keycloak Java process"
                 openssl --version
                 openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /tmp/tls.fixed.keys -nocrypt
 
                 echo "Fixing perms"
+                chown 1000:1000 /tmp/tls.fixed.keys
                 chmod 400 /tmp/tls.fixed.keys
 
                 echo "Complete"
