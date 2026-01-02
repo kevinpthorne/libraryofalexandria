@@ -44,7 +44,7 @@ spec:
           - name: KC_DB_URL_PROPERTIES
             value: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp/tls.fixed.key&sslrootcert=/etc/x509/db-client/ca.crt"
           - name: KC_TRUSTSTORE_PATHS
-            value: "/etc/x509/db-client/ca.crt,/etc/x509/db-ca/ca.crt"
+            value: "/etc/x509/db-ca/ca.crt"
           - name: JAVA_OPTS_APPEND
             value: "-Djavax.net.debug=ssl,handshake"
           # Vital for functioning behind an Ingress
