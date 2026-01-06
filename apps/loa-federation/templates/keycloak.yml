@@ -103,9 +103,9 @@ spec:
 
                 rm -f /tmp-private/tls.fixed.key
 
-                echo "Converting PKCS1 private key to PKCS8 for Keycloak Java process"
+                echo "Converting PKCS1 PEM private key to PKCS8 DER for Keycloak-Pgsql-JDBC process"
                 openssl --version
-                openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /tmp-private/tls.fixed.key -nocrypt
+                openssl pkcs8 -topk8 -inform PEM -outform DER -in /etc/x509/db-client/tls.key -out /tmp-private/tls.fixed.key -nocrypt
 
                 echo "Fixing perms"
                 chown 1000:1000 /tmp-private/tls.fixed.key
