@@ -9,7 +9,7 @@ spec:
     # CloudPirates hosts their charts in an OCI registry
     repoURL: registry-1.docker.io/cloudpirates
     chart: keycloak
-    targetRevision: 0.11.3 # Check ArtifactHub for the latest version
+    targetRevision: 0.11.3
     helm:
       values: |
         replicaCount: 2
@@ -25,7 +25,7 @@ spec:
           schema: app
           name: app
           username: app
-          jdbcParams: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/etc/x509/pkcs8/tls.fixed.key&sslrootcert=/etc/x509/db-ca/ca.crt"
+          jdbcParams: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp-private/tls.fixed.key&sslrootcert=/etc/x509/db-ca/ca.crt"
         
         # 3. Environment Variables (The "Magic Glue")
         # We inject the DB credentials and the JDBC Cert-Auth string here.
@@ -83,7 +83,7 @@ spec:
             mountPath: /etc/x509/db-ca
             readOnly: true
           - name: tls-fixed
-            mountPath: /etc/x509/pkcs8
+            mountPath: /tmp-private
             readOnly: true
             
         extraInitContainers:
@@ -103,16 +103,16 @@ spec:
 
                 echo "Converting PKCS1 private key to PKCS8 for Keycloak Java process"
                 openssl --version
-                openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /etc/x509/pkcs8/tls.fixed.key -nocrypt
+                openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /tmp-private/tls.fixed.key -nocrypt
 
                 echo "Fixing perms"
-                chown 1000:1000 /etc/x509/pkcs8/tls.fixed.key
-                chmod 400 /etc/x509/pkcs8/tls.fixed.key
+                chown 1000:1000 /tmp-private/tls.fixed.key
+                chmod 400 /tmp-private/tls.fixed.key
 
                 echo "Complete"
             volumeMounts:
               - name: tls-fixed
-                mountPath: /etc/x509/pkcs8
+                mountPath: /tmp-private
               - name: db-client-certs
                 mountPath: /etc/x509/db-client
                 readOnly: true
