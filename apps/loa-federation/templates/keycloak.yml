@@ -101,6 +101,8 @@ spec:
               - |
                 set -ex
 
+                rm -f /tmp-private/tls.fixed.key
+
                 echo "Converting PKCS1 private key to PKCS8 for Keycloak Java process"
                 openssl --version
                 openssl pkcs8 -topk8 -inform PEM -outform PEM -in /etc/x509/db-client/tls.key -out /tmp-private/tls.fixed.key -nocrypt
