@@ -107,7 +107,7 @@ spec:
 
                 echo "Fixing perms"
                 chown 1000:1000 /tmp-private/tls.fixed.key
-                chmod 400 /tmp-private/tls.fixed.key
+                chmod 440 /tmp-private/tls.fixed.key
 
                 echo "Complete"
             volumeMounts:
