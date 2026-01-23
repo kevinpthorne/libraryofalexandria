@@ -89,7 +89,7 @@ spec:
       fromFieldPath: spec.refreshInterval
       toFieldPath: parameters.refreshInterval
     - type: FromCompositeFieldPath
-      fromFieldPath: spec.targetNamespace
+      fromFieldPath: spec.appNamespace
       toFieldPath: parameters.targetNamespace
     - type: FromCompositeFieldPath
       fromFieldPath: spec.sourceNamespace

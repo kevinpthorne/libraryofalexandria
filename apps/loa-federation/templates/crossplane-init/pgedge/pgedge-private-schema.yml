@@ -32,7 +32,60 @@ spec:
           toFieldPath: "spec.forProvider.name"
 
     # ------------------------------------------------------------------
-    # 2. K8s CERTIFICATE (The Credential)
+    # 2. CERT MANAGER CERTIFICATE (Generate the Client Cert)
+    # ------------------------------------------------------------------
+    - base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: cert-manager.io/v1
+              kind: Certificate
+              metadata:
+                name: PLACEHOLDER
+                namespace: pgedge
+              spec:
+                secretName: PLACEHOLDER
+                duration: 2160h # 90d
+                renewBefore: 360h # 15d
+                subject:
+                  organizations:
+                    - loa
+                commonName: PLACEHOLDER
+                isCA: false
+                privateKey:
+                  algorithm: RSA
+                  encoding: PKCS1
+                  size: 2048
+                usages:
+                  - client auth
+                issuerRef:
+                  name: client-ca-issuer
+                  kind: Issuer
+                  group: cert-manager.io
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+            - fromFieldPath: spec.userName
+            strategy: string
+            string:
+              fmt: "%s-client-cert"
+          toFieldPath: spec.forProvider.manifest.metadata.name
+        - type: CombineFromComposite
+          combine:
+            variables:
+            - fromFieldPath: spec.userName
+            strategy: string
+            string:
+              fmt: "%s-client-cert"
+          toFieldPath: spec.forProvider.manifest.spec.secretName
+        - fromFieldPath: "spec.parameters.userName"
+          toFieldPath: "spec.forProvider.manifest.spec.commonName"
+
+    # ------------------------------------------------------------------
+    # 3. SYNCED CERT CLAIM (Sync the generated cert to App)
     # ------------------------------------------------------------------
     - base:
         apiVersion: kubernetes.crossplane.io/v1alpha1
@@ -47,7 +100,7 @@ spec:
                 namespace: crossplane-system
               parameters:
                 appName: PLACEHOLDER
-                appNamespace: pgedge
+                appNamespace: PLACEHOLDER # Was hardcoded to pgedge
                 certSecretNameSuffix: "-client-cert"
                 refreshInterval: "1d"
                 sourceNamespace: pgedge
@@ -64,6 +117,8 @@ spec:
           toFieldPath: parameters.name
         - fromFieldPath: "spec.parameters.userName"
           toFieldPath: "spec.forProvider.manifest.parameters.appName"
+        - fromFieldPath: "spec.parameters.appNamespace"
+          toFieldPath: "spec.forProvider.manifest.parameters.appNamespace"
     
     # Copy the CA too
     - base:
