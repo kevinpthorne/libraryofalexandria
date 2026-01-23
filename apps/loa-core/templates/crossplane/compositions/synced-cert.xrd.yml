@@ -1,0 +1,50 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: syncedcert.auth.loa.kevinpthorne.com
+spec:
+  group: auth.loa.kevinpthorne.com
+  names:
+    kind: SyncedCert
+    plural: syncedcerts
+  claimNames:
+    kind: SyncedCertClaim
+    plural: syncedcertclaims
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              appName:
+                type: string
+                description: "The name of the app to generate a cert for."
+              appNamespace:
+                type: string
+                description: "The namespace where the app is running."
+              certSecretNameSuffix:
+                type: string
+                default: "-client-cert"
+                description: "The suffix that may get appended to the cert secret name."
+              refreshInterval:
+                type: string
+                default: "1d"
+                description: "How often to refresh the secret."
+              sourceNamespace:
+                type: string
+                default: "pgedge"
+                description: "Source namespace (defaults to pgedge)."
+              replicatorSA:
+                type: string
+                default: "secret-replicator-sa"
+              replicatorNamespace:
+                type: string
+                default: "external-secrets"
+            required:
+            - appName
+            - appNamespace

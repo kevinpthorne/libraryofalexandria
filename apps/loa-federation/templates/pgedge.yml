@@ -13,11 +13,11 @@ spec:
       # We override the values to enforce a restricted security context
       values: |
         pgEdge:
-          appName: pgedge-cluster
+          appName: {{ .Values.pgedge.appName }}
           enableSuperuserAccess: true
           nodes:
             - name: {{ .Values.cluster.name }}-data
-              hostname: pgedge-cluster-{{ .Values.cluster.name }}-data-rw
+              hostname: {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw
               clusterSpec:
                 instances: {{ tpl .Values.pgedge.instances . }}
                 # CloudNativePG Security Context Injection
@@ -37,12 +37,21 @@ spec:
                         - ALL
                 # SPOCK MULTI-MASTER CONFIG (Required)
                 postgresql:
+                {{- if gt (int (tpl .Values.pgedge.instances .)) 1 -}}
+                  synchronous:
+                    method: any
+                    number: 1
+                    dataDurability: required
+                {{- end -}}
                   parameters:
                     wal_level: "logical"
                     max_worker_processes: "20"
                     max_replication_slots: "20"
                     max_wal_senders: "20"
                     track_commit_timestamp: "on"
+                  pg_hba:
+                    - hostssl all all all cert  # let's let cilium network policies gatekeep access
+                    - hostssl all streaming_replica all cert map=cnpg_streaming_replica  # comes from pgedge-helm
                 # Required for readOnlyRootFilesystem to work (Postgres needs tmp write access)
                 storage:
                   size: 1Gi

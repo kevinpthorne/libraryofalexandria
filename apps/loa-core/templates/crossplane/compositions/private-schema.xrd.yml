@@ -1,0 +1,43 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: privateschemas.db.loa.kevinpthorne.com
+spec:
+  group: db.loa.kevinpthorne.com
+  names:
+    kind: PrivateSchema
+    plural: privateschemas
+  claimNames:
+    kind: PrivateSchemaClaim
+    plural: privateschemaclaims
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              parameters:
+                type: object
+                properties:
+                  databaseName:
+                    type: string
+                    default: app  # default db in pgedge is 'app'
+                    description: "Target Database Name"
+                  schemaName:
+                    type: string
+                    description: "Schema to create"
+                  userName:
+                    type: string
+                    description: "User to create (CN will match this)"
+                  appNamespace:
+                    type: string
+                    description: "Namespace of the application"
+                required:
+                  - schemaName
+                  - userName
+                  - appNamespace

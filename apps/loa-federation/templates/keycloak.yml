@@ -22,7 +22,7 @@ spec:
           type: postgres
           host: pgedge-cluster-{{ .Values.cluster.name }}-data-rw.pgedge.svc.cluster.local
           port: "5432"
-          schema: app
+          schema: public
           name: app
           username: app
           jdbcParams: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp-private/tls.fixed.key&sslrootcert=/etc/x509/db-ca/ca.crt"

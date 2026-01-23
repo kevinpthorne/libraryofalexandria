@@ -35,7 +35,7 @@ metadata:
 spec:
   refreshInterval: 1m
   secretStoreRef:
-    name: pgedge-cluster-store
+    name: pgedge-cluster-store  # assume this exists already
     kind: ClusterSecretStore
   target:
     name: pgedge-app-client-cert

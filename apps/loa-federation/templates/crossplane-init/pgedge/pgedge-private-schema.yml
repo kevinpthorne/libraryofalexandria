@@ -1,0 +1,150 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: pgedge-private-schema
+  labels:
+    provider: postgresql
+spec:
+  compositeTypeRef:
+    apiVersion: db.loa.kevinpthorne.com/v1alpha1
+    kind: PrivateSchema
+  resources:
+    # ------------------------------------------------------------------
+    # 1. SQL ROLE (The User)
+    # ------------------------------------------------------------------
+    - base:
+        apiVersion: postgresql.sql.crossplane.io/v1alpha1
+        kind: Role
+        spec:
+          providerConfigRef:
+            name: pgedge-provider-config
+          forProvider:
+            privileges:
+              login: true
+              superUser: false
+              createDb: false
+              createRole: false
+              inherit: true
+            # No passwordSecretRef needed because we use Cert Auth
+            passwordSecretRef: null 
+      patches:
+        - fromFieldPath: "spec.parameters.userName"
+          toFieldPath: "spec.forProvider.name"
+
+    # ------------------------------------------------------------------
+    # 2. K8s CERTIFICATE (The Credential)
+    # ------------------------------------------------------------------
+    - base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: auth.loa.kevinpthorne.com/v1alpha1
+              kind: SyncedCertClaim
+              metadata:
+                name: PLACEHOLDER
+                namespace: crossplane-system
+              parameters:
+                appName: PLACEHOLDER
+                appNamespace: pgedge
+                certSecretNameSuffix: "-client-cert"
+                refreshInterval: "1d"
+                sourceNamespace: pgedge
+                replicatorSA: secret-replicator-sa
+                replicatorNamespace: external-secrets
+      patches:
+        - type: CombineFromComposite
+          combine:
+            variables:
+            - fromFieldPath: spec.userName
+            strategy: string
+            string:
+              fmt: "%s-client-cert-claim"
+          toFieldPath: parameters.name
+        - fromFieldPath: "spec.parameters.userName"
+          toFieldPath: "spec.forProvider.manifest.parameters.appName"
+    
+    # Copy the CA too
+    - base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: auth.loa.kevinpthorne.com/v1alpha1
+              kind: SyncedSecretClaim
+              metadata:
+                name: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ca-cert-claim"
+                namespace: crossplane-system
+              parameters:
+                name: PLACEHOLDER
+                data:
+                  - secretKey: ca.crt
+                    remoteRef:
+                      key: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ca"
+                      property: ca.crt
+                refreshInterval: "6M"
+                targetNamespace: PLACEHOLDER
+                sourceNamespace: pgedge
+                replicatorSA: secret-replicator-sa
+                replicatorNamespace: external-secrets
+      patches:
+        - fromFieldPath: "spec.parameters.appNamespace"
+          toFieldPath: "spec.forProvider.manifest.parameters.targetNamespace"
+        - fromFieldPath: "spec.parameters.userName"
+          toFieldPath: "spec.forProvider.manifest.parameters.appName"
+
+    # ------------------------------------------------------------------
+    # 3. SQL SCHEMA (The Container)
+    # ------------------------------------------------------------------
+    - base:
+        apiVersion: postgresql.sql.crossplane.io/v1alpha1
+        kind: Schema
+        spec:
+          providerConfigRef:
+            name: pgedge-provider-config
+      patches:
+        - fromFieldPath: "spec.parameters.schemaName"
+          toFieldPath: "spec.forProvider.name"
+        - fromFieldPath: "spec.parameters.databaseName"
+          toFieldPath: "spec.forProvider.database"
+
+    # ------------------------------------------------------------------
+    # 4. SQL GRANT (The Permission)
+    # ------------------------------------------------------------------
+    - base:
+        apiVersion: postgresql.sql.crossplane.io/v1alpha1
+        kind: Grant
+        spec:
+          providerConfigRef:
+            name: pgedge-provider-config
+          forProvider:
+            privileges: ["USAGE", "CREATE"]
+            objectType: SCHEMA
+      patches:
+        - fromFieldPath: "spec.parameters.userName"
+          toFieldPath: "spec.forProvider.role"
+        - fromFieldPath: "spec.parameters.databaseName"
+          toFieldPath: "spec.forProvider.database"
+        - fromFieldPath: "spec.parameters.schemaName"
+          toFieldPath: "spec.forProvider.schema"
+
+    # ------------------------------------------------------------------
+    # 5. SQL GRANT (The Revocation - Security)
+    # ------------------------------------------------------------------
+    - base:
+        apiVersion: postgresql.sql.crossplane.io/v1alpha1
+        kind: Grant
+        spec:
+          providerConfigRef:
+            name: pgedge-provider-config
+          forProvider:
+            role: PUBLIC
+            privileges: [] # Revoke all
+            objectType: SCHEMA
+      patches:
+        - fromFieldPath: "spec.parameters.databaseName"
+          toFieldPath: "spec.forProvider.database"
+        - fromFieldPath: "spec.parameters.schemaName"
+          toFieldPath: "spec.forProvider.schema"

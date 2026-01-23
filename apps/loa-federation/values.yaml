@@ -3,3 +3,4 @@ cluster: {}
 
 pgedge:
   instances: "{{ .Values.cluster.workers.count | default \"3\" }}"
+  appName: "pgedge-cluster"

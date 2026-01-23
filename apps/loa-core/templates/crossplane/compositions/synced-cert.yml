@@ -1,0 +1,102 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: cert-replication
+  labels:
+    provider: kubernetes
+    type: cert-replication
+spec:
+  compositeTypeRef:
+    apiVersion: auth.loa.kevinpthorne.com/v1alpha1
+    kind: SyncedCert
+  resources:
+  - name: synced-cert-copy
+    base:
+      apiVersion: auth.loa.kevinpthorne.com/v1alpha1
+      kind: SyncedSecretClaim
+      metadata:
+        name: PLACEHOLDER
+        namespace: crossplane-system
+      parameters:
+        name: PLACEHOLDER
+        data:
+          - secretKey: ca.crt
+            remoteRef:
+              key: PLACEHOLDER
+              property: ca.crt
+          - secretKey: tls.crt
+            remoteRef:
+              key: PLACEHOLDER
+              property: tls.crt
+          - secretKey: tls.key
+            remoteRef:
+              key: PLACEHOLDER
+              property: tls.key
+        refreshInterval: PLACEHOLDER
+        targetNamespace: PLACEHOLDER
+        sourceNamespace: PLACEHOLDER
+        replicatorSA: PLACEHOLDER
+        replicatorNamespace: PLACEHOLDER
+    patches:
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: spec.appName
+        - fromFieldPath: spec.certSecretNameSuffix
+        strategy: string
+        string:
+          fmt: "%s%s-syncedsecretclaim"
+      toFieldPath: metadata.name
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: spec.appName
+        - fromFieldPath: spec.certSecretNameSuffix
+        strategy: string
+        string:
+          fmt: "%s%s"
+      toFieldPath: parameters.name
+      # data
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: spec.appName
+        - fromFieldPath: spec.certSecretNameSuffix
+        strategy: string
+        string:
+          fmt: "%s%s"
+      toFieldPath: "spec.data[0].remoteRef.key" # Target item 1
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: spec.appName
+        - fromFieldPath: spec.certSecretNameSuffix
+        strategy: string
+        string:
+          fmt: "%s%s"
+      toFieldPath: "spec.data[1].remoteRef.key" # Target item 2
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: spec.appName
+        - fromFieldPath: spec.certSecretNameSuffix
+        strategy: string
+        string:
+          fmt: "%s%s"
+      toFieldPath: "spec.data[2].remoteRef.key" # Target item 3
+      # end data
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.refreshInterval
+      toFieldPath: parameters.refreshInterval
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.targetNamespace
+      toFieldPath: parameters.targetNamespace
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.sourceNamespace
+      toFieldPath: parameters.sourceNamespace
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.replicatorSA
+      toFieldPath: parameters.replicatorSA
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.replicatorNamespace
+      toFieldPath: parameters.replicatorNamespace

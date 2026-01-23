@@ -1,0 +1,13 @@
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: PrivateSchemaClaim
+metadata:
+  name: keycloak-schema
+  namespace: crossplane-system
+spec:
+  compositionRef:
+    name: pgedge-private-schema
+  parameters:
+    databaseName: app
+    schemaName: keycloak
+    userName: keycloak
+    appNamespace: keycloak
