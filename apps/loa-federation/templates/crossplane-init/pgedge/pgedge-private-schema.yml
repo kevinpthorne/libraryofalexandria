@@ -133,7 +133,7 @@ spec:
                 name: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ca-cert-claim"
                 namespace: crossplane-system
               parameters:
-                name: PLACEHOLDER
+                name: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ca"
                 data:
                   - secretKey: ca.crt
                     remoteRef:
@@ -147,8 +147,6 @@ spec:
       patches:
         - fromFieldPath: "spec.parameters.appNamespace"
           toFieldPath: "spec.forProvider.manifest.parameters.targetNamespace"
-        - fromFieldPath: "spec.parameters.userName"
-          toFieldPath: "spec.forProvider.manifest.parameters.appName"
 
     # ------------------------------------------------------------------
     # 3. SQL SCHEMA (The Container)

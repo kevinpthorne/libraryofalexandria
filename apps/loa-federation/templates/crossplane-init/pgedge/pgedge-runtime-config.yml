@@ -31,7 +31,7 @@ spec:
                 - mountPath: /tmp
                   name: tmp-volume
                 - mountPath: /certificates/admin
-                  name: pgedge-admin-client-cert
+                  name: admin-client-cert
                   readOnly: true
               env:
                 - name: PGSSLMODE
@@ -45,7 +45,7 @@ spec:
           volumes:
             - name: tmp-volume
               emptyDir: {}
-            - name: pgedge-admin-client-cert
+            - name: admin-client-cert
               secret:
                 defaultMode: 420
                 items:
@@ -58,4 +58,4 @@ spec:
                   - key: ca.crt
                     mode: 384
                     path: ca.crt
-                secretName: pgedge-admin-client-cert
+                secretName: admin-client-cert

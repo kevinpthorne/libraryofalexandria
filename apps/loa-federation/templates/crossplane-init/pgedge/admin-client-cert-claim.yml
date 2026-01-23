@@ -1,0 +1,11 @@
+# needed to auth crossplane postgres provider to pgedge
+apiVersion: auth.loa.kevinpthorne.com/v1alpha1
+kind: SyncedCertClaim
+metadata:
+  name: admin-client-cert-claim
+  namespace: crossplane-system
+parameters:
+  appName: admin
+  appNamespace: crossplane-system
+  refreshInterval: "6M"
+  sourceNamespace: pgedge
