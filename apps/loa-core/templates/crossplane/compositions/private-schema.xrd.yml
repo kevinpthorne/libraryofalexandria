@@ -2,6 +2,8 @@ apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
   name: privateschemas.db.loa.kevinpthorne.com
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
 spec:
   scoped: Namespaced
   group: db.loa.kevinpthorne.com
