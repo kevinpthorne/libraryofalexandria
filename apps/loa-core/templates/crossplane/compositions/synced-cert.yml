@@ -73,7 +73,7 @@ spec:
                 strategy: string
                 string:
                   fmt: "%s%s"
-              toFieldPath: "spec.data[0].remoteRef.key" # Target item 1
+              toFieldPath: "spec.data[0].remoteRef.key" # ca.crt
             - type: CombineFromComposite
               combine:
                 variables:
@@ -82,7 +82,7 @@ spec:
                 strategy: string
                 string:
                   fmt: "%s%s"
-              toFieldPath: "spec.data[1].remoteRef.key" # Target item 2
+              toFieldPath: "spec.data[1].remoteRef.key" # tls.crt
             - type: CombineFromComposite
               combine:
                 variables:
@@ -91,7 +91,7 @@ spec:
                 strategy: string
                 string:
                   fmt: "%s%s"
-              toFieldPath: "spec.data[2].remoteRef.key" # Target item 3
+              toFieldPath: "spec.data[2].remoteRef.key" # tls.key
               # end data
             - type: FromCompositeFieldPath
               fromFieldPath: spec.refreshInterval
