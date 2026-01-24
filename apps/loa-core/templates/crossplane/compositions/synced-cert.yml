@@ -18,7 +18,7 @@ spec:
         apiVersion: pt.fn.crossplane.io/v1beta1
         kind: Resources
         resources:
-          - name: synced-cert-copy
+          - name: synced-cert-to-synced-secret
             base:
               apiVersion: auth.loa.kevinpthorne.com/v1alpha1
               kind: SyncedSecret
