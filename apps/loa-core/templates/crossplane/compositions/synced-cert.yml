@@ -48,7 +48,7 @@ spec:
             - type: CombineFromComposite
               combine:
                 variables:
-                - fromFieldPath: spec.appName
+                - fromFieldPath: spec.userName
                 - fromFieldPath: spec.certSecretNameSuffix
                 strategy: string
                 string:
@@ -57,7 +57,7 @@ spec:
             - type: CombineFromComposite
               combine:
                 variables:
-                - fromFieldPath: spec.appName
+                - fromFieldPath: spec.userName
                 - fromFieldPath: spec.certSecretNameSuffix
                 strategy: string
                 string:
@@ -67,7 +67,7 @@ spec:
             - type: CombineFromComposite
               combine:
                 variables:
-                - fromFieldPath: spec.appName
+                - fromFieldPath: spec.userName
                 - fromFieldPath: spec.certSecretNameSuffix
                 strategy: string
                 string:
@@ -76,7 +76,7 @@ spec:
             - type: CombineFromComposite
               combine:
                 variables:
-                - fromFieldPath: spec.appName
+                - fromFieldPath: spec.userName
                 - fromFieldPath: spec.certSecretNameSuffix
                 strategy: string
                 string:
@@ -85,7 +85,7 @@ spec:
             - type: CombineFromComposite
               combine:
                 variables:
-                - fromFieldPath: spec.appName
+                - fromFieldPath: spec.userName
                 - fromFieldPath: spec.certSecretNameSuffix
                 strategy: string
                 string:
