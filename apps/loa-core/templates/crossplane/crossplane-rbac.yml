@@ -2,23 +2,23 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: crossplane-rbac-manager
+  name: crossplane-rbac-extras
 rules:
-  - apiGroups: ["rbac.authorization.k8s.io"]
+  - apiGroups: ["rbac.authorization.k8s.io", "external-secrets.io"]
     # We restrict access strictly to Roles and RoleBindings.
     # We include RoleBindings because creating a Role is usually useless without binding it.
-    resources: ["roles", "rolebindings"]
+    resources: ["roles", "rolebindings", "clustersecretstores"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: crossplane-rbac-binding
+  name: crossplane-rbac-extras-binding
 subjects:
   - kind: ServiceAccount
     name: crossplane
     namespace: crossplane-system
 roleRef:
   kind: ClusterRole
-  name: crossplane-rbac-manager
+  name: crossplane-rbac-extras
   apiGroup: rbac.authorization.k8s.io
