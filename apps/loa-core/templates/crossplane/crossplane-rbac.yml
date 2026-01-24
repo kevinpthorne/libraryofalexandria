@@ -5,7 +5,7 @@ kind: ClusterRole
 metadata:
   name: crossplane-rbac-extras
 rules:
-  - apiGroups: ["rbac.authorization.k8s.io", "external-secrets.io"]
+  - apiGroups: ["rbac.authorization.k8s.io", "external-secrets.io", "status.external-secrets.io"]
     # We restrict access strictly to Roles and RoleBindings.
     # We include RoleBindings because creating a Role is usually useless without binding it.
     resources: ["roles", "rolebindings", "clustersecretstores", "externalsecrets"]
