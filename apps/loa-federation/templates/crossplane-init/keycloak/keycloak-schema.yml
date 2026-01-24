@@ -4,10 +4,10 @@ metadata:
   name: keycloak-schema
   namespace: crossplane-system
 spec:
-  compositionRef:
-    name: pgedge-private-schema
-  parameters:
-    databaseName: app
-    schemaName: keycloak
-    userName: keycloak
-    appNamespace: keycloak
+  crossplane:
+    compositionRef:
+      name: pgedge-private-schema
+  databaseName: app
+  schemaName: keycloak
+  userName: keycloak
+  appNamespace: keycloak

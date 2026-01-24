@@ -39,7 +39,7 @@ spec:
                   # No passwordSecretRef needed because we use Cert Auth
                   passwordSecretRef: null 
             patches:  
-              - fromFieldPath: "spec.parameters.userName"
+              - fromFieldPath: "spec.userName"
                 toFieldPath: "spec.forProvider.name"
               - type: CombineFromComposite
                 combine:
@@ -101,7 +101,7 @@ spec:
                   string:
                     fmt: "%s-client-cert"
                 toFieldPath: spec.forProvider.manifest.spec.secretName
-              - fromFieldPath: "spec.parameters.userName"
+              - fromFieldPath: "spec.userName"
                 toFieldPath: "spec.forProvider.manifest.spec.commonName"
       
           # ------------------------------------------------------------------
@@ -119,7 +119,7 @@ spec:
                     metadata:
                       name: PLACEHOLDER
                       namespace: crossplane-system
-                    parameters:
+                    spec:
                       appName: PLACEHOLDER
                       appNamespace: PLACEHOLDER # Was hardcoded to pgedge
                       certSecretNameSuffix: "-client-cert"
@@ -135,11 +135,11 @@ spec:
                   strategy: string
                   string:
                     fmt: "%s-client-cert-claim"
-                toFieldPath: parameters.name
-              - fromFieldPath: "spec.parameters.userName"
-                toFieldPath: "spec.forProvider.manifest.parameters.appName"
-              - fromFieldPath: "spec.parameters.appNamespace"
-                toFieldPath: "spec.forProvider.manifest.parameters.appNamespace"
+                toFieldPath: name
+              - fromFieldPath: "spec.userName"
+                toFieldPath: "spec.forProvider.manifest.spec.appName"
+              - fromFieldPath: "spec.appNamespace"
+                toFieldPath: "spec.forProvider.manifest.spec.appNamespace"
           
           # Copy the CA too
           - name: ca-cert-sync
@@ -154,7 +154,7 @@ spec:
                     metadata:
                       name: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ca-cert-claim"
                       namespace: crossplane-system
-                    parameters:
+                    spec:
                       name: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ca"
                       data:
                         - secretKey: ca.crt
@@ -167,8 +167,8 @@ spec:
                       replicatorSA: secret-replicator-sa
                       replicatorNamespace: external-secrets
             patches:
-              - fromFieldPath: "spec.parameters.appNamespace"
-                toFieldPath: "spec.forProvider.manifest.parameters.targetNamespace"
+              - fromFieldPath: "spec.appNamespace"
+                toFieldPath: "spec.forProvider.manifest.spec.targetNamespace"
       
           # ------------------------------------------------------------------
           # 3. SQL SCHEMA (The Container)
@@ -181,9 +181,9 @@ spec:
                 providerConfigRef:
                   name: pgedge-provider-config
             patches:
-              - fromFieldPath: "spec.parameters.schemaName"
+              - fromFieldPath: "spec.schemaName"
                 toFieldPath: "spec.forProvider.name"
-              - fromFieldPath: "spec.parameters.databaseName"
+              - fromFieldPath: "spec.databaseName"
                 toFieldPath: "spec.forProvider.database"
       
           # ------------------------------------------------------------------
@@ -200,11 +200,11 @@ spec:
                   privileges: ["USAGE", "CREATE"]
                   objectType: SCHEMA
             patches:
-              - fromFieldPath: "spec.parameters.userName"
+              - fromFieldPath: "spec.userName"
                 toFieldPath: "spec.forProvider.role"
-              - fromFieldPath: "spec.parameters.databaseName"
+              - fromFieldPath: "spec.databaseName"
                 toFieldPath: "spec.forProvider.database"
-              - fromFieldPath: "spec.parameters.schemaName"
+              - fromFieldPath: "spec.schemaName"
                 toFieldPath: "spec.forProvider.schema"
       
           # ------------------------------------------------------------------
@@ -222,9 +222,9 @@ spec:
                   privileges: [] # Revoke all
                   objectType: SCHEMA
             patches:
-              - fromFieldPath: "spec.parameters.databaseName"
+              - fromFieldPath: "spec.databaseName"
                 toFieldPath: "spec.forProvider.database"
-              - fromFieldPath: "spec.parameters.schemaName"
+              - fromFieldPath: "spec.schemaName"
                 toFieldPath: "spec.forProvider.schema"
     - step: automatically-detect-readiness
       functionRef:

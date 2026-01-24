@@ -4,7 +4,7 @@ kind: SyncedCert
 metadata:
   name: admin-client-cert-claim
   namespace: crossplane-system
-parameters:
+spec:
   appName: admin
   appNamespace: crossplane-system
   refreshInterval: "6M"

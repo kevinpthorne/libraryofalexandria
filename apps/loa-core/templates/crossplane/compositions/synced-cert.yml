@@ -25,7 +25,7 @@ spec:
               metadata:
                 name: PLACEHOLDER
                 namespace: crossplane-system
-              parameters:
+              spec:
                 name: PLACEHOLDER
                 data:
                   - secretKey: ca.crt
@@ -63,7 +63,7 @@ spec:
                 strategy: string
                 string:
                   fmt: "%s%s"
-              toFieldPath: parameters.name
+              toFieldPath: spec.name
               # data
             - type: CombineFromComposite
               combine:
@@ -95,19 +95,19 @@ spec:
               # end data
             - type: FromCompositeFieldPath
               fromFieldPath: spec.refreshInterval
-              toFieldPath: parameters.refreshInterval
+              toFieldPath: spec.refreshInterval
             - type: FromCompositeFieldPath
               fromFieldPath: spec.appNamespace
-              toFieldPath: parameters.targetNamespace
+              toFieldPath: spec.targetNamespace
             - type: FromCompositeFieldPath
               fromFieldPath: spec.sourceNamespace
-              toFieldPath: parameters.sourceNamespace
+              toFieldPath: spec.sourceNamespace
             - type: FromCompositeFieldPath
               fromFieldPath: spec.replicatorSA
-              toFieldPath: parameters.replicatorSA
+              toFieldPath: spec.replicatorSA
             - type: FromCompositeFieldPath
               fromFieldPath: spec.replicatorNamespace
-              toFieldPath: parameters.replicatorNamespace
+              toFieldPath: spec.replicatorNamespace
     - step: automatically-detect-readiness
       functionRef:
         name: function-auto-ready

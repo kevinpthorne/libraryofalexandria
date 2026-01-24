@@ -3,8 +3,7 @@ kind: PrivateSchema
 metadata:
   name: test-private-schema
 spec:
-  parameters:
-    userName: testuser
-    databaseName: testdb
-    schemaName: testschema
-    appNamespace: test-app-ns
+  userName: testuser
+  databaseName: testdb
+  schemaName: testschema
+  appNamespace: test-app-ns
