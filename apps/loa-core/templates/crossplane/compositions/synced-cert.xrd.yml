@@ -7,7 +7,6 @@ spec:
   names:
     kind: SyncedCert
     plural: syncedcerts
-  scope: Namespaced
   versions:
   - name: v1alpha1
     served: true
