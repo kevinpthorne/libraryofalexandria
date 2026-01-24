@@ -1,5 +1,5 @@
 apiVersion: db.loa.kevinpthorne.com/v1alpha1
-kind: PrivateSchemaClaim
+kind: PrivateSchema
 metadata:
   name: keycloak-schema
   namespace: crossplane-system

@@ -7,9 +7,7 @@ spec:
   names:
     kind: SyncedCert
     plural: syncedcerts
-  claimNames:
-    kind: SyncedCertClaim
-    plural: syncedcertclaims
+  scope: Namespaced
   versions:
   - name: v1alpha1
     served: true

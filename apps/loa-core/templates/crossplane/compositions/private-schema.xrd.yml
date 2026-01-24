@@ -7,9 +7,7 @@ spec:
   names:
     kind: PrivateSchema
     plural: privateschemas
-  claimNames:
-    kind: PrivateSchemaClaim
-    plural: privateschemaclaims
+  scope: Namespaced
   versions:
   - name: v1alpha1
     served: true
