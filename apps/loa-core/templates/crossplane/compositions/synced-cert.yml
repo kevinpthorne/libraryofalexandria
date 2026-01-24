@@ -24,7 +24,7 @@ spec:
               kind: SyncedSecret
               metadata:
                 name: PLACEHOLDER
-                namespace: crossplane-system
+                namespace: PLACEHOLDER
               spec:
                 name: PLACEHOLDER
                 data:
@@ -41,7 +41,6 @@ spec:
                       key: PLACEHOLDER
                       property: tls.key
                 refreshInterval: PLACEHOLDER
-                targetNamespace: PLACEHOLDER
                 sourceNamespace: PLACEHOLDER
                 replicatorSA: PLACEHOLDER
                 replicatorNamespace: PLACEHOLDER
@@ -97,8 +96,8 @@ spec:
               fromFieldPath: spec.refreshInterval
               toFieldPath: spec.refreshInterval
             - type: FromCompositeFieldPath
-              fromFieldPath: spec.appNamespace
-              toFieldPath: spec.targetNamespace
+              fromFieldPath: manifest.namespace
+              toFieldPath: manifest.namespace
             - type: FromCompositeFieldPath
               fromFieldPath: spec.sourceNamespace
               toFieldPath: spec.sourceNamespace

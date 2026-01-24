@@ -118,10 +118,9 @@ spec:
                     kind: SyncedCert
                     metadata:
                       name: PLACEHOLDER
-                      namespace: crossplane-system
+                      namespace: PLACEHOLDER
                     spec:
-                      appName: PLACEHOLDER
-                      appNamespace: PLACEHOLDER # Was hardcoded to pgedge
+                      userName: PLACEHOLDER
                       certSecretNameSuffix: "-client-cert"
                       refreshInterval: "1d"
                       sourceNamespace: pgedge
@@ -137,9 +136,9 @@ spec:
                     fmt: "%s-client-cert-claim"
                 toFieldPath: name
               - fromFieldPath: "spec.userName"
-                toFieldPath: "spec.forProvider.manifest.spec.appName"
-              - fromFieldPath: "spec.appNamespace"
-                toFieldPath: "spec.forProvider.manifest.spec.appNamespace"
+                toFieldPath: "spec.forProvider.manifest.spec.userName"
+              - fromFieldPath: "metadata.namespace"
+                toFieldPath: "spec.forProvider.manifest.metadata.namespace"
           
           # Copy the CA too
           - name: ca-cert-sync
@@ -153,7 +152,7 @@ spec:
                     kind: SyncedSecret
                     metadata:
                       name: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ca-cert-claim"
-                      namespace: crossplane-system
+                      namespace: PLACEHOLDER
                     spec:
                       name: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ca"
                       data:
@@ -162,13 +161,12 @@ spec:
                             key: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ca"
                             property: ca.crt
                       refreshInterval: "6M"
-                      targetNamespace: PLACEHOLDER
                       sourceNamespace: pgedge
                       replicatorSA: secret-replicator-sa
                       replicatorNamespace: external-secrets
             patches:
-              - fromFieldPath: "spec.appNamespace"
-                toFieldPath: "spec.forProvider.manifest.spec.targetNamespace"
+              - fromFieldPath: "metadata.namespace"
+                toFieldPath: "spec.forProvider.manifest.metadata.namespace"
       
           # ------------------------------------------------------------------
           # 3. SQL SCHEMA (The Container)

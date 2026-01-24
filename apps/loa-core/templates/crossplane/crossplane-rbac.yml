@@ -1,0 +1,24 @@
+# needed for synced-secret (i.e. letting external-secrets sync across namespaces)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: crossplane-rbac-manager
+rules:
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    # We restrict access strictly to Roles and RoleBindings.
+    # We include RoleBindings because creating a Role is usually useless without binding it.
+    resources: ["roles", "rolebindings"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: crossplane-rbac-binding
+subjects:
+  - kind: ServiceAccount
+    name: crossplane
+    namespace: crossplane-system
+roleRef:
+  kind: ClusterRole
+  name: crossplane-rbac-manager
+  apiGroup: rbac.authorization.k8s.io

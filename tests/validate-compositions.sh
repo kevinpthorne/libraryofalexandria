@@ -3,7 +3,7 @@ set -e
 
 # Ensure functions.yaml exists in the current directory or point to a shared one
 FUNCTIONS_FILE="apps/loa-core/templates/crossplane/pkgs/functions.yml"
-DOCKER_HOST=unix:///Users/kevint/.docker/run/docker.sock
+export DOCKER_HOST=unix:///Users/kevint/.docker/run/docker.sock
 
 # 1. Secret Store
 echo "Checking SecretStore..."

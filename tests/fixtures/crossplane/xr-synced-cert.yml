@@ -2,8 +2,8 @@ apiVersion: auth.loa.kevinpthorne.com/v1alpha1
 kind: SyncedCert
 metadata:
   name: test-synced-cert
+  namespace: my-app-ns
 spec:
-  appName: my-app
-  appNamespace: my-app-ns
+  userName: my-app
   sourceNamespace: cert-manager
   certSecretNameSuffix: -tls

@@ -2,8 +2,8 @@ apiVersion: db.loa.kevinpthorne.com/v1alpha1
 kind: PrivateSchema
 metadata:
   name: test-private-schema
+  namespace: test-app-ns
 spec:
   userName: testuser
   databaseName: testdb
   schemaName: testschema
-  appNamespace: test-app-ns
