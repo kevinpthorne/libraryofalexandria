@@ -1,7 +1,7 @@
 apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: syncedcert.auth.loa.kevinpthorne.com
+  name: syncedcerts.auth.loa.kevinpthorne.com
 spec:
   scoped: Namespaced
   group: auth.loa.kevinpthorne.com
