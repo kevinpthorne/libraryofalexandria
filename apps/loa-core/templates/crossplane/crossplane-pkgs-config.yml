@@ -2,7 +2,6 @@ apiVersion: pkg.crossplane.io/v1beta1
 kind: DeploymentRuntimeConfig
 metadata:
   name: hardened-runtime-config
-  namespace: crossplane-system
 spec:
   deploymentTemplate:
     spec:
