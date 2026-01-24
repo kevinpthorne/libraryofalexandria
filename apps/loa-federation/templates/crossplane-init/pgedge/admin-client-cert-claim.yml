@@ -6,5 +6,5 @@ metadata:
   namespace: crossplane-system
 spec:
   userName: admin
-  refreshInterval: "6M"
+  refreshInterval: "1000h" # note: currently, this cert never expires. Must change!
   sourceNamespace: pgedge

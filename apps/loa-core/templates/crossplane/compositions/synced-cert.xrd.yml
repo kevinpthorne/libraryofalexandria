@@ -30,7 +30,7 @@ spec:
                 description: "The suffix that may get appended to the cert secret name."
               refreshInterval:
                 type: string
-                default: "1d"
+                default: "1000h"  # current default client cert expiry on pgedge is 6 months
                 description: "How often to refresh the secret."
               sourceNamespace:
                 type: string
