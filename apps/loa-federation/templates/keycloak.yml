@@ -25,7 +25,7 @@ spec:
           schema: public
           name: app
           username: app
-          jdbcParams: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp-private/tls.fixed.key&sslrootcert=/etc/x509/db-ca/ca.crt"
+          jdbcParams: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp-private/tls.fixed.key&sslrootcert=/etc/x509/cas/ca-bundle.crt"
         
         # 3. Environment Variables (The "Magic Glue")
         # We inject the DB credentials and the JDBC Cert-Auth string here.
@@ -42,7 +42,7 @@ spec:
             value: app
           # Construct the JDBC URL parameters for Mutual TLS
           - name: KC_TRUSTSTORE_PATHS
-            value: "/etc/x509/db-ca/ca.crt"
+            value: "/etc/x509/cas/ca.crt"
           # - name: JAVA_OPTS_APPEND
           #   value: "-Djavax.net.debug=ssl,handshake"
           # Vital for functioning behind an Ingress
@@ -68,9 +68,9 @@ spec:
             secret:
               secretName: pgedge-keycloak-client-cert
               defaultMode: 0400
-          - name: db-ca-cert
+          - name: cas
             secret:
-              secretName: pgedge-cluster-test-data-ca
+              secretName: trusted-ca-bundle
               defaultMode: 0400
           - name: tls-fixed
             emptyDir: {}
@@ -79,8 +79,8 @@ spec:
           - name: db-client-certs
             mountPath: /etc/x509/db-client
             readOnly: true
-          - name: db-ca-cert
-            mountPath: /etc/x509/db-ca
+          - name: cas
+            mountPath: /etc/x509/ca
             readOnly: true
           - name: tls-fixed
             mountPath: /tmp-private
