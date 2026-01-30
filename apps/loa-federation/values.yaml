@@ -2,7 +2,7 @@ argoNamespace: argo-cd
 cluster: {}
 
 pki:
-  rootCAIssuer: pki-bootstrap
+  rootCAIssuer: pki-bootstrap  # currently implied to be ClusterIssuer
   certManagerNamespace: cert-manager
 
 pgedge:
