@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: streaming-replica-client-cert
+  namespace: {{ .Values.pgedge.namespace }}
+  labels:
+    cnpg.io/reload: ""
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: streaming-replica-client-cert
+  namespace: {{ .Values.pgedge.namespace }}
+spec:
+  secretName: streaming-replica-client-cert
+  usages:
+    - client auth
+  commonName: streaming_replica
+  issuerRef:
+    name: pgedge-{{ .Values.pgedge.appName }}-client-ca-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  privateKey:
+    rotationPolicy: Never

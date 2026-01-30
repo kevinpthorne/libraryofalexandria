@@ -35,7 +35,7 @@ spec:
                   readOnly: true
               env:
                 - name: PGSSLMODE
-                  value: "verify-ca"
+                  value: "verify-full"
                 - name: PGSSLROOTCERT
                   value: "/certificates/admin/ca.crt"
                 - name: PGSSLCERT

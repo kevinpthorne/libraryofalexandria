@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pgedge-{{ .Values.pgedge.appName }}-server-cert
+  namespace: {{ .Values.pgedge.namespace }}
+  labels:
+    cnpg.io/reload: ""
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pgedge-{{ .Values.pgedge.appName }}-server-cert
+  namespace: {{ .Values.pgedge.namespace }}
+spec:
+  secretName: pgedge-{{ .Values.pgedge.appName }}-server-cert
+  usages:
+    - server auth
+  dnsNames:
+    - "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw"
+    - "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.{{ .Values.pgedge.namespace }}"
+    - "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.{{ .Values.pgedge.namespace }}.svc"
+    - "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-r"
+    - "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-r.{{ .Values.pgedge.namespace }}"
+    - "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-r.{{ .Values.pgedge.namespace }}.svc"
+    - "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ro"
+    - "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ro.{{ .Values.pgedge.namespace }}"
+    - "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-ro.{{ .Values.pgedge.namespace }}.svc"
+  issuerRef:
+    name: {{ .Values.pki.rootCAIssuer }}
+    kind: ClusterIssuer
+    group: cert-manager.io
+  privateKey:
+    rotationPolicy: Never

@@ -1,0 +1,35 @@
+# creating this secret ahead of time allows us to add the label prior
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pgedge-{{ .Values.pgedge.appName }}-client-ca-key-pair
+  namespace: {{ .Values.pgedge.certManagerNamespace }}
+  labels:
+    pki.loa.kevinpthorne.com/trusted-ca: "true"
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pgedge-{{ .Values.pgedge.appName }}-client-ca
+  namespace: {{ .Values.pki.certManagerNamespace }}
+spec:
+  isCA: true
+  commonName: "{{ .Values.pki.rootCAIssuer }}-pgedge-{{ .Values.pgedge.appName }}-client-ca"
+  secretName: pgedge-{{ .Values.pgedge.appName }}-client-ca-key-pair
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    name: {{ .Values.pki.rootCAIssuer }}
+    kind: Issuer
+    group: cert-manager.io
+  privateKey:
+    rotationPolicy: Never
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: pgedge-{{ .Values.pgedge.appName }}-client-ca-issuer
+spec:
+  ca:
+    secretName: pgedge-{{ .Values.pgedge.appName }}-client-ca-key-pair

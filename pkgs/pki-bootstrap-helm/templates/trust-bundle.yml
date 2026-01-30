@@ -1,0 +1,26 @@
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: trusted-ca-bundle
+spec:
+  sources:
+  # 1. The Static Root CA (The anchor)
+  - secret:
+      name: {{ .Release.Name }}
+      key: "tls.crt"
+  
+  # 2. Dynamic Intermediates (The variable part)
+  # Any secret in the 'cert-manager' namespace with this label 
+  # will be automatically appended to the bundle.
+  - secret:
+      selector:
+        matchLabels:
+          pki.loa.kevinpthorne.com/trusted-ca: "true"
+      key: "tls.crt"
+
+  target:
+    configMap:
+      key: "ca-bundle.crt"
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: "*"

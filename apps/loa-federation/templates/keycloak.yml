@@ -20,7 +20,7 @@ spec:
 
         database:
           type: postgres
-          host: pgedge-cluster-{{ .Values.cluster.name }}-data-rw.pgedge.svc.cluster.local
+          host: pgedge-cluster-{{ .Values.cluster.name }}-data-rw.pgedge.svc
           port: "5432"
           schema: public
           name: app
@@ -35,7 +35,7 @@ spec:
           - name: KC_DB_URL_DATABASE
             value: "app"
           - name: KC_DB_URL_HOST
-            value: "pgedge-cluster-{{ .Values.cluster.name }}-data-rw.pgedge.svc.cluster.local"
+            value: "pgedge-cluster-{{ .Values.cluster.name }}-data-rw.pgedge.svc"
           - name: KC_DB_URL_PORT
             value: "5432"
           - name: KC_DB_USERNAME
@@ -66,7 +66,7 @@ spec:
           # DB Client Certs (via Crossplane/Manual Secret)
           - name: db-client-certs
             secret:
-              secretName: pgedge-app-client-cert
+              secretName: pgedge-keycloak-client-cert
               defaultMode: 0400
           - name: db-ca-cert
             secret:

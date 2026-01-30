@@ -14,12 +14,17 @@ spec:
       values: |
         pgEdge:
           appName: {{ .Values.pgedge.appName }}
-          enableSuperuserAccess: true
           nodes:
             - name: {{ .Values.cluster.name }}-data
               hostname: {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw
               clusterSpec:
                 instances: {{ tpl .Values.pgedge.instances . }}
+                imagePullPolicy: IfNotPresent
+                certificates:
+                  serverTLSSecret: pgedge-{{ .Values.pgedge.appName }}-server-cert
+                  serverCASecret: pgedge-{{ .Values.pgedge.appName }}-server-cert
+                  clientCASecret: pgedge-{{ .Values.pgedge.appName }}-client-ca-key-pair
+                  replicationTLSSecret: streaming-replica-client-cert
                 # CloudNativePG Security Context Injection
                 image:
                   podSecurityContext:
@@ -57,7 +62,7 @@ spec:
                   size: 1Gi
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: pgedge
+    namespace: {{ .Values.pgedge.namespace }}
   syncPolicy:
     automated:
       prune: true

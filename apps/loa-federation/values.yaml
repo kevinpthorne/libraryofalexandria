@@ -1,6 +1,11 @@
 argoNamespace: argo-cd
 cluster: {}
 
+pki:
+  rootCAIssuer: pki-bootstrap
+  certManagerNamespace: cert-manager
+
 pgedge:
   instances: "{{ .Values.cluster.workers.count | default \"3\" }}"
   appName: "pgedge-cluster"
+  namespace: pgedge
