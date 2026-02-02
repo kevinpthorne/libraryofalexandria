@@ -13,6 +13,7 @@ spec:
       # We override the values to enforce a restricted security context
       values: |
         pgEdge:
+          provisionCerts: false  # we do this ourselves to force cluster issuer
           appName: {{ .Values.pgedge.appName }}
           nodes:
             - name: {{ .Values.cluster.name }}-data
