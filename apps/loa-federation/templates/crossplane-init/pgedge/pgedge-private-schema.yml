@@ -63,7 +63,7 @@ spec:
                 secretName: PLACEHOLDER
                 usages:
                   - client auth
-                commonName: admin
+                commonName: PLACEHOLDER
                 issuerRef:
                   name: pgedge-{{ .Values.pgedge.appName }}-client-ca-issuer
                   kind: ClusterIssuer
@@ -87,6 +87,9 @@ spec:
                   string:
                     fmt: "pgedge-%s-client-cert"
                 toFieldPath: spec.secretName
+              - fromFieldPath: spec.userName
+                toFieldPath: spec.commonName
+
 
           # ------------------------------------------------------------------
           # 3. SQL SCHEMA (The Container)
@@ -117,6 +120,8 @@ spec:
                 forProvider:
                   privileges: ["USAGE", "CREATE"]
                   objectType: SCHEMA
+                  database: PLACEHOLDER
+                  schema: PLACEHOLDER
             patches:
               - fromFieldPath: "spec.userName"
                 toFieldPath: "spec.forProvider.role"
@@ -139,6 +144,8 @@ spec:
                   role: PUBLIC
                   privileges: [] # Revoke all
                   objectType: SCHEMA
+                  database: PLACEHOLDER
+                  schema: PLACEHOLDER
             patches:
               - fromFieldPath: "spec.databaseName"
                 toFieldPath: "spec.forProvider.database"
