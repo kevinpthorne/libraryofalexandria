@@ -1,0 +1,8 @@
+{{ if .Values.blocks }}
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: {{ .Values.poolName }}
+spec:
+  blocks: {{ toYaml .Values.blocks | nindent 4 }}
+{{ end }}

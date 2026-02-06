@@ -1,0 +1,5 @@
+blocks: []
+interfaces: []
+
+poolName: svc-pool
+policyName: svc-policy

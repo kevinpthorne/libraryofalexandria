@@ -34,6 +34,40 @@
                 description = "Overrides for apps, usually placed in master0's config";
                 default = {};
             };
+
+            virtualIps = let
+                    range = lib.types.submodule {
+                                options = {
+                                    start = lib.mkOption {
+                                        type = lib.types.str;
+                                    };
+                                    end = lib.mkOption {
+                                        type = lib.types.str;
+                                    };
+                                };
+                            };
+                    cidr = lib.types.submodule {
+                                options = {
+                                    cidr = lib.mkOption {
+                                        type = lib.types.str;
+                                    };
+                                };
+                            };      
+                in lib.mkOption {
+                type = lib.types.submodule {
+                    options = {
+                        enable = lib.mkEnableOption "Set a virtual IP range for Cilium";
+
+                        blocks = lib.mkOption {
+                            type = lib.types.listOf (lib.types.either range cidr);
+                        };
+                        interfaces = lib.mkOption {
+                            type = lib.types.listOf lib.types.str;
+                            default = [ "eth0 "];
+                        };
+                    };
+                };
+            };
         };
         # rendered options, never given outside this module
         masters = lib.mkOption {

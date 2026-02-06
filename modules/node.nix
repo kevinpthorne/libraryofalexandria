@@ -1,11 +1,11 @@
 { config, pkgs, lib, ... }:
 let 
     indexOf = val: lib.lists.findFirstIndex (x: x == val) null;
-    getHostname = nodeType: nodeId: clusterName: nodeType + toString nodeId + "-" + clusterName;
+    getHostname = nodeType: nodeId: clusterName: "${nodeType}${toString nodeId}-${clusterName}";
 in
 {
     imports = [
-        ./submodules/deployment/colmena.nix
+        ./submodules/deployment
         ./submodules/k8s/engines/rke2.nix
         ./submodules/k8s/engines/kubernetes.nix
     ];

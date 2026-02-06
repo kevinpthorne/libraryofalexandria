@@ -38,5 +38,13 @@ in {
         apps.loa-core.values.overrides.seaweedfs.size = "1G";
         apps.loa-extras.enable = lib.mkForce true;
         apps.loa-federation.values.overrides.pgedge.instances = "2"; # TODO make not require quotes
+
+        virtualIps = {
+            enable = true;
+            blocks = [{
+                start = "192.168.56.100";
+                end = "192.168.56.200";
+            }];
+        };
     };
 }

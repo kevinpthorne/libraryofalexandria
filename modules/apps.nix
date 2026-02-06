@@ -44,10 +44,6 @@
             enable = true;
             version = "9.1.4";
         };
-        external-secrets-operator = {
-            enable = true;
-            version = "1.2.0";
-        };
         cert-manager = {
             enable = true;
             version = "v1.17.0";

@@ -49,9 +49,23 @@
 
         # disko.imageBuilder.enableBinfmt = true;  # TODO this needs to be enabled for cross compilation
         disko.devices.disk.main = { # disk is called 'main'
-            imageSize = "30G";
+            imageSize = "32G";
             device = "/dev/vda";
         };
+
+        # data dir
+        fileSystems."/var" = {
+            device = "/dev/vdb";
+            fsType = "ext4";
+            autoFormat = true;  # letting disko do this instead
+            options = [ "defaults" "noatime" ];
+            # Ensure this directory is created on system activation
+            neededForBoot = true;
+        };
+        services.fstrim.enable = true;
+        environment.systemPackages = with pkgs; [
+            e2fsprogs   # Provides filesystem utilities like tune2fs, fsck for ext4
+        ];
  
         boot.loader.grub = {
             enable = true;

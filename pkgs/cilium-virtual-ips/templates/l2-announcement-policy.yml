@@ -1,0 +1,10 @@
+{{ if .Values.interfaces }}
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: {{ .Values.policyName }}
+spec:
+  interfaces: {{ toYaml .Values.interfaces | nindent 4 }}
+  externalIPs: true
+  loadBalancerIPs: true
+{{ end }}

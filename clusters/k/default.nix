@@ -1,9 +1,37 @@
 { lib, config, lib2, ... }:
 let
-    defaultModule = id: { pkgs, lib, ... }: {
-        config = {
-            time.timeZone = "Etc/UTC";
-        };
+    defaultModule = isMaster: id: let
+            firstIpOctet = 21;
+            ipLastOctet = if isMaster then firstIpOctet + id else firstIpOctet + id + config.masters.count;
+        in 
+        { pkgs, lib, ... }: {
+            config = {
+                time.timeZone = "Etc/UTC";
+
+                libraryofalexandria.node.deployment.mgmtVlan = {
+                    enable = true;
+                    vlanId = 101;
+                    staticIp = "192.168.101.${ipLastOctet}";
+                };
+
+                networking = {
+                    vlans.lowtrust121 = { id = 121; interface = "eth0"; };
+                    vlans.mgmt100 = { id = 100; interface = "eth0"; };
+                    
+                    interfaces = {
+                        eth0.useDHCP = false;
+
+                        lowtrust121.ipv4.addresses = [{
+                            address = "192.168.121.${ipLastOctet}";
+                            prefixLength = 24; # Equivalent to subnet mask 255.255.255.0
+                        }];
+                        mgmt100.ipv4.addresses = [{
+                            address = "192.168.100.${ipLastOctet}";
+                            prefixLength = 24;
+                        }];
+                    };
+                };
+            };
     };
 in {
     config.libraryofalexandria.cluster = {
@@ -11,10 +39,10 @@ in {
 
         masters = {
             count = 3;
-            ips = [ "10.69.69.100" "10.69.69.101" "10.69.69.102" ];
+            ips = [ "192.168.121.21" "192.168.121.22" "192.168.121.23" ];
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/rpi5.nix)
-                (defaultModule nodeId)
+                (defaultModule true nodeId)
                 (lib2.importIfExists ./master.nix)
                 (lib2.importIfExists ./master-${toString nodeId}.nix)
             ];
@@ -23,12 +51,21 @@ in {
             count = 2;
             modules = with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/rpi5.nix)
-                (defaultModule nodeId)
+                (defaultModule false nodeId)
                 (lib2.importIfExists ./worker.nix)
                 (lib2.importIfExists ./worker-${toString nodeId}.nix)
             ];
         };
 
         apps.loa-extras.enable = true;
+
+        virtualIps = {
+            enable = true;
+            blocks = [{
+                start = "192.168.121.30";
+                end = "192.168.121.250";
+            }];
+            interfaces = [ "eth0.121" ];
+        };
     };
 }

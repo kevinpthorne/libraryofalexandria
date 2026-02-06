@@ -44,8 +44,8 @@
 
     overlays = {
       # runonce = import ./pkgs/runonce 
-      runonce = final: prev: { runonce = import ./pkgs/runonce final; };
-      # localPkgs = final: prev: import ./pkgs nixpkgs final;
+      # runonce = final: prev: { runonce = import ./pkgs/runonce final; };
+      localPkgs = final: prev: localPkgs final;
     };
 
     nixosConfigurations = {
@@ -63,6 +63,7 @@
     // clusters.nixosConfigurations;
 
     colmena = clusters.colmena;
+    clusters = clusters;
 
     packages = deepMerge [ 
       # system-specific packages  
@@ -74,7 +75,7 @@
         let
           systemPkgs = import nixpkgs {
             inherit system;
-            overlays = with self.overlays; [ runonce ];
+            overlays = with self.overlays; [ localPkgs ];
           };
         in
         {

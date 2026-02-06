@@ -92,12 +92,18 @@
                 tokenFile = "/var/keys/token.key";
                 extraFlags = [
                     "--profile=cis"
+                    "--disable-kube-proxy"  # cilium to do
                 ] ++ tlsSanFlags;
+                disable = [
+                    "rke2-ingress-nginx"
+                    "rke2-servicelb"
+                ];
             } else {
                 role = "agent";
                 agentTokenFile = "/var/keys/agent-token.key";
                 extraFlags = [
                     "--profile=cis"
+                    "--disable-kube-proxy"
                 ] ++ tlsSanFlags;
             });
 
@@ -138,10 +144,33 @@
   type: ipsec
   ipsec:
     secretName: cilium-ipsec-keys
+# Enable L2 Announcements (MetalLB replacement)
+l2announcements:
+  enabled: true
+externalIPs:
+  enabled: true
+
+# Enable Gateway API (Nginx replacement)
+gatewayAPI:
+  enabled: true
+
+# Ensure eBPF replacement is active (Required for these features)
+kubeProxyReplacement: true
+k8sServiceHost: 127.0.0.1
+k8sServicePort: 6443
 '';
                     };
                     namespace = "kube-system";
                 }
+                (lib.mkIf config.libraryofalexandria.cluster.virtualIps.enable {
+                    name = "cilium-virtual-ips";
+                    chart = "${pkgs.cilium-virtual-ips}";
+                    values = {
+                        blocks = config.libraryofalexandria.cluster.virtualIps.blocks;
+                        interfaces = config.libraryofalexandria.cluster.virtualIps.interfaces;
+                    };
+                    namespace = "kube-system";
+                })
             ];
     };
 }

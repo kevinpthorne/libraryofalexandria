@@ -38,7 +38,6 @@
             device = "/dev/nvme0n1";
             fsType = "ext4";
             # autoFormat = true;  # letting disko do this instead
-            label = "data";
             options = [ "defaults" "noatime" ];
             # Ensure this directory is created on system activation
             neededForBoot = true;

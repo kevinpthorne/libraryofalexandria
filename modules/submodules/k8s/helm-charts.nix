@@ -8,6 +8,7 @@
             charts = lib.mkOption {
                 type = lib.types.listOf (lib.types.submodule ./helm-chart.nix);
             };
+            offlineMode = lib.mkEnableOption "Download helm repository snapshots to the nix store";
         };
     };
 
@@ -50,6 +51,34 @@
                     concatCommands = commands: builtins.concatStringsSep "\n" commands;
                     kubeconfig = config.environment.variables."KUBECONFIG";
                 in ''
+                    set -x
+                    echo "pwd = $(pwd)"
+                    ${pkgs.kubernetes-helm}/bin/helm env
+
+                    ${concatCommands (forEachChartModule (chart: (
+                        "${lib.optionalString (chart.config.repo != null) "${pkgs.kubernetes-helm}/bin/helm repo add ${chart.config.name} ${chart.config.repo}"}"
+                    )))}
+
+                    ${pkgs.kubernetes-helm}/bin/helm repo update
+
+                    ${concatCommands (forEachChartModule (chart: (
+                        concatCommands [
+                            "echo \"Installing ${chart.config.name}\""
+                            "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.config.name} ${chart.config.chart} ${lib.optionalString (chart.config.version != null) "--version ${chart.config.version}"} -f ${chart.config.package}/hc-${chart.config.name}-values.yaml ${lib.optionalString (chart.config.namespace != null) "--namespace ${chart.config.namespace} --create-namespace"} --kubeconfig ${kubeconfig} --wait"
+                        ]
+                    )))}
+                '';
+            };
+
+            systemd.services.helm-chart-remover = {
+                wantedBy = [ "${k8sSystemdService}.service" ];
+                after = [ "${k8sSystemdService}.service" ];
+                script = let
+                    forEachChartModule = func: builtins.map (chart: func chart) helmChartValuesModules;
+                    concatCommands = commands: builtins.concatStringsSep "\n" commands;
+                    kubeconfig = config.environment.variables."KUBECONFIG";
+                in ''
+                    set -x
                     echo "pwd = $(pwd)"
                     ${pkgs.kubernetes-helm}/bin/helm env
 

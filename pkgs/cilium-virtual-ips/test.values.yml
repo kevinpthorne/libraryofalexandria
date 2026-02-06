@@ -1,0 +1,7 @@
+blocks:
+  - start: 10.0.0.1
+    end: 10.0.0.3
+  - cidr: 172.16.0.0/24
+interfaces:
+  - eth0
+  - eth1
