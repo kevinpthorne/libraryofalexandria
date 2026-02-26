@@ -70,15 +70,16 @@
             # vm.overcommit_memory=1
             # kernel.panic=10
             # kernel.panic_on_oops=1
-            boot.kernelParams = [
-                "panic_on_oops=1"
-                "panic=10"
-            ];
-            boot.kernel.sysctl = {
-                "vm.overcommit_memory" = 1;
-                "kernel.panic_on_oops" = 1;
-                "kernel.panic" = 10;
-            };
+            # already set in 25.11
+            # boot.kernelParams = [
+            #     "panic_on_oops=1"
+            #     "panic=10"
+            # ];
+            # boot.kernel.sysctl = {
+            #     "vm.overcommit_memory" = 1;
+            #     "kernel.panic_on_oops" = 1;
+            #     "kernel.panic" = 10;
+            # };
 
             services.rke2 = let 
                 tlsSanFlags = builtins.map (ip: "--tls-san=${ip}") config.libraryofalexandria.node.masterIps;

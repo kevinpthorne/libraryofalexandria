@@ -11,7 +11,7 @@ let
                 libraryofalexandria.node.deployment.mgmtVlan = {
                     enable = true;
                     vlanId = 101;
-                    staticIp = "192.168.101.${ipLastOctet}";
+                    staticIp = "192.168.101.${toString ipLastOctet}";
                 };
 
                 networking = {
@@ -22,11 +22,11 @@ let
                         eth0.useDHCP = false;
 
                         lowtrust121.ipv4.addresses = [{
-                            address = "192.168.121.${ipLastOctet}";
+                            address = "192.168.121.${toString ipLastOctet}";
                             prefixLength = 24; # Equivalent to subnet mask 255.255.255.0
                         }];
                         mgmt100.ipv4.addresses = [{
-                            address = "192.168.100.${ipLastOctet}";
+                            address = "192.168.100.${toString ipLastOctet}";
                             prefixLength = 24;
                         }];
                     };

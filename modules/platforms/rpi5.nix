@@ -9,7 +9,7 @@
         ../submodules/arm64/etcd-fix.nix
         ../submodules/rpi/cgroup.nix
         inputs.disko.nixosModules.disko
-        ../submodules/disko-layouts/one-data-partition.nix
+        # ../submodules/disko-layouts/one-data-partition.nix
     ];
 
     config = {
@@ -19,8 +19,8 @@
         networking = {
             useDHCP = false;
             interfaces = {
-                wlan0.useDHCP = false;
-                eth0.useDHCP = true;  # master IPs need to be reserved in DHCP server
+                wlan0.useDHCP = lib.mkDefault false;
+                eth0.useDHCP = lib.mkDefault true;  # master IPs need to be reserved in DHCP server
             };
         };
         raspberry-pi-nix.board = "bcm2712"; # pi 5

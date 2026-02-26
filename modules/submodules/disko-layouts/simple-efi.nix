@@ -26,6 +26,7 @@
                 type = "filesystem";
                 format = "ext4";
                 mountpoint = "/";
+                extraArgs = [ "-F" "-E" "lazy_itable_init=0,lazy_journal_init=0" ];
               };
             };
           };

@@ -75,6 +75,7 @@ in
                 # TODO maybe set ip statically?
                 enableIPv6  = false;  # rke2 etcd prefers ipv6 over v4 but v4 is easier for humans
             };
+            system.nixos.label = config.libraryofalexandria.node.hostname;
 
             environment = {
                 systemPackages = with pkgs; [
@@ -113,6 +114,6 @@ in
                 serverOption = "iburst";
             };
 
-            system.stateVersion = "25.05";
+            system.stateVersion = "25.11";
         };
 }

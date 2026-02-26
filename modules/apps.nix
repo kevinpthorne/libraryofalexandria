@@ -35,23 +35,23 @@
 
     config.libraryofalexandria.apps = {
         "${config.libraryofalexandria.cluster.name}-apps".enable = true;
-        loa-extras.enable = false;
-        loa-observability.enable = true;
-        loa-federation.enable = true;
-        loa-authn.enable = false;  # openldap is too crusty and old
-        loa-core.enable = true;
+        loa-extras.enable = lib.mkDefault false;
+        loa-observability.enable = lib.mkDefault true;
+        loa-federation.enable = lib.mkDefault true;
+        loa-authn.enable = lib.mkDefault false;  # openldap is too crusty and old
+        loa-core.enable = lib.mkDefault true;
         argocd = {
-            enable = true;
-            version = "9.1.4";
+            enable = lib.mkDefault true;
+            version = lib.mkDefault "9.1.4";
         };
         cert-manager = {
-            enable = true;
-            version = "v1.17.0";
-            csiVersion = "v0.12.0";
+            enable = lib.mkDefault true;
+            version = lib.mkDefault "v1.17.0";
+            csiVersion = lib.mkDefault "v0.12.0";
         };
         longhorn = {
-            enable = true;
-            version = "1.10.0";
+            enable = lib.mkDefault true;
+            version = lib.mkDefault "1.10.0";
         };
     };
 }

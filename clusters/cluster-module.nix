@@ -181,8 +181,10 @@
             src = ./.;
             
             buildInputs = derivations;
+            enableParallelBuilding = true;
             
             buildPhase = ''
+                set -x
                 # Make directories
                 ${concatCommands (builtins.map (system: "mkdir -p $out/images/${system.config.libraryofalexandria.node.hostname}/") allSystems)}
 

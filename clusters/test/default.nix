@@ -3,7 +3,7 @@ let
     defaultModule = id: { pkgs, lib, ... }: {
         config = {
             time.timeZone = "Etc/UTC";
-            vmHostPlatform = "aarch64-linux";
+            nixpkgs.hostPlatform = "aarch64-linux";
             # vmImage.size = "20G";
 
             libraryofalexandria.node.deployment.colmena.hostName = "localhost";
@@ -15,7 +15,7 @@ in {
 
         masters = {
             count = 3;
-            ips = [ "192.168.56.11" "192.168.56.9" "192.168.56.8" ];
+            ips = [ "192.168.56.12" "192.168.56.13" "192.168.56.14" ];
             modules = let cluster = config; in with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/vm.nix)
                 # (import ../../modules/submodules/stig.nix)
