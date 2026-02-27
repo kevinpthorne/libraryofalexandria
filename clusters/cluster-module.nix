@@ -211,7 +211,7 @@
         # modules-only, for nixosTest
         modules = (collectModules masterModulesAttrSets) // (collectModules workerModulesAttrSets);
         # colmena
-        colmena = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "colmena") ({
+        colmenaHive = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "colmena") (inputs.colmena.lib.makeHive {
             meta = {
                 nixpkgs = import inputs.nixpkgs {
                     hostPlatform = "aarch64-linux"; # FIXME this will cause issues on x86 builder hosts
@@ -232,7 +232,7 @@
         # ..build-all-${clusterName}
         packages = lib2.eachArch (arch: let 
             pkgs = import inputs.nixpkgs {
-                system = arch;
+                hostPlatform = arch;
             };
         in {
             "build-all-${config.libraryofalexandria.cluster.name}" = allSystemsBuilder pkgs;  # TODO this technically names the package twice - why not once?

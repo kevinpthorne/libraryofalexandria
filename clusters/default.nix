@@ -35,12 +35,12 @@ let
     ) {} (builtins.attrNames clusters);
     
     nixosConfigurations = collectAll (cluster: cluster.nixosConfigurations);
-    colmena = collectAll (cluster: cluster.colmena);
+    colmenaHive = collectAll (cluster: cluster.colmenaHive);
     packages = mergeAll (cluster: cluster.packages);
 in
 {
     by_name = clusters;
     inherit nixosConfigurations;
-    inherit colmena;
+    inherit colmenaHive;
     inherit packages;
 }

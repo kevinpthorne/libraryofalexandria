@@ -62,7 +62,7 @@
     } 
     // clusters.nixosConfigurations;
 
-    colmena = clusters.colmena;
+    colmenaHive = clusters.colmenaHive;
     clusters = clusters;
 
     packages = deepMerge [ 
