@@ -214,7 +214,7 @@
         colmena = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "colmena") ({
             meta = {
                 nixpkgs = import inputs.nixpkgs {
-                    system = "aarch64-linux"; # FIXME this will cause issues on x86 builder hosts
+                    hostPlatform = "aarch64-linux"; # FIXME this will cause issues on x86 builder hosts
                 };
                 nodeNixpkgs = builtins.mapAttrs (_: v: v.pkgs) config.nodes;
                 nodeSpecialArgs = builtins.mapAttrs (_: v: v._module.specialArgs) config.nodes;
@@ -225,7 +225,7 @@
                 };
             };
         } // builtins.mapAttrs (name: value: {
-            nixpkgs.system = value.config.nixpkgs.system;
+            nixpkgs.hostPlatform = value.config.nixpkgs.hostPlatform;
             imports = value._module.args.modules;
         }) (config.nodes));
         # packages
