@@ -8,6 +8,7 @@ in
         ./submodules/deployment
         ./submodules/k8s/engines/rke2.nix
         ./submodules/k8s/engines/kubernetes.nix
+        ./submodules/k8s/zarf.nix
     ];
 
     options.libraryofalexandria.node = {
@@ -62,6 +63,8 @@ in
             extraHostEntries = map (entry: "${entry.name} ${entry.value}") (lib.attrsets.attrsToList masterIpsToHostnames);
             extraHostsStr = lib.concatStringsSep "\n" extraHostEntries;
         in lib.mkIf config.libraryofalexandria.node.enable {
+
+            libraryofalexandria.zarf.enable = true;
 
             networking = {
                 hostName = config.libraryofalexandria.node.hostname;

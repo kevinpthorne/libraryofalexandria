@@ -1,10 +1,10 @@
 # Usage:
 # lib2.fetchRke2Asset "rke2-images" { "linux-amd64" = "abc..."; "linux-arm64" = "def..."; }
 name: sha256s:
-{ pkgs, lib, ... }@args:
+{ pkgs, ... }@args:
 let
     rke2Version = pkgs.rke2.version;
-    rke2VersionUrlEncoded = lib.escapeURL rke2Version;
+    rke2VersionUrlEncoded = pkgs.lib.escapeURL rke2Version;
     rke2Arch = import ./get-rke2-arch.nix { inherit pkgs; };
     fileUrl = "https://github.com/rancher/rke2/releases/download/v${rke2VersionUrlEncoded}/${name}.${rke2Arch}.tar.zst";
     sha256 = sha256s.${rke2Arch};

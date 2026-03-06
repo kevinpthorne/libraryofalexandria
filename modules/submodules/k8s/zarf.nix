@@ -11,18 +11,23 @@
     };
 
     config = let
-      zarfBundlePackage = pkgs.zarf;
       isMaster = config.libraryofalexandria.node.type == "master";
       isMaster0 = isMaster && config.libraryofalexandria.node.id == 0;
+      helmCharts = config.system.build.helmChartModules;
+      helmChartPackages = builtins.map (chartModule: chartModule.config.chartPackage) helmCharts;
+      zarfBundlePackage = pkgs.zarf-bundle.override {
+        clusterName = config.libraryofalexandria.cluster.name;
+        inherit helmCharts;
+      };
       k8sSystemdService = if config.libraryofalexandria.cluster.k8sEngine == "rke2" then "rke2-server" else "kubernetes";
     in lib.mkIf (config.libraryofalexandria.zarf.enable && isMaster0) {
-      environment.systemPackages = [
-          zarfBundlePackage
-        ] ++ (with pkgs; [
+      environment.systemPackages = (with pkgs; [
           runonce
           zarf
           skopeo
-      ]);
+          zarfBundlePackage
+      ]) ++ helmChartPackages;  # zarf doesnt deploy bundled charts
+      # TODO but how should we do initial helm chart install then?!
 
       systemd.services.zarf-init = {
         requires = [ "${k8sSystemdService}.service" ];

@@ -15,6 +15,7 @@
     config = 
     let
         clusterName = config.libraryofalexandria.cluster.name;
+        chartLocks = builtins.fromJSON (builtins.readFile ../../../../clusters/${clusterName}/charts-lock.json);
         helmChartModules = (builtins.map (chart: 
             let 
                 chartModule = inputs.nixpkgs.lib.evalModules {
@@ -27,12 +28,13 @@
                             values = chart.values;
                             namespace = chart.namespace;
                             repo = chart.repo;
-                        } 
+                        }
+                        {
+                            inherit chartLocks;
+                        }
                     ];
                     specialArgs = {
                         inherit pkgs;
-                        inherit inputs;
-                        chartLocks = builtins.fromJSON (builtins.readFile ../../../../clusters/${clusterName}/charts-lock.json);
                     };
                 };
 

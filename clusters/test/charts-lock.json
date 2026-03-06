@@ -98,7 +98,7 @@
       "ecr-public.aws.com/docker/library/redis:8.2.2-alpine": {
         "imageName": "ecr-public.aws.com/docker/library/redis",
         "imageDigest": "sha256:59b6e694653476de2c992937ebe1c64182af4728e54bb49e9b7a6c26614d8933",
-        "hash": "sha256-h5xFH2MHszWt0o47Uj9eKdG2X4PhU3ZSkyQA10lCbR0="
+        "hash": "sha256-gwKYyjBK4rhJXXkxdjC9pAVnSjkVFY+SDZdm5z36YCI="
       },
       "ghcr.io/dexidp/dex:v2.44.0": {
         "imageName": "ghcr.io/dexidp/dex",

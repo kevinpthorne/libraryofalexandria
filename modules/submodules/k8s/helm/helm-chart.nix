@@ -1,4 +1,5 @@
-{ pkgs, lib, config, inputs, chartLocks, ... }: {
+{ pkgs, lib, config, ... }:
+{
     options = {
         name = lib.mkOption {
             type = lib.types.str;
@@ -22,6 +23,11 @@
             type = lib.types.nullOr lib.types.str;
             default = null;
         };
+        # super options
+        chartLocks = lib.mkOption {
+            type = lib.types.attrs;
+            readOnly = true;
+        };
         # generated
         isLocalChart = lib.mkOption {
             type = lib.types.bool;
@@ -35,19 +41,30 @@
             type = lib.types.package;
             readOnly = true;
         };
+        imagePackages = lib.mkOption {
+            type = lib.types.listOf lib.types.package;
+            readOnly = true;
+        };
     };
 
     config = let 
         isLocalChart = config.version == null;
-        helmChartPackage = if isLocalChart then config.chart else let
-            lock = chartLocks.${config.name};
-         in pkgs.fetchurl {
+        lock = config.chartLocks.${config.name};
+        helmChartPackage = if isLocalChart then config.chart else pkgs.fetchurl {
             # We explicitly set the name to ensure it ends with .tgz,
             # which Zarf requires to recognize it as an archive.
             name = builtins.baseNameOf lock.url;
             url = lock.url;
-            sha256 = lock.sha256;
+            sha256 = lock.hash;
         };
+        imagePackages = lib.mapAttrsToList (imgString: imgLock: 
+            pkgs.dockerTools.pullImage {
+                imageName = imgLock.imageName;
+                imageDigest = imgLock.imageDigest;
+                sha256 = imgLock.hash;
+                # TODO set arch
+            }
+        ) lock.images;
         helmChartValuesPackageName = "render-hc-${config.name}-values";
         helmChartValuesPackage = pkgs.runCommand helmChartValuesPackageName {
             buildInputs = with pkgs; [ yj ];
@@ -61,5 +78,6 @@
         inherit isLocalChart;
         chartPackage = helmChartPackage;
         valuesPackage = helmChartValuesPackage;
+        inherit imagePackages;
     };
 }
