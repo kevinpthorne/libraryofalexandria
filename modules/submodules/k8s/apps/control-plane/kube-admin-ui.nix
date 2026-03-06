@@ -1,6 +1,6 @@
 { lib, lib2, config, ... }:
 {
-    imports = [ ../../helm-charts.nix ];
+    imports = [ ../../helm ];
 
     options.libraryofalexandria.apps.kube-admin-ui = {
         enable = lib.mkEnableOption "";

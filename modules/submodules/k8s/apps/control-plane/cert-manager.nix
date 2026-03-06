@@ -1,6 +1,6 @@
 { lib, lib2, config, pkgs, ... }:
 {
-    imports = [ ../../helm-charts.nix ];
+    imports = [ ../../helm ];
 
     config = lib.mkIf config.libraryofalexandria.apps.cert-manager.enable {
         libraryofalexandria.helmCharts.enable = true;
@@ -34,6 +34,7 @@
                 version = config.libraryofalexandria.apps.cert-manager.csiVersion;
                 values = {};
                 namespace = "cert-manager-system";
+                repo = "https://charts.jetstack.io";
             }
             {
                 name = "pki-bootstrap";

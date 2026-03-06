@@ -1,4 +1,4 @@
-{ pkgs, lib, config, ... }: {
+{ pkgs, lib, config, inputs, chartLocks, ... }: {
     options = {
         name = lib.mkOption {
             type = lib.types.str;
@@ -23,17 +23,31 @@
             default = null;
         };
         # generated
-        package = lib.mkOption {
+        isLocalChart = lib.mkOption {
+            type = lib.types.bool;
+            readOnly = true;
+        };
+        chartPackage = lib.mkOption {
             type = lib.types.package;
             readOnly = true;
         };
-        packageName = lib.mkOption {
-            type = lib.types.string;
+        valuesPackage = lib.mkOption {
+            type = lib.types.package;
             readOnly = true;
         };
     };
 
     config = let 
+        isLocalChart = config.version == null;
+        helmChartPackage = if isLocalChart then config.chart else let
+            lock = chartLocks.${config.name};
+         in pkgs.fetchurl {
+            # We explicitly set the name to ensure it ends with .tgz,
+            # which Zarf requires to recognize it as an archive.
+            name = builtins.baseNameOf lock.url;
+            url = lock.url;
+            sha256 = lock.sha256;
+        };
         helmChartValuesPackageName = "render-hc-${config.name}-values";
         helmChartValuesPackage = pkgs.runCommand helmChartValuesPackageName {
             buildInputs = with pkgs; [ yj ];
@@ -43,21 +57,9 @@
             mkdir -p $out
             yj -jy < "$jsonPath" > $out/hc-${config.name}-values.yaml
         '';
-        # helmChartInstallerPackage = pkgs.callPackage({stdenv, kubernetes-helm}:
-        #     stdenv.mkDerivation {
-        #         name = "install-hc-${config.name}";
-        #         src = ./.;
-
-        #         buildInputs = [ helmChartValuesPackage kubernetes-helm ];
-
-        #         buildPhase = ''
-        #             mkdir -p $out/log
-        #             ${pkgs.kubernetes-helm}/bin/helm upgrade --install ${config.name} ${config.chart} --version ${config.version} -f ${pkgs.${helmChartValuesPackageName}}/hc-${config.name}-values.yaml
-        #         '';
-        #     }
-        # );
     in {
-        package = helmChartValuesPackage;
-        packageName = helmChartValuesPackageName;
+        inherit isLocalChart;
+        chartPackage = helmChartPackage;
+        valuesPackage = helmChartValuesPackage;
     };
 }

@@ -1,6 +1,6 @@
 { lib, lib2, config, pkgs, ... }:
 {
-    imports = [ ../helm-charts.nix ];
+    imports = [ ../helm ];
 
     config = lib.mkIf (config.libraryofalexandria.apps.argocd.enable && config.libraryofalexandria.apps.loa-federation.enable) {
         libraryofalexandria.helmCharts.enable = true;

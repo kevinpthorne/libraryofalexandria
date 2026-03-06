@@ -211,10 +211,11 @@
         # modules-only, for nixosTest
         modules = (collectModules masterModulesAttrSets) // (collectModules workerModulesAttrSets);
         # colmena
-        colmenaHive = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "colmena") (inputs.colmena.lib.makeHive {
+        colmena = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "colmena") ({
             meta = {
                 nixpkgs = import inputs.nixpkgs {
-                    hostPlatform = "aarch64-linux"; # FIXME this will cause issues on x86 builder hosts
+                    system = "aarch64-linux"; # FIXME this will cause issues on x86 builder hosts
+                    hostPlatform = "aarch64-linux";
                 };
                 nodeNixpkgs = builtins.mapAttrs (_: v: v.pkgs) config.nodes;
                 nodeSpecialArgs = builtins.mapAttrs (_: v: v._module.specialArgs) config.nodes;
@@ -233,9 +234,11 @@
         packages = lib2.eachArch (arch: let 
             pkgs = import inputs.nixpkgs {
                 hostPlatform = arch;
+                system = arch;
             };
         in {
             "build-all-${config.libraryofalexandria.cluster.name}" = allSystemsBuilder pkgs;  # TODO this technically names the package twice - why not once?
+            "chart-index-${config.libraryofalexandria.cluster.name}" = (builtins.head masterSystems).config.system.build.chartIndex;
         });
     };
 }

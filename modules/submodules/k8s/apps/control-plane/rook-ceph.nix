@@ -1,6 +1,6 @@
 { lib, lib2, config, ... }:
 {
-    imports = [ ../../helm-charts.nix ];
+    imports = [ ../../helm ];
 
     options.libraryofalexandria.apps.rook-ceph = {
         enable = lib.mkEnableOption "";
@@ -105,6 +105,7 @@
                     pspEnable = true;
                 };
                 namespace = "rook-ceph";
+                repo = "https://charts.rook.io/release";
             }
         ];
     };

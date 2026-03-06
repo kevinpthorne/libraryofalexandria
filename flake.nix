@@ -24,6 +24,7 @@
     };
 
     kubegen.url = "github:farcaller/nix-kube-generators";
+    kubenix.url = "github:hall/kubenix";
 
     nixos-stig.url = "github:kevinpthorne/nixos-stig";
   };
@@ -62,7 +63,7 @@
     } 
     // clusters.nixosConfigurations;
 
-    colmenaHive = clusters.colmenaHive;
+    colmena = clusters.colmena;
     clusters = clusters;
 
     packages = deepMerge [ 

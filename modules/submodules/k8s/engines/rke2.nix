@@ -2,7 +2,7 @@
 {
     imports = [
         ../../nixstore-linker.nix
-        ../helm-charts.nix
+        ../helm
     ];
 
     config = 
