@@ -107,11 +107,11 @@ jq -c '.[]' "$INPUT_FILE" | while read -r item; do
   # Helm template requires different arguments depending on if it's local vs remote
   if [[ "$is_local" == "true" ]]; then
     # For local charts, raw_chart should be the directory path
-    images=$(helm template "$chart_base" "$raw_chart" -f /tmp/values.yaml | grep "image:" | awk '{print $2}' | tr -d '"' | sort -u || true)
+    images=$(helm template "$chart_base" "$raw_chart" -f /tmp/values.yaml --include-crds | grep "image:" | awk '{print $2}' | tr -d '"' | sort -u || true)
   else
     echo "  -> Pulling chart..."
     helm pull --untar --untardir /tmp/temp-chart $tgz_url
-    images=$(helm template "$chart_base" /tmp/temp-chart/$chart_base -f /tmp/values.yaml | grep "image:" | awk '{print $2}' | tr -d '"' | sort -u || true)
+    images=$(helm template "$chart_base" /tmp/temp-chart/$chart_base -f /tmp/values.yaml --include-crds | grep "image:" | awk '{print $2}' | tr -d '"' | sort -u || true)
   fi
 
   for img in $images; do

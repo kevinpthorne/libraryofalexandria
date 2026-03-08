@@ -6,6 +6,10 @@ metadata:
   # Add finalizer to ensure child apps are deleted before this parent app
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  {{- if .Values.online }}
+  annotations:
+    zarf.dev/agent: "ignore"
+  {{- end }}
 spec:
   project: {{ .Values.project }}
   

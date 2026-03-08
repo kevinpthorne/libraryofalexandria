@@ -6,9 +6,7 @@ in
 {
     imports = [
         ./submodules/deployment
-        ./submodules/k8s/engines/rke2.nix
-        ./submodules/k8s/engines/kubernetes.nix
-        ./submodules/k8s/zarf.nix
+        ./submodules/k8s
     ];
 
     options.libraryofalexandria.node = {

@@ -46,3 +46,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true # Automatically create the 'crossplane-system' namespace
+    # pull from internet
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"

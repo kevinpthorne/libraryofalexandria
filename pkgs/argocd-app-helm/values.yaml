@@ -1,5 +1,8 @@
 project: default
 
+# Require online access for installation. Set to false to use Zarf
+online: true
+
 source:
   repoURL: ~
   path: ~

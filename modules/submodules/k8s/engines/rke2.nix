@@ -83,6 +83,9 @@
 
             services.rke2 = let 
                 tlsSanFlags = builtins.map (ip: "--tls-san=${ip}") config.libraryofalexandria.node.masterIps;
+                clusterCidr = "10.${toString config.libraryofalexandria.cluster.id}.0.0/16";
+                servicesOctet = config.libraryofalexandria.cluster.id + 127;
+                serviceCidr = "10.${toString servicesOctet}.0.0/16";
             in {
                 enable = true;
                 serverAddr = if isMaster0 then "" else "https://${master0Ip}:9345";  # default rke2 port
@@ -94,10 +97,12 @@
                 extraFlags = [
                     "--profile=cis"
                     "--disable-kube-proxy"  # cilium to do
+                    "--cluster-cidr=${clusterCidr}"
+                    "--service-cidr=${serviceCidr}"
                 ] ++ tlsSanFlags;
                 disable = [
                     "rke2-ingress-nginx"
-                    "rke2-servicelb"
+                    "rke2-servicelb" 
                 ];
             } else {
                 role = "agent";
@@ -140,16 +145,27 @@
                     name = "cilium-overrides";
                     chart = "${pkgs.rke2-overrides-helm}";
                     values = {
-                        valuesContent = ''encryption:
+                        valuesContent = ''
+cluster:
+  name: ${config.libraryofalexandria.cluster.name}
+  id: ${config.libraryofalexandria.cluster.id}
+clustermesh:
+  useAPIServer: true
+  enabled: true
+  config:
+    enabled: true
+  service:
+    type: ${if config.libraryofalexandria.cluster.virtualIps.enable then "LoadBalancer" else "NodePort"}
+encryption:
   enabled: true
   type: ipsec
   ipsec:
     secretName: cilium-ipsec-keys
 # Enable L2 Announcements (MetalLB replacement)
 l2announcements:
-  enabled: true
+  enabled: ${builtins.toString config.libraryofalexandria.cluster.virtualIps.enable}
 externalIPs:
-  enabled: true
+  enabled: ${builtins.toString config.libraryofalexandria.cluster.virtualIps.enable}
 
 # Enable Gateway API (Nginx replacement)
 gatewayAPI:

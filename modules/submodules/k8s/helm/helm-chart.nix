@@ -1,4 +1,4 @@
-{ pkgs, lib, config, ... }:
+{ pkgs, lib, config, lib2, ... }:
 {
     options = {
         name = lib.mkOption {
@@ -62,7 +62,7 @@
                 imageName = imgLock.imageName;
                 imageDigest = imgLock.imageDigest;
                 sha256 = imgLock.hash;
-                # TODO set arch
+                arch = lib2.getGoArch { inherit pkgs; };
             }
         ) lock.images;
         helmChartValuesPackageName = "render-hc-${config.name}-values";

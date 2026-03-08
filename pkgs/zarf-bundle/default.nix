@@ -11,6 +11,18 @@ let
     metadata = { name = "loa-${clusterName}-bootstrap-bundle"; };
     components = [
       {
+        # fixes helm crd upgrade problem
+        name = "system-crds";
+        required = true;
+        manifests = [
+          {
+            name = "extracted-crds";
+            namespace = "kube-system";
+            files = [ "extracted-crds/**/*.yaml" ];
+          }
+        ];
+      }
+      {
         name = "${clusterName}-charts";
         # TODO this this right?
         charts = builtins.map (chartModule: {
@@ -33,10 +45,25 @@ pkgs.stdenv.mkDerivation {
 
   # No network access required here!
   buildPhase = ''
-    mkdir -p oci-store charts
+    mkdir -p oci-store charts extracted-crds
     
     cp ${zarfYaml} ./zarf.yaml
-    cat zarf.yaml
+
+    # Copy charts and extract CRDs
+    ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: drvPath: ''
+      cp ${drvPath} ./charts/${name}.tgz
+      
+      # Unpack to a temporary directory
+      mkdir -p /tmp/${name}-unpack
+      tar -xzf ./charts/${name}.tgz -C /tmp/${name}-unpack
+      
+      # If the chart has a crds directory, copy its contents
+      if [ -d /tmp/${name}-unpack/*/crds ]; then
+        echo "Extracting CRDs for ${name}..."
+        cp -r /tmp/${name}-unpack/*/crds/* ./extracted-crds/
+      fi
+      rm -rf /tmp/${name}-unpack
+    '') chartPackages)}
 
     # Convert the dockerTools tarballs into an OCI layout that Zarf can read
     # We map the pulledImages array into the oci-store directory
@@ -50,6 +77,7 @@ pkgs.stdenv.mkDerivation {
 
   installPhase = ''
     mkdir -p $out
+    cp zarf.yaml $out/
     cp zarf-package-*.tar.zst $out/
   '';
 }

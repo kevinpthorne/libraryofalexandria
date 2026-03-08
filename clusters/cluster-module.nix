@@ -10,6 +10,10 @@
             name = lib.mkOption {
                 type = lib.types.str;
             };
+            id = lib.mkOption {
+                type = lib.types.ints.between 1 127;
+                description = "Used for both cluster CIDR, service CIDR and clustermesh ID";
+            };
 
             k8sEngine = lib.mkOption {
                 type = lib.types.enum [ "rke2" "kubernetes" ];

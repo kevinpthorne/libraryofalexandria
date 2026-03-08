@@ -36,6 +36,7 @@ let
 in {
     config.libraryofalexandria.cluster = {
         name = "k";
+        id = 2;
 
         masters = {
             count = 3;

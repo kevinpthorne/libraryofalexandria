@@ -40,6 +40,7 @@
         loa-federation.enable = lib.mkDefault true;
         loa-authn.enable = lib.mkDefault false;  # openldap is too crusty and old
         loa-core.enable = lib.mkDefault true;
+        kube-admin-ui.enable = lib.mkDefault true;
         argocd = {
             enable = lib.mkDefault true;
             version = lib.mkDefault "9.1.4";

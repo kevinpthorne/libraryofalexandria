@@ -30,3 +30,7 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+    # pull from internet
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
