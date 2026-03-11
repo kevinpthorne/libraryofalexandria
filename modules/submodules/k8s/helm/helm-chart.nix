@@ -34,7 +34,7 @@
             readOnly = true;
         };
         chartPackage = lib.mkOption {
-            type = lib.types.package;
+            type = lib.types.nullOr lib.types.package;
             readOnly = true;
         };
         valuesPackage = lib.mkOption {
@@ -49,8 +49,10 @@
 
     config = let 
         isLocalChart = config.version == null;
-        lock = config.chartLocks.${config.name};
-        helmChartPackage = if isLocalChart then config.chart else pkgs.fetchurl {
+        lock = config.chartLocks.${config.name} or null;
+        helmChartPackage = if lock == null 
+        then builtins.trace "Chart ${config.name} not found in chart-locks.json" null 
+        else if isLocalChart then config.chart else pkgs.fetchurl {
             # We explicitly set the name to ensure it ends with .tgz,
             # which Zarf requires to recognize it as an archive.
             name = builtins.baseNameOf lock.url;
@@ -64,7 +66,7 @@
                 sha256 = imgLock.hash;
                 arch = lib2.getGoArch { inherit pkgs; };
             }
-        ) lock.images;
+        ) (lock.images or {});
         helmChartValuesPackageName = "render-hc-${config.name}-values";
         helmChartValuesPackage = pkgs.runCommand helmChartValuesPackageName {
             buildInputs = with pkgs; [ yj ];

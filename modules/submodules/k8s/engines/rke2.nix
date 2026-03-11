@@ -148,7 +148,7 @@
                         valuesContent = ''
 cluster:
   name: ${config.libraryofalexandria.cluster.name}
-  id: ${config.libraryofalexandria.cluster.id}
+  id: ${toString config.libraryofalexandria.cluster.id}
 clustermesh:
   useAPIServer: true
   enabled: true
@@ -160,7 +160,7 @@ encryption:
   enabled: true
   type: ipsec
   ipsec:
-    secretName: cilium-ipsec-keys
+    secretName: cilium-ipsec-keys  # this matches cilium-keys-gen-helm default name value
 # Enable L2 Announcements (MetalLB replacement)
 l2announcements:
   enabled: ${builtins.toString config.libraryofalexandria.cluster.virtualIps.enable}

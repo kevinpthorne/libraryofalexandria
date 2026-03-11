@@ -1,8 +1,9 @@
 { pkgs, config, lib, inputs, ... }:
 {
     imports = [  # top installs last
-        ./kube-admin-ui.nix
+        ./headlamp.nix
         ./argocd.nix
+        ./trust-manager.nix
         ./cert-manager.nix
         ./longhorn.nix
     ];

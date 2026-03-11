@@ -35,6 +35,7 @@
                     ];
                     specialArgs = {
                         inherit pkgs;
+                        inherit lib2;
                     };
                 };
 
@@ -57,7 +58,7 @@
 
             system.build.chartIndex = pkgs.chart-index.override {
                 clusterName = config.libraryofalexandria.cluster.name;
-                charts = builtins.map (chartModule: chartModule.config) helmChartModules;
+                charts = config.libraryofalexandria.helmCharts.charts;
             };
 
             systemd.services.helm-chart-installer = lib.mkIf config.libraryofalexandria.helmCharts.installer {

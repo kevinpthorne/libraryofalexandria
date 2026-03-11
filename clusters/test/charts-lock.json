@@ -1,6 +1,6 @@
 {
   "cilium-keys-gen-helm": {
-    "url": "file:///nix/store/grrvpwij4fkl7azzqdjan11pk58f02rx-cilium-keys-gen-helm",
+    "url": "file:///nix/store/qg45944njd4bhnw2ngpxr5j3p41rgjsq-cilium-keys-gen-helm",
     "images": {}
   },
   "cilium-overrides": {
@@ -37,28 +37,28 @@
     }
   },
   "cert-manager": {
-    "url": "https://charts.jetstack.io/charts/cert-manager-v1.17.0.tgz",
-    "hash": "sha256-pi/xXjt5ijLik9Bc22O7aucJZe5XwOgJ+NMYEwb1p4g=",
+    "url": "https://charts.jetstack.io/charts/cert-manager-v1.20.0.tgz",
+    "hash": "sha256-Hxomj9FkLXbQuf0WKq7ckZc6gbh9nlfA//JGAkzNKtQ=",
     "images": {
-      "quay.io/jetstack/cert-manager-cainjector:v1.17.0": {
+      "quay.io/jetstack/cert-manager-cainjector:v1.20.0": {
         "imageName": "quay.io/jetstack/cert-manager-cainjector",
-        "imageDigest": "sha256:63ea34d0e82ebfd91242498c54ad104d6bce7a56c7a2e24de5461aabd744a9b2",
-        "hash": "sha256-5Ew3aUmmIzLDjfm6D9ZV4Xo6PKB5YzZBPZGXTodq++4="
+        "imageDigest": "sha256:6a620381d99583d886e8ce745c872f638bcfc854964ad95d657eec2048a6dca1",
+        "hash": "sha256-rlBwzFlzQ8zvInmm0r5C7XzLH+eNU/2gFWtT24NjkIw="
       },
-      "quay.io/jetstack/cert-manager-controller:v1.17.0": {
+      "quay.io/jetstack/cert-manager-controller:v1.20.0": {
         "imageName": "quay.io/jetstack/cert-manager-controller",
-        "imageDigest": "sha256:424263d7a11b54b56b26953d22bf28bd87338056b518dd007e391ad0b702c5f0",
-        "hash": "sha256-xMAXz8zaQhcwDLmNgSLbA/OqgSP5JHKqcVBLFW4FFDU="
+        "imageDigest": "sha256:b9009aa6b45b59da1363a26dab15aee7d77c7ce01ac2c1cf05ecd1121462db16",
+        "hash": "sha256-pFAVfZJauiJsXkdd0KnWd/CGdGg/MZAUkNQ1GRAF2pI="
       },
-      "quay.io/jetstack/cert-manager-startupapicheck:v1.17.0": {
+      "quay.io/jetstack/cert-manager-startupapicheck:v1.20.0": {
         "imageName": "quay.io/jetstack/cert-manager-startupapicheck",
-        "imageDigest": "sha256:d0f48f7993ff9a09e78e93e1536b8afabd6243e1d8fe4f84ea92afe1d6b02ec2",
-        "hash": "sha256-KKAMOppn+8JMqG51/3YPzBUrnvjLXqAdj+zLXOm6yUA="
+        "imageDigest": "sha256:54da63c9964d70a62fe0c2b5bb1501679e30a2b150672b04528a853ef919bed7",
+        "hash": "sha256-yuRtGd8IQ++eyP9qosiTLNMY4mHKkZQlOEmQCGCoGsM="
       },
-      "quay.io/jetstack/cert-manager-webhook:v1.17.0": {
+      "quay.io/jetstack/cert-manager-webhook:v1.20.0": {
         "imageName": "quay.io/jetstack/cert-manager-webhook",
-        "imageDigest": "sha256:6e8f1c96b7acd9526b7dec7ce8af45e4a774877e24be183e3ce36a25c9d5ed3b",
-        "hash": "sha256-phVrs+eQ6q1RjyyGlAA09mTjWLLuI8sa+KS86pOMA9U="
+        "imageDigest": "sha256:2133daae1f08ad54bcfd317f4a19b48e2bba1c490dbf04e74c4666b3d5d6a69b",
+        "hash": "sha256-Cr6sdYqEpRpMgUUuG5QHVnPbkSQEejhc5uWWQaH5u8U="
       }
     }
   },
@@ -67,23 +67,23 @@
     "images": {}
   },
   "cert-manager-csi-driver": {
-    "url": "https://charts.jetstack.io/charts/cert-manager-csi-driver-v0.12.0.tgz",
-    "hash": "sha256-B+V0Ns7JVtxuGjjbQ1duW23vMKD8KpyzHGRBT4ix4do=",
+    "url": "https://charts.jetstack.io/charts/cert-manager-csi-driver-v0.13.0.tgz",
+    "hash": "sha256-GaqZisubTGkaK4ZQnSTmArJB1f1JCt6YUoI6rJJPNUM=",
     "images": {
-      "quay.io/jetstack/cert-manager-csi-driver:v0.12.0": {
+      "quay.io/jetstack/cert-manager-csi-driver:v0.13.0": {
         "imageName": "quay.io/jetstack/cert-manager-csi-driver",
-        "imageDigest": "sha256:df7dcb0350ffd4f505762093e56586dec7dad453791f9425c0221b6ac5d859fc",
-        "hash": "sha256-SqCU+tZfcrRqPaOC+yEFJyhURonEPqX3M5ptQKV8pdE="
+        "imageDigest": "sha256:07982a9d5b0b17727f6b411e84b84b7baad4dd829aa7ad7db024d0894b4b9515",
+        "hash": "sha256-ATjRUersyFf6NT6z7045Sy9SnZYTww0+EZ1Ajk696/g="
       },
-      "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0@sha256:11f199f6bec47403b03cb49c79a41f445884b213b382582a60710b8c6fdc316a": {
-        "imageName": "registry.k8s.io/sig-storage/csi-node-driver-registrar",
-        "imageDigest": "sha256:11f199f6bec47403b03cb49c79a41f445884b213b382582a60710b8c6fdc316a",
-        "hash": "sha256-6zCaqVyPAmS1V9E9KoiuKp+9v6oDMj41wve0KzbY1dI="
+      "quay.io/jetstack/csi-node-driver-registrar:v2.16.0": {
+        "imageName": "quay.io/jetstack/csi-node-driver-registrar",
+        "imageDigest": "sha256:ab482308a4921e28a6df09a16ab99a457e9af9641ff44fb1be1a690d07ce8b70",
+        "hash": "sha256-K+cc3hv6C7FmJ7xj7WmThWmfSnatBbG2cvbIw/Oi7xA="
       },
-      "registry.k8s.io/sig-storage/livenessprobe:v2.17.0@sha256:9b75b9ade162136291d5e8f13a1dfc3dec71ee61419b1bfc112e0796ff8a6aa9": {
-        "imageName": "registry.k8s.io/sig-storage/livenessprobe",
-        "imageDigest": "sha256:9b75b9ade162136291d5e8f13a1dfc3dec71ee61419b1bfc112e0796ff8a6aa9",
-        "hash": "sha256-+rbOSCai5cUY7mVxZNJ1+uS3YZRiz7IXh92TniitDjM="
+      "quay.io/jetstack/livenessprobe:v2.18.0": {
+        "imageName": "quay.io/jetstack/livenessprobe",
+        "imageDigest": "sha256:c4cc074199c045dd73ab85f28897e2a32f4d6f38ffdba4f3b13b8007ccbd3570",
+        "hash": "sha256-QmYsbJMZ7cybMcuzVMJEcdCDBKh5i1gfBwMjnCcvRxk="
       }
     }
   },
@@ -91,45 +91,72 @@
     "url": "file:///nix/store/wbdbisc6d583vbn5lfaw1cpmmpvlqcbd-pki-bootstrap-helm",
     "images": {}
   },
-  "argo": {
-    "url": "https://github.com/argoproj/argo-helm/releases/download/argo-cd-9.1.4/argo-cd-9.1.4.tgz",
-    "hash": "sha256-JUeUjNwtVo/87q8zk5efNLmN4+y/J+C/5WDEy8VnNUY=",
+  "trust-manager": {
+    "url": "https://charts.jetstack.io/charts/trust-manager-v0.22.0.tgz",
+    "hash": "sha256-Kan+ZhWPcaGmGm6VXeLVqLaLjLW0kaigcsb3s+shHQo=",
     "images": {
-      "ecr-public.aws.com/docker/library/redis:8.2.2-alpine": {
+      "quay.io/jetstack/trust-manager:v0.22.0": {
+        "imageName": "quay.io/jetstack/trust-manager",
+        "imageDigest": "sha256:16f8ad469b944f1b060d5fc2d391672d76ac0b11717d4af27f7dc0e7cf145066",
+        "hash": "sha256-qsUzVlVk8CwMw3IriEXgZe5g6bV+0AO9Nu+J8HbcdX8="
+      },
+      "quay.io/jetstack/trust-pkg-debian-bookworm:20230311-deb12u1.5": {
+        "imageName": "quay.io/jetstack/trust-pkg-debian-bookworm",
+        "imageDigest": "sha256:3d75dbefafa1d32a262078eadcab0c2e58621c3ac7ef2ea070bc83f9dc234cb6",
+        "hash": "sha256-rr9y4jS+GsE+RmDrkRa33c3Cs7Zre0J3Ei6UHf/cE/Q="
+      }
+    }
+  },
+  "argo": {
+    "url": "https://github.com/argoproj/argo-helm/releases/download/argo-cd-9.4.10/argo-cd-9.4.10.tgz",
+    "hash": "sha256-n1ihetUtB6SbczYPB/geWZxVKV0/L4KKtsrxcbHSul0=",
+    "images": {
+      "ecr-public.aws.com/docker/library/redis:8.2.3-alpine": {
         "imageName": "ecr-public.aws.com/docker/library/redis",
-        "imageDigest": "sha256:59b6e694653476de2c992937ebe1c64182af4728e54bb49e9b7a6c26614d8933",
-        "hash": "sha256-gwKYyjBK4rhJXXkxdjC9pAVnSjkVFY+SDZdm5z36YCI="
+        "imageDigest": "sha256:08ad0b1d280850169a790dba1393ff7a90aef951fc19632cf4d3ce4f78e679ba",
+        "hash": "sha256-uao+VHcBa3kuM46wLFHUbP71iAAEl/sg79xicQx3zp0="
       },
-      "ghcr.io/dexidp/dex:v2.44.0": {
+      "ghcr.io/dexidp/dex:v2.45.1": {
         "imageName": "ghcr.io/dexidp/dex",
-        "imageDigest": "sha256:5d0656fce7d453c0e3b2706abf40c0d0ce5b371fb0b73b3cf714d05f35fa5f86",
-        "hash": "sha256-TIE4yW6tB7mPbqiU28wwr5Poy9ITKGKjg+ybB73bp6I="
+        "imageDigest": "sha256:8499afd690c437f52301efd2b05b2455da5bd2dfc20332cd697dc9937f808462",
+        "hash": "sha256-QHo+yYYduYZebgu4l5qouX5uU0KBCNiWAPMvxoAN42Q="
       },
-      "quay.io/argoproj/argocd:v3.2.0": {
+      "quay.io/argoproj/argocd:v3.3.3": {
         "imageName": "quay.io/argoproj/argocd",
-        "imageDigest": "sha256:3c9b3b33a7e6c9c56a9d8417af1845afc516f714941962208b125017bbc1e4b1",
-        "hash": "sha256-nqcYWzydUOicjSwHI4lz+TX36AQKFxJ5O+hVeQwHRhM="
+        "imageDigest": "sha256:8b9a0993937850c1ee6e2ada47a2be8259d512e959ae58afa39936658f7b52e7",
+        "hash": "sha256-wqKKAAW6It/DkJlBIe9qiEh+VRW1e1iHZVUhM3IiXWs="
+      }
+    }
+  },
+  "headlamp": {
+    "url": "https://github.com/kubernetes-sigs/headlamp/releases/download/headlamp-helm-0.40.0/headlamp-0.40.0.tgz",
+    "hash": "sha256-NR52Ylj8Sr9ZrdGi5OpSQGhJFs9rjlXmAoLIwOlhBTw=",
+    "images": {
+      "ghcr.io/headlamp-k8s/headlamp:v0.40.0": {
+        "imageName": "ghcr.io/headlamp-k8s/headlamp",
+        "imageDigest": "sha256:16c34eb5ef85e40bdbdeb5baebc70f7a6c59ae3739d8779bf896674c4d762ad5",
+        "hash": "sha256-gWhSW0/CWb2bHwJkLjwan2+3x0Ksqjcur+KCCmUpJV8="
       }
     }
   },
   "loa-core-app": {
-    "url": "file:///nix/store/8yipcnhp5l72lai6q8cqfby0dhnblkjk-argocd-app-helm",
+    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
     "images": {}
   },
   "loa-federation-app": {
-    "url": "file:///nix/store/8yipcnhp5l72lai6q8cqfby0dhnblkjk-argocd-app-helm",
+    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
     "images": {}
   },
   "loa-observability-app": {
-    "url": "file:///nix/store/8yipcnhp5l72lai6q8cqfby0dhnblkjk-argocd-app-helm",
+    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
     "images": {}
   },
   "loa-extras-app": {
-    "url": "file:///nix/store/8yipcnhp5l72lai6q8cqfby0dhnblkjk-argocd-app-helm",
+    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
     "images": {}
   },
   "test-apps": {
-    "url": "file:///nix/store/8yipcnhp5l72lai6q8cqfby0dhnblkjk-argocd-app-helm",
+    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
     "images": {}
   }
 }

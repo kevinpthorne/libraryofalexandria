@@ -1,6 +1,6 @@
 { pkgs, clusterName ? "unknown", charts ? [], ... }:
 let
-  chartsSpecs = builtins.map (chartConfig: builtins.removeAttrs chartConfig [ "chartPackage" "valuesPackage" ]) charts;
+  chartsSpecs = builtins.map (chartConfig: builtins.removeAttrs chartConfig [ "chartLocks" "chartPackage" "valuesPackage" "imagePackages" ]) charts;
   chartsJsonFile = pkgs.writeText "chart-index-source.json" (builtins.toJSON chartsSpecs);
 in
 pkgs.runCommand "chart-index-${clusterName}" {} ''

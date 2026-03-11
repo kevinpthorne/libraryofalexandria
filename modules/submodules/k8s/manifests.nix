@@ -31,7 +31,7 @@
             wantedBy = [ "${config.libraryofalexandria.cluster.k8sEngine}.service" ];
             after = [ "${config.libraryofalexandria.cluster.k8sEngine}.service" ];
             script = ''
-                ${pkgs.kubectl}/bin/kubectl apply -f ${chart.config.package}/manifest.json
+                ${pkgs.kubectl}/bin/kubectl apply -f ${package}/manifest.json
             '';
         };
     };

@@ -16,7 +16,6 @@ let
 
                 networking = {
                     vlans.lowtrust121 = { id = 121; interface = "eth0"; };
-                    vlans.mgmt100 = { id = 100; interface = "eth0"; };
                     
                     interfaces = {
                         eth0.useDHCP = false;
@@ -24,10 +23,6 @@ let
                         lowtrust121.ipv4.addresses = [{
                             address = "192.168.121.${toString ipLastOctet}";
                             prefixLength = 24; # Equivalent to subnet mask 255.255.255.0
-                        }];
-                        mgmt100.ipv4.addresses = [{
-                            address = "192.168.100.${toString ipLastOctet}";
-                            prefixLength = 24;
                         }];
                     };
                 };

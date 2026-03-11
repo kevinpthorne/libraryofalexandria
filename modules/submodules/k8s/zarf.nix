@@ -59,7 +59,7 @@
           
           # We must point Zarf to the local init package from the Nix store
           # otherwise it will try to download it from GitHub.
-          INIT_PKG=$(ls ${zarfInitPackage}/zarf-init-*.tar.zst | head -n 1)
+          INIT_PKG=$(ls ${pkgs.zarf-init}/zarf-init-*.tar.zst | head -n 1)
 
           ${pkgs.zarf}/bin/zarf init \
             --components=git-server,registry,agent \

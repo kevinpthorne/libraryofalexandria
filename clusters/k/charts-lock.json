@@ -1,0 +1,135 @@
+{
+  "cilium-keys-gen-helm": {
+    "url": "file:///nix/store/qg45944njd4bhnw2ngpxr5j3p41rgjsq-cilium-keys-gen-helm",
+    "images": {}
+  },
+  "cilium-overrides": {
+    "url": "file:///nix/store/pi9dd49q5khqwvxdvab393asjrw8qzx7-rke2-overrides-helm",
+    "images": {}
+  },
+  "cilium-virtual-ips": {
+    "url": "file:///nix/store/7n4l0axfsvh9zi4ic5dxyhhabxwrvhm6-cilium-virtual-ips",
+    "images": {}
+  },
+  "longhorn-namespace": {
+    "url": "file:///nix/store/wkfiwv1vdxd4px1cskgs37b2sky0lzh4-namespace-helm",
+    "images": {}
+  },
+  "longhorn": {
+    "url": "https://github.com/longhorn/charts/releases/download/longhorn-1.10.0/longhorn-1.10.0.tgz",
+    "hash": "sha256-K+nao6QNuX6R/WoyrtCly9kXvUHwsA3h5o8KmOajqAs=",
+    "images": {
+      "longhornio/longhorn-manager:v1.10.0": {
+        "imageName": "longhornio/longhorn-manager",
+        "imageDigest": "sha256:5b0bc1b88f0cda9b335f57a733df33e44da4138dd9a86f1d5a115e8ceed04a02",
+        "hash": "sha256-zfyi8EtcdMHmddUuaygcCE3Ba9AY3O3qjCLirHVF7Wc="
+      },
+      "longhornio/longhorn-share-manager:v1.10.0": {
+        "imageName": "longhornio/longhorn-share-manager",
+        "imageDigest": "sha256:9f6e5e3be8abe139ec1998ee089d3df0ce4da63dcf0bc0b056428a2cef9fbde6",
+        "hash": "sha256-Jtz59Afeb4EAUNr3x6ILcfIxPJs7lW8Ul2PmUz+WuLs="
+      },
+      "longhornio/longhorn-ui:v1.10.0": {
+        "imageName": "longhornio/longhorn-ui",
+        "imageDigest": "sha256:e60f361615112da95713125361bb4042a91cac6a3df027014c72d5c834b0fa3d",
+        "hash": "sha256-QXAqBWAbQemqFlYQXNY57R0WrAG07AYft348ESRhc5A="
+      }
+    }
+  },
+  "cert-manager": {
+    "url": "https://charts.jetstack.io/charts/cert-manager-v1.17.0.tgz",
+    "hash": "sha256-pi/xXjt5ijLik9Bc22O7aucJZe5XwOgJ+NMYEwb1p4g=",
+    "images": {
+      "quay.io/jetstack/cert-manager-cainjector:v1.17.0": {
+        "imageName": "quay.io/jetstack/cert-manager-cainjector",
+        "imageDigest": "sha256:63ea34d0e82ebfd91242498c54ad104d6bce7a56c7a2e24de5461aabd744a9b2",
+        "hash": "sha256-5Ew3aUmmIzLDjfm6D9ZV4Xo6PKB5YzZBPZGXTodq++4="
+      },
+      "quay.io/jetstack/cert-manager-controller:v1.17.0": {
+        "imageName": "quay.io/jetstack/cert-manager-controller",
+        "imageDigest": "sha256:424263d7a11b54b56b26953d22bf28bd87338056b518dd007e391ad0b702c5f0",
+        "hash": "sha256-xMAXz8zaQhcwDLmNgSLbA/OqgSP5JHKqcVBLFW4FFDU="
+      },
+      "quay.io/jetstack/cert-manager-startupapicheck:v1.17.0": {
+        "imageName": "quay.io/jetstack/cert-manager-startupapicheck",
+        "imageDigest": "sha256:d0f48f7993ff9a09e78e93e1536b8afabd6243e1d8fe4f84ea92afe1d6b02ec2",
+        "hash": "sha256-KKAMOppn+8JMqG51/3YPzBUrnvjLXqAdj+zLXOm6yUA="
+      },
+      "quay.io/jetstack/cert-manager-webhook:v1.17.0": {
+        "imageName": "quay.io/jetstack/cert-manager-webhook",
+        "imageDigest": "sha256:6e8f1c96b7acd9526b7dec7ce8af45e4a774877e24be183e3ce36a25c9d5ed3b",
+        "hash": "sha256-phVrs+eQ6q1RjyyGlAA09mTjWLLuI8sa+KS86pOMA9U="
+      }
+    }
+  },
+  "cert-manager-system-namespace": {
+    "url": "file:///nix/store/wkfiwv1vdxd4px1cskgs37b2sky0lzh4-namespace-helm",
+    "images": {}
+  },
+  "cert-manager-csi-driver": {
+    "url": "https://charts.jetstack.io/charts/cert-manager-csi-driver-v0.12.0.tgz",
+    "hash": "sha256-B+V0Ns7JVtxuGjjbQ1duW23vMKD8KpyzHGRBT4ix4do=",
+    "images": {
+      "quay.io/jetstack/cert-manager-csi-driver:v0.12.0": {
+        "imageName": "quay.io/jetstack/cert-manager-csi-driver",
+        "imageDigest": "sha256:df7dcb0350ffd4f505762093e56586dec7dad453791f9425c0221b6ac5d859fc",
+        "hash": "sha256-SqCU+tZfcrRqPaOC+yEFJyhURonEPqX3M5ptQKV8pdE="
+      },
+      "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0@sha256:11f199f6bec47403b03cb49c79a41f445884b213b382582a60710b8c6fdc316a": {
+        "imageName": "registry.k8s.io/sig-storage/csi-node-driver-registrar",
+        "imageDigest": "sha256:11f199f6bec47403b03cb49c79a41f445884b213b382582a60710b8c6fdc316a",
+        "hash": "sha256-6zCaqVyPAmS1V9E9KoiuKp+9v6oDMj41wve0KzbY1dI="
+      },
+      "registry.k8s.io/sig-storage/livenessprobe:v2.17.0@sha256:9b75b9ade162136291d5e8f13a1dfc3dec71ee61419b1bfc112e0796ff8a6aa9": {
+        "imageName": "registry.k8s.io/sig-storage/livenessprobe",
+        "imageDigest": "sha256:9b75b9ade162136291d5e8f13a1dfc3dec71ee61419b1bfc112e0796ff8a6aa9",
+        "hash": "sha256-+rbOSCai5cUY7mVxZNJ1+uS3YZRiz7IXh92TniitDjM="
+      }
+    }
+  },
+  "pki-bootstrap": {
+    "url": "file:///nix/store/wbdbisc6d583vbn5lfaw1cpmmpvlqcbd-pki-bootstrap-helm",
+    "images": {}
+  },
+  "argo": {
+    "url": "https://github.com/argoproj/argo-helm/releases/download/argo-cd-9.1.4/argo-cd-9.1.4.tgz",
+    "hash": "sha256-JUeUjNwtVo/87q8zk5efNLmN4+y/J+C/5WDEy8VnNUY=",
+    "images": {
+      "ecr-public.aws.com/docker/library/redis:8.2.2-alpine": {
+        "imageName": "ecr-public.aws.com/docker/library/redis",
+        "imageDigest": "sha256:59b6e694653476de2c992937ebe1c64182af4728e54bb49e9b7a6c26614d8933",
+        "hash": "sha256-h5xFH2MHszWt0o47Uj9eKdG2X4PhU3ZSkyQA10lCbR0="
+      },
+      "ghcr.io/dexidp/dex:v2.44.0": {
+        "imageName": "ghcr.io/dexidp/dex",
+        "imageDigest": "sha256:5d0656fce7d453c0e3b2706abf40c0d0ce5b371fb0b73b3cf714d05f35fa5f86",
+        "hash": "sha256-TIE4yW6tB7mPbqiU28wwr5Poy9ITKGKjg+ybB73bp6I="
+      },
+      "quay.io/argoproj/argocd:v3.2.0": {
+        "imageName": "quay.io/argoproj/argocd",
+        "imageDigest": "sha256:3c9b3b33a7e6c9c56a9d8417af1845afc516f714941962208b125017bbc1e4b1",
+        "hash": "sha256-nqcYWzydUOicjSwHI4lz+TX36AQKFxJ5O+hVeQwHRhM="
+      }
+    }
+  },
+  "loa-core-app": {
+    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
+    "images": {}
+  },
+  "loa-federation-app": {
+    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
+    "images": {}
+  },
+  "loa-observability-app": {
+    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
+    "images": {}
+  },
+  "loa-extras-app": {
+    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
+    "images": {}
+  },
+  "k-apps": {
+    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
+    "images": {}
+  }
+}
