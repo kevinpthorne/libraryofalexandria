@@ -1,4 +1,4 @@
-{ pkgs, lib, config, lib2, ... }:
+{ pkgs, lib, config, lib2, inputs, ... }:
 {
     options = {
         name = lib.mkOption {
@@ -41,8 +41,12 @@
             type = lib.types.package;
             readOnly = true;
         };
-        imagePackages = lib.mkOption {
+        images = lib.mkOption {
             type = lib.types.listOf lib.types.package;
+            readOnly = true;
+        };
+        chartLock = lib.mkOption {
+            type = lib.types.attrs;
             readOnly = true;
         };
     };
@@ -59,14 +63,6 @@
             url = lock.url;
             sha256 = lock.hash;
         };
-        imagePackages = lib.mapAttrsToList (imgString: imgLock: 
-            pkgs.dockerTools.pullImage {
-                imageName = imgLock.imageName;
-                imageDigest = imgLock.imageDigest;
-                sha256 = imgLock.hash;
-                arch = lib2.getGoArch { inherit pkgs; };
-            }
-        ) (lock.images or {});
         helmChartValuesPackageName = "render-hc-${config.name}-values";
         helmChartValuesPackage = pkgs.runCommand helmChartValuesPackageName {
             buildInputs = with pkgs; [ yj ];
@@ -80,6 +76,19 @@
         inherit isLocalChart;
         chartPackage = helmChartPackage;
         valuesPackage = helmChartValuesPackage;
-        inherit imagePackages;
+        images = lib.mapAttrsToList (_imgString: imgLock: 
+            # import
+            inputs.nixpkgs.lib.evalModules {
+                modules = [
+                    ./image 
+                    imgLock
+                ];
+                specialArgs = {
+                    inherit pkgs;
+                    inherit lib2;
+                };
+            }
+        ) (lock.images or {});
+        chartLock = lock;
     };
 }

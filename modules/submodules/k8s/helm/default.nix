@@ -21,6 +21,7 @@
                 chartModule = inputs.nixpkgs.lib.evalModules {
                     modules = [
                         ./helm-chart.nix 
+                        # chart
                         {
                             name = chart.name;  # TODO why do we need to copy the attrset?
                             chart = chart.chart;
@@ -34,6 +35,7 @@
                         }
                     ];
                     specialArgs = {
+                        inherit inputs;
                         inherit pkgs;
                         inherit lib2;
                     };

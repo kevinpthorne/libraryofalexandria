@@ -239,10 +239,17 @@
             pkgs = import inputs.nixpkgs {
                 hostPlatform = arch;
                 system = arch;
+                overlays = [ localPkgs ];
             };
         in {
             "build-all-${config.libraryofalexandria.cluster.name}" = allSystemsBuilder pkgs;  # TODO this technically names the package twice - why not once?
             "chart-index-${config.libraryofalexandria.cluster.name}" = (builtins.head masterSystems).config.system.build.chartIndex;
+            # "go-archs-${config.libraryofalexandria.cluster.name}" = pkgs.go-arch-index.override {
+            #     inherit pkgs;
+            #     inherit lib;
+            #     clusterName = config.libraryofalexandria.cluster.name;
+            #     nixosConfigurations = config.nodes;
+            # };
         });
     };
 }

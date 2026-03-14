@@ -15,7 +15,7 @@ let
     # You will need to get the real hash. You can temporarily use lib.fakeHash 
     # to force a build failure and reveal the correct hash, or run:
     # nix-prefetch-url https://github.com/.../zarf-init-...tar.zst
-    sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; 
+    sha256 = "sha256-2jJKDHA2ToxUrDqYUd8l5O0ArunA7Wgx9+VV4EH5y8E=";  # 0.64.0 
   };
 
 in

@@ -59,7 +59,7 @@
         };
         longhorn = {
             enable = lib.mkDefault true;
-            version = lib.mkDefault "1.10.0";
+            version = lib.mkDefault "1.11.0";
         };
     };
 }

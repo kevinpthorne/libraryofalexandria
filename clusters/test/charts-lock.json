@@ -16,23 +16,26 @@
     "images": {}
   },
   "longhorn": {
-    "url": "https://github.com/longhorn/charts/releases/download/longhorn-1.10.0/longhorn-1.10.0.tgz",
-    "hash": "sha256-K+nao6QNuX6R/WoyrtCly9kXvUHwsA3h5o8KmOajqAs=",
+    "url": "https://github.com/longhorn/charts/releases/download/longhorn-1.11.0/longhorn-1.11.0.tgz",
+    "hash": "sha256-fpBaiw3DJ0KRQ1Co5AYjT/WuZR1LjD+Zq6hKg2CKG/Y=",
     "images": {
-      "longhornio/longhorn-manager:v1.10.0": {
-        "imageName": "longhornio/longhorn-manager",
-        "imageDigest": "sha256:5b0bc1b88f0cda9b335f57a733df33e44da4138dd9a86f1d5a115e8ceed04a02",
-        "hash": "sha256-zfyi8EtcdMHmddUuaygcCE3Ba9AY3O3qjCLirHVF7Wc="
+      "docker.io/longhornio/longhorn-manager:v1.11.0": {
+        "imageName": "docker.io/longhornio/longhorn-manager",
+        "imageDigest": "sha256:acea91f195d5ac9500ab597b185b6fe5e90a02336bae70f4847155cdf417eea0",
+        "hash": "sha256-mBpheDYXanu0GUFncO5O6DNUurJhyWHr75UtUBvwLCQ=",
+        "finalImageTag": "v1.11.0"
       },
-      "longhornio/longhorn-share-manager:v1.10.0": {
-        "imageName": "longhornio/longhorn-share-manager",
-        "imageDigest": "sha256:9f6e5e3be8abe139ec1998ee089d3df0ce4da63dcf0bc0b056428a2cef9fbde6",
-        "hash": "sha256-Jtz59Afeb4EAUNr3x6ILcfIxPJs7lW8Ul2PmUz+WuLs="
+      "docker.io/longhornio/longhorn-share-manager:v1.11.0": {
+        "imageName": "docker.io/longhornio/longhorn-share-manager",
+        "imageDigest": "sha256:19e9be9e470adf15447bc16dd8c3bc25153d13667abda9a6c37d0aaadd1717b6",
+        "hash": "sha256-aU6BHO+QmaqGbZj8/rMm3Espemah3iJPv35rdq0eomg=",
+        "finalImageTag": "v1.11.0"
       },
-      "longhornio/longhorn-ui:v1.10.0": {
-        "imageName": "longhornio/longhorn-ui",
-        "imageDigest": "sha256:e60f361615112da95713125361bb4042a91cac6a3df027014c72d5c834b0fa3d",
-        "hash": "sha256-QXAqBWAbQemqFlYQXNY57R0WrAG07AYft348ESRhc5A="
+      "docker.io/longhornio/longhorn-ui:v1.11.0": {
+        "imageName": "docker.io/longhornio/longhorn-ui",
+        "imageDigest": "sha256:e3a4761f49e6198c4de418e74a3c36f08326a14efcebf63cd13a840505843ef5",
+        "hash": "sha256-DeCKOx96B5Ah/Gl+yuMvoIbaB4Q7lMj62icaxbNzZmg=",
+        "finalImageTag": "v1.11.0"
       }
     }
   },
@@ -43,22 +46,26 @@
       "quay.io/jetstack/cert-manager-cainjector:v1.20.0": {
         "imageName": "quay.io/jetstack/cert-manager-cainjector",
         "imageDigest": "sha256:6a620381d99583d886e8ce745c872f638bcfc854964ad95d657eec2048a6dca1",
-        "hash": "sha256-rlBwzFlzQ8zvInmm0r5C7XzLH+eNU/2gFWtT24NjkIw="
+        "hash": "sha256-6zKG26gJkdpqXDW19cT2Iqn0iYCBGF0aH8RkSQwMYqo=",
+        "finalImageTag": "v1.20.0"
       },
       "quay.io/jetstack/cert-manager-controller:v1.20.0": {
         "imageName": "quay.io/jetstack/cert-manager-controller",
         "imageDigest": "sha256:b9009aa6b45b59da1363a26dab15aee7d77c7ce01ac2c1cf05ecd1121462db16",
-        "hash": "sha256-pFAVfZJauiJsXkdd0KnWd/CGdGg/MZAUkNQ1GRAF2pI="
+        "hash": "sha256-gR1GjmbhtbgJz2mSUSJznyExYXjxd/cnCJOYwH5/X2s=",
+        "finalImageTag": "v1.20.0"
       },
       "quay.io/jetstack/cert-manager-startupapicheck:v1.20.0": {
         "imageName": "quay.io/jetstack/cert-manager-startupapicheck",
         "imageDigest": "sha256:54da63c9964d70a62fe0c2b5bb1501679e30a2b150672b04528a853ef919bed7",
-        "hash": "sha256-yuRtGd8IQ++eyP9qosiTLNMY4mHKkZQlOEmQCGCoGsM="
+        "hash": "sha256-JaDm83MW4WPvbBvb4qIWR1TDtzsTJIA0/yQHGC6hK3o=",
+        "finalImageTag": "v1.20.0"
       },
       "quay.io/jetstack/cert-manager-webhook:v1.20.0": {
         "imageName": "quay.io/jetstack/cert-manager-webhook",
         "imageDigest": "sha256:2133daae1f08ad54bcfd317f4a19b48e2bba1c490dbf04e74c4666b3d5d6a69b",
-        "hash": "sha256-Cr6sdYqEpRpMgUUuG5QHVnPbkSQEejhc5uWWQaH5u8U="
+        "hash": "sha256-Ev0JCjzdOLzkwRE4m4ZB13oTP4Tsf6HvQMX24gb14NE=",
+        "finalImageTag": "v1.20.0"
       }
     }
   },
@@ -73,17 +80,20 @@
       "quay.io/jetstack/cert-manager-csi-driver:v0.13.0": {
         "imageName": "quay.io/jetstack/cert-manager-csi-driver",
         "imageDigest": "sha256:07982a9d5b0b17727f6b411e84b84b7baad4dd829aa7ad7db024d0894b4b9515",
-        "hash": "sha256-ATjRUersyFf6NT6z7045Sy9SnZYTww0+EZ1Ajk696/g="
+        "hash": "sha256-JJd8DuwvA+iRvHAtIz/OE2wqmO13z+dWbzkNttcA1Qs=",
+        "finalImageTag": "v0.13.0"
       },
       "quay.io/jetstack/csi-node-driver-registrar:v2.16.0": {
         "imageName": "quay.io/jetstack/csi-node-driver-registrar",
         "imageDigest": "sha256:ab482308a4921e28a6df09a16ab99a457e9af9641ff44fb1be1a690d07ce8b70",
-        "hash": "sha256-K+cc3hv6C7FmJ7xj7WmThWmfSnatBbG2cvbIw/Oi7xA="
+        "hash": "sha256-K1yCfdA81UK9EKge3Up2W0Ud/5uZ/QaoBhddVgVG4m0=",
+        "finalImageTag": "v2.16.0"
       },
       "quay.io/jetstack/livenessprobe:v2.18.0": {
         "imageName": "quay.io/jetstack/livenessprobe",
         "imageDigest": "sha256:c4cc074199c045dd73ab85f28897e2a32f4d6f38ffdba4f3b13b8007ccbd3570",
-        "hash": "sha256-QmYsbJMZ7cybMcuzVMJEcdCDBKh5i1gfBwMjnCcvRxk="
+        "hash": "sha256-Er7hyA6Hgh3somibzEaFFX1xDEO4h5O28lEVW3slwFs=",
+        "finalImageTag": "v2.18.0"
       }
     }
   },
@@ -98,12 +108,14 @@
       "quay.io/jetstack/trust-manager:v0.22.0": {
         "imageName": "quay.io/jetstack/trust-manager",
         "imageDigest": "sha256:16f8ad469b944f1b060d5fc2d391672d76ac0b11717d4af27f7dc0e7cf145066",
-        "hash": "sha256-qsUzVlVk8CwMw3IriEXgZe5g6bV+0AO9Nu+J8HbcdX8="
+        "hash": "sha256-CDTxFix9L3IRGoUeTyOIb1d3vnz7tyW4vuzM+rpwlmw=",
+        "finalImageTag": "v0.22.0"
       },
       "quay.io/jetstack/trust-pkg-debian-bookworm:20230311-deb12u1.5": {
         "imageName": "quay.io/jetstack/trust-pkg-debian-bookworm",
         "imageDigest": "sha256:3d75dbefafa1d32a262078eadcab0c2e58621c3ac7ef2ea070bc83f9dc234cb6",
-        "hash": "sha256-rr9y4jS+GsE+RmDrkRa33c3Cs7Zre0J3Ei6UHf/cE/Q="
+        "hash": "sha256-uc90t8ROuFf3QSYmTO64M4cstS1nGtRiuEcGSnZQWPk=",
+        "finalImageTag": "20230311-deb12u1.5"
       }
     }
   },
@@ -114,17 +126,20 @@
       "ecr-public.aws.com/docker/library/redis:8.2.3-alpine": {
         "imageName": "ecr-public.aws.com/docker/library/redis",
         "imageDigest": "sha256:08ad0b1d280850169a790dba1393ff7a90aef951fc19632cf4d3ce4f78e679ba",
-        "hash": "sha256-uao+VHcBa3kuM46wLFHUbP71iAAEl/sg79xicQx3zp0="
+        "hash": "sha256-dIyl/Uig99lyfhBZ/jGopt/E5k+hkD96Ajx3ipOmmXU=",
+        "finalImageTag": "8.2.3-alpine"
       },
       "ghcr.io/dexidp/dex:v2.45.1": {
         "imageName": "ghcr.io/dexidp/dex",
         "imageDigest": "sha256:8499afd690c437f52301efd2b05b2455da5bd2dfc20332cd697dc9937f808462",
-        "hash": "sha256-QHo+yYYduYZebgu4l5qouX5uU0KBCNiWAPMvxoAN42Q="
+        "hash": "sha256-GgHoWz7vnJ3VaHWk3JvA6hTaUOWJRfnvgUBLxHUdhYg=",
+        "finalImageTag": "v2.45.1"
       },
       "quay.io/argoproj/argocd:v3.3.3": {
         "imageName": "quay.io/argoproj/argocd",
         "imageDigest": "sha256:8b9a0993937850c1ee6e2ada47a2be8259d512e959ae58afa39936658f7b52e7",
-        "hash": "sha256-wqKKAAW6It/DkJlBIe9qiEh+VRW1e1iHZVUhM3IiXWs="
+        "hash": "sha256-thG9jpBCo9mIN3kPKxa63ypT1ZQjn23KPEyYEfPC4B4=",
+        "finalImageTag": "v3.3.3"
       }
     }
   },
@@ -135,7 +150,8 @@
       "ghcr.io/headlamp-k8s/headlamp:v0.40.0": {
         "imageName": "ghcr.io/headlamp-k8s/headlamp",
         "imageDigest": "sha256:16c34eb5ef85e40bdbdeb5baebc70f7a6c59ae3739d8779bf896674c4d762ad5",
-        "hash": "sha256-gWhSW0/CWb2bHwJkLjwan2+3x0Ksqjcur+KCCmUpJV8="
+        "hash": "sha256-487nCQrUsxLfiSSj9FT/ukHAq+6nrcPhypJmjn9Xb9Q=",
+        "finalImageTag": "v0.40.0"
       }
     }
   },

@@ -32,6 +32,8 @@ FLAKE_TARGET=".#packages.${SYSTEM}.chart-index-${CLUSTER_NAME}"
 echo "[+] Building Nix derivation: $FLAKE_TARGET"
 
 INPUT_FILE=$(nix build "$FLAKE_TARGET" --no-link --print-out-paths)/chart-index.json
+ARCH="arm64"  # FIXME
+OS="linux" # FIXME
 
 if [ ! -f "$INPUT_FILE" ]; then
     echo "[!] Error: Built derivation output is not a file: $INPUT_FILE"
@@ -138,7 +140,7 @@ jq -c '.[]' "$INPUT_FILE" | while read -r item; do
     fi
 
     # 3. Build the nix-prefetch-docker command dynamically
-    prefetch_cmd=(nix-prefetch-docker --image-name "$img_name" --quiet --json)
+    prefetch_cmd=(nix-prefetch-docker --image-name "$img_name" --quiet --json --os "$OS" --arch "$ARCH")
     
     if [[ -n "$img_tag" ]]; then
       prefetch_cmd+=(--image-tag "$img_tag")
@@ -165,6 +167,7 @@ jq -c '.[]' "$INPUT_FILE" | while read -r item; do
     # Extract the required fields for Nix
     digest=$(echo "$hash_info" | jq -r '.imageDigest // empty')
     hash=$(echo "$hash_info" | jq -r '.hash // .sha256 // empty')
+    finalImageTag=$(echo "$hash_info" | jq -r '.finalImageTag // empty')
 
     # 5. Append the image under the chart's 'images' key in charts-lock.json
     jq --arg chartName "$name" \
@@ -172,7 +175,8 @@ jq -c '.[]' "$INPUT_FILE" | while read -r item; do
        --arg name "$img_name" \
        --arg digest "$digest" \
        --arg hash "$hash" \
-       '.[$chartName].images[$img] = { imageName: $name, imageDigest: $digest, hash: $hash }' "$OUTPUT_FILE" > /tmp/lock-tmp.json && mv /tmp/lock-tmp.json "$OUTPUT_FILE"
+       --arg finalImageTag "$finalImageTag" \
+       '.[$chartName].images[$img] = { imageName: $name, imageDigest: $digest, hash: $hash, finalImageTag: $finalImageTag }' "$OUTPUT_FILE" > /tmp/lock-tmp.json && mv /tmp/lock-tmp.json "$OUTPUT_FILE"
   done
 
   echo "[+] Finished discovering container images"
