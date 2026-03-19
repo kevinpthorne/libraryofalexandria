@@ -42,7 +42,12 @@
             readOnly = true;
         };
         images = lib.mkOption {
-            type = lib.types.listOf lib.types.package;
+            type = lib.types.listOf (lib.types.submoduleWith {
+                modules = [ ./image.nix ];
+                specialArgs = {
+                    inherit pkgs lib2;
+                };
+            });
             readOnly = true;
         };
         chartLock = lib.mkOption {
@@ -76,19 +81,7 @@
         inherit isLocalChart;
         chartPackage = helmChartPackage;
         valuesPackage = helmChartValuesPackage;
-        images = lib.mapAttrsToList (_imgString: imgLock: 
-            # import
-            inputs.nixpkgs.lib.evalModules {
-                modules = [
-                    ./image 
-                    imgLock
-                ];
-                specialArgs = {
-                    inherit pkgs;
-                    inherit lib2;
-                };
-            }
-        ) (lock.images or {});
+        images = lib.mapAttrsToList (_imgString: imgLock: imgLock) (lock.images or {});
         chartLock = lock;
     };
 }

@@ -5,6 +5,8 @@ let
   images = builtins.concatMap (chartModule: chartModule.config.images) helmCharts;
 
   nullable = val: default: if val == null then default else val;
+  localOciRepo = "oci-store";
+  ociRefOf = image: "oci:${localOciRepo}:${baseNameOf image.imageName}_${image.finalImageTag}";
 
   # Generate the zarf.yaml
   # We use the oci:// prefix to tell Zarf to look at local folders, not the internet
@@ -35,7 +37,7 @@ let
           valuesFiles = [ "./charts/${baseNameOf chartModule.config.valuesPackage}" ];
         }) helmCharts;
         # images = lib.mapAttrsToList (img: _: "oci://./oci-store/${img}") imageHashes;
-        images = builtins.map (image: "oci:oci-store:${image.config.name}") images;
+        images = builtins.map (image: ociRefOf image) images;
       }
     ];
   };
@@ -69,7 +71,7 @@ pkgs.stdenv.mkDerivation {
     EOF
     # -----------------------------------
 
-    mkdir -p oci-store charts extracted-crds
+    mkdir -p ${localOciRepo} charts extracted-crds
     chmod -R +w .
 
     cp ${zarfYaml} ./zarf.yaml
@@ -82,11 +84,11 @@ pkgs.stdenv.mkDerivation {
 
     # Convert the dockerTools tarballs into an OCI layout that Zarf can read
     # We map the pulledImages array into the oci-store directory
-    ${lib.concatStringsSep "\n" (builtins.map (imgDrv: ''
-      skopeo copy docker-archive:${images.config.package} oci:oci-store:${images.config.name}
+    ${lib.concatStringsSep "\n" (builtins.map (image: ''
+      skopeo copy docker-archive:${image.package} ${ociRefOf image}
     '') images)}
 
-    chmod -R +w charts oci-store
+    chmod -R +w charts ${localOciRepo}
 
     # Build the Zarf bundle entirely offline
     zarf package create --confirm --output .

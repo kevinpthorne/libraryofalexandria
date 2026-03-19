@@ -1,11 +1,11 @@
 { pkgs, lib, config, lib2, ... }:
 {
   options = {
-    name = lib.mkOption {
+    imageName = lib.mkOption {
       type = lib.types.str;
     };
 
-    digest = lib.mkOption {
+    imageDigest = lib.mkOption {
       type = lib.types.str;
     };
 
@@ -26,8 +26,8 @@
 
   config = {
     package = pkgs.dockerTools.pullImage {
-      imageName = config.name;
-      imageDigest = config.digest;
+      imageName = config.imageName;
+      imageDigest = config.imageDigest;
       finalImageTag = config.finalImageTag;
       sha256 = config.hash;
       arch = lib2.getGoArch { inherit pkgs; };

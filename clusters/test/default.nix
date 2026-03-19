@@ -7,6 +7,8 @@ let
             # vmImage.size = "20G";
 
             libraryofalexandria.node.deployment.colmena.hostName = "localhost";
+            libraryofalexandria.zarf.enable = lib.mkForce false;
+            libraryofalexandria.helmCharts.installerEnabled = true;
         };
     };
 in {

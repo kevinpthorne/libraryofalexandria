@@ -6,9 +6,10 @@
         libraryofalexandria.helmCharts = {
             enable = lib.mkEnableOption "Install helm charts on this cluster";
             charts = lib.mkOption {
+                # TODO replace this with submoduleWith!
                 type = lib.types.listOf (lib.types.submodule ./helm-chart.nix);
             };
-            installer = lib.mkEnableOption "Enabled installer systemd service";  # doesn't use local nix store charts unless specified
+            installerEnabled = lib.mkEnableOption "Enabled installer systemd service";  # doesn't use local nix store charts unless specified
         };
     };
 
@@ -21,7 +22,7 @@
                 chartModule = inputs.nixpkgs.lib.evalModules {
                     modules = [
                         ./helm-chart.nix 
-                        # chart
+                        # chart  # can't use since chartPackage somehow gets set
                         {
                             name = chart.name;  # TODO why do we need to copy the attrset?
                             chart = chart.chart;
@@ -63,9 +64,10 @@
                 charts = config.libraryofalexandria.helmCharts.charts;
             };
 
-            systemd.services.helm-chart-installer = lib.mkIf config.libraryofalexandria.helmCharts.installer {
-                requires = [ "${k8sSystemdService}.service" ];
-                after = [ "${k8sSystemdService}.service" ];
+            systemd.services.helm-chart-installer = lib.mkIf config.libraryofalexandria.helmCharts.installerEnabled {
+                enable = true;
+                requires = [ "k8s-api-waiter.service" ];
+                after = [ "k8s-api-waiter.service" ];
                 script = let
                     forEachChartModule = func: builtins.map (chart: func chart) helmChartModules;
                     concatCommands = commands: builtins.concatStringsSep "\n" commands;
@@ -84,15 +86,16 @@
                     ${concatCommands (forEachChartModule (chart: (
                         concatCommands [
                             "echo \"Installing ${chart.config.name}\""
-                            "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.config.name} ${chart.config.chart} ${lib.optionalString (chart.config.version != null) "--version ${chart.config.version}"} -f ${chart.config.package}/hc-${chart.config.name}-values.yaml ${lib.optionalString (chart.config.namespace != null) "--namespace ${chart.config.namespace} --create-namespace"} --kubeconfig ${kubeconfig} --wait"
+                            "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.config.name} ${chart.config.chart} ${lib.optionalString (chart.config.version != null) "--version ${chart.config.version}"} -f ${chart.config.valuesPackage}/hc-${chart.config.name}-values.yaml ${lib.optionalString (chart.config.namespace != null) "--namespace ${chart.config.namespace} --create-namespace"} --kubeconfig ${kubeconfig} --wait"
                         ]
                     )))}
                 '';
             };
 
-            systemd.services.helm-chart-remover = lib.mkIf config.libraryofalexandria.helmCharts.installer {
-                requires = [ "${k8sSystemdService}.service" ];
-                after = [ "${k8sSystemdService}.service" ];
+            systemd.services.helm-chart-remover = lib.mkIf config.libraryofalexandria.helmCharts.installerEnabled {
+                requires = [ "k8s-api-waiter.service" ];
+                after = [ "k8s-api-waiter.service" ];
+                enable = false;  # requires manual invocation
                 script = let
                     forEachChartModule = func: builtins.map (chart: func chart) helmChartModules;
                     concatCommands = commands: builtins.concatStringsSep "\n" commands;
