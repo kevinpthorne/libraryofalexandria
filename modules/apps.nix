@@ -35,7 +35,9 @@
 
     config.libraryofalexandria.apps = {
         "${config.libraryofalexandria.cluster.name}-apps".enable = true;
+        
         loa-extras.enable = lib.mkDefault false;
+        loa-voip.enable = lib.mkDefault false;
         loa-observability.enable = lib.mkDefault true;
         loa-federation.enable = lib.mkDefault true;
         loa-authn.enable = lib.mkDefault false;  # openldap is too crusty and old

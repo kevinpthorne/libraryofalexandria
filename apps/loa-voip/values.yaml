@@ -1,0 +1,31 @@
+argoNamespace: argo-cd
+cluster: {}
+
+pki:
+  rootCAIssuer: pki-bootstrap  # currently implied to be ClusterIssuer
+  certManagerNamespace: cert-manager
+
+global:
+  domain: "sip.yourdomain.com"
+
+kamailio:
+  replicaCount: 2
+  image: "ghcr.io/kamailio/kamailio-ci:6.0-alpine"
+  ports:
+    sip: 5060
+    ws: 8080 # Internal port Kamailio listens on for WebSockets
+
+rtpengine:
+  # Deployed as a DaemonSet to maximize node coverage with hostNetwork
+  image: "sipwise/rtpengine:latest"
+  ports:
+    min: 10000
+    max: 20000
+  # You must tell RTPEngine its public IP for NAT traversal
+  externalIP: "198.51.100.10" 
+
+asterisk:
+  replicaCount: 1
+  image: "andrius/asterisk:22"
+  ports:
+    sip: 5060

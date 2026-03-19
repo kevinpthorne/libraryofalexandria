@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kamailio
+  labels:
+    app: kamailio
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kamailio
+  template:
+    metadata:
+      labels:
+        app: kamailio
+    spec:
+      containers:
+        - name: kamailio
+          image: {{ .Values.kamailio.image }}
+          ports:
+            - name: sip-udp
+              containerPort: {{ .Values.kamailio.ports.sip }}
+              protocol: UDP
+            - name: sip-tcp
+              containerPort: {{ .Values.kamailio.ports.sip }}
+              protocol: TCP
+            - name: ws-tcp
+              containerPort: {{ .Values.kamailio.ports.ws }}
+              protocol: TCP
+          volumeMounts:
+            - name: kamailio-config-volume
+              mountPath: /etc/kamailio/kamailio.cfg
+              subPath: kamailio.cfg
+      volumes:
+        - name: kamailio-config-volume
+          configMap:
+            name: kamailio-config

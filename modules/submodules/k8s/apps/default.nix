@@ -2,6 +2,7 @@
 {
     imports = [  # top installs last
         ./loa-extras.nix
+        ./loa-voip.nix
         ./loa-observability.nix
         ./loa-federation.nix
         ./loa-authn.nix

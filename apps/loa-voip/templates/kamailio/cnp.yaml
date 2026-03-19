@@ -1,0 +1,29 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: kamailio-edge-policy
+spec:
+  endpointSelector:
+    matchLabels:
+      app: kamailio
+  ingress:
+    # RULE 1: Whitelist Telnyx Signaling IPs for standard SIP
+    # Note: Replace with actual current Telnyx IP ranges
+    - fromCIDR:
+        - "192.76.120.10/32" 
+        - "192.109.239.0/24"
+      toPorts:
+        - ports:
+            - port: "{{ .Values.kamailio.ports.sip }}"
+              protocol: UDP
+            - port: "{{ .Values.kamailio.ports.sip }}"
+              protocol: TCP
+
+    # RULE 2: Allow WebRTC traffic from the Ingress Controller
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: ingress-nginx # Adjust if using a different ingress
+      toPorts:
+        - ports:
+            - port: "{{ .Values.kamailio.ports.ws }}"
+              protocol: TCP

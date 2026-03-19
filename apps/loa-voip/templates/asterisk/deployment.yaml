@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-asterisk
+spec:
+  replicas: {{ .Values.asterisk.replicaCount }}
+  selector:
+    matchLabels:
+      app: asterisk
+  template:
+    metadata:
+      labels:
+        app: asterisk
+    spec:
+      containers:
+        - name: asterisk
+          image: {{ .Values.asterisk.image }}
+          ports:
+            - name: sip-internal
+              containerPort: {{ .Values.asterisk.ports.sip }}
+              protocol: UDP

@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Release.Name }}-rtpengine
+  namespace: {{ .Release.Name }}-rtpengine
+spec:
+  selector:
+    matchLabels:
+      app: rtpengine
+  template:
+    metadata:
+      labels:
+        app: rtpengine
+    spec:
+      hostNetwork: true # CRITICAL: Bypasses K8s networking for RTP
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: rtpengine
+          image: {{ .Values.rtpengine.image }}
+          ports:
+            - name: ng-control
+              containerPort: 22222 # Kamailio talks to RTPEngine here
+              protocol: UDP
+          env:
+            - name: INTERFACE
+              # Advertises the node's external IP to fix one-way audio
+              value: "pub/{{ .Values.rtpengine.externalIP }}"
+            - name: PORT_MIN
+              value: "{{ .Values.rtpengine.ports.min }}"
+            - name: PORT_MAX
+              value: "{{ .Values.rtpengine.ports.max }}"
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"] # Needed for eBPF/kernel packet pushing

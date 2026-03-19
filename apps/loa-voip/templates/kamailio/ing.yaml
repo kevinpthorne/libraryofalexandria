@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-kamailio-wss
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.pki.rootCAIssuer }}
+    # Nginx/Cilium specific annotations to allow WebSocket upgrades
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  tls:
+    - hosts:
+        - {{ .Values.global.domain }}
+      secretName: kamailio-tls-secret # cert-manager creates this
+  rules:
+    - host: {{ .Values.global.domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Release.Name }}-kamailio-ws
+                port:
+                  number: {{ .Values.kamailio.ports.ws }}

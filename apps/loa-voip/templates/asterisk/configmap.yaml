@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: asterisk-config
+  labels:
+    app: asterisk
+data:
+  pjsip.conf: |
+    ; --- 1. THE TRANSPORT ---
+    ; This tells Asterisk to listen on port 5060 inside its pod.
+    [transport-udp]
+    type=transport
+    protocol=udp
+    bind=0.0.0.0:{{ .Values.asterisk.ports.sip }}
+
+    ; --- 2. THE TRUSTED KAMAILIO TRUNK ---
+    ; We define Kamailio as an "endpoint" so Asterisk can process its calls.
+    [kamailio-trunk]
+    type=endpoint
+    transport=transport-udp
+    context=from-kamailio       ; The dialplan routing context for incoming calls
+    disallow=all
+    allow=ulaw,alaw,g722        ; Allow standard audio codecs (no Opus yet)
+    aors=kamailio-trunk
+    ; Disable authentication because Kamailio is inside our secure K8s network
+    outbound_auth=
+    force_rport=yes
+    rewrite_contact=yes
+
+    [kamailio-trunk]
+    type=aor
+    contact=sip:{{ .Release.Name }}-kamailio-sip.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.kamailio.ports.sip }}
+
+    ; --- 3. IP IDENTIFICATION (THE SECURITY GATE) ---
+    ; This is the most critical part. It tells Asterisk: "If a SIP packet comes 
+    ; from this IP range, automatically assign it to the 'kamailio-trunk' endpoint."
+    [kamailio-identify]
+    type=identify
+    endpoint=kamailio-trunk
+    ; You must whitelist the IP range of your Kubernetes Pod network (e.g., Calico/Cilium)
+    ; so Asterisk trusts the internal traffic routed by Kamailio.
+    ; Cilium Network Policies should do heavier lifting here too
+    match=10.0.0.0/8 
+
+    ; --- 4. A TEST DESK PHONE (Optional) ---
+    ; If you want a physical desk phone to register through Kamailio to Asterisk
+    [1001]
+    type=endpoint
+    context=internal-phones
+    disallow=all
+    allow=ulaw
+    auth=1001-auth
+    aors=1001
+
+    [1001-auth]
+    type=auth
+    auth_type=userpass
+    password=SuperSecretPassword123
+    username=1001
+
+    [1001]
+    type=aor
+    max_contacts=2
+  extensions.conf: |
+    ; extensions.conf
+    [general]
+    static=yes
+    writeprotect=yes
+
+    ; This matches the context=from-kamailio we defined in pjsip.conf
+    [from-kamailio]
+
+    ; --- THE ECHO TEST ---
+    ; Dialing 4444 will echo your voice back to you. 
+    ; If you hear yourself, Kamailio, RTPEngine, and Asterisk are perfectly aligned.
+    exten => 4444,1,NoOp(Incoming call from Kamailio - Echo Test)
+    same => n,Answer()
+    same => n,Echo()
+    same => n,Hangup()
+
+    ; --- THE PLAYBACK TEST ---
+    ; Dialing 5555 plays a default Asterisk sound file.
+    ; This tests one-way audio from K8s to your phone.
+    exten => 5555,1,NoOp(Incoming call from Kamailio - Playback Test)
+    same => n,Answer()
+    same => n,Playback(demo-congrats) ; A standard Asterisk audio file
+    same => n,Hangup()

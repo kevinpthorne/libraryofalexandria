@@ -6,9 +6,11 @@ let
             nixpkgs.hostPlatform = "aarch64-linux";
             # vmImage.size = "20G";
 
-            libraryofalexandria.node.deployment.colmena.hostName = "localhost";
-            libraryofalexandria.zarf.enable = lib.mkForce false;
-            libraryofalexandria.helmCharts.installerEnabled = true;
+            libraryofalexandria = {
+                node.deployment.colmena.hostName = "localhost";
+                zarf.enable = lib.mkForce false;
+                helmCharts.installerEnabled = true;
+            };
         };
     };
 in {
@@ -39,8 +41,9 @@ in {
         };
 
         apps.loa-core.values.overrides.seaweedfs.size = "1G";
-        apps.loa-extras.enable = lib.mkForce true;
+        apps.loa-extras.enable = lib.mkForce false;
         apps.loa-federation.values.overrides.pgedge.instances = "2"; # TODO make not require quotes
+        apps.loa-voip.enable = lib.mkForce true;
 
         virtualIps = {
             enable = true;
