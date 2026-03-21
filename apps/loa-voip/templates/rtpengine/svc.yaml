@@ -10,8 +10,8 @@ spec:
   clusterIP: None 
   ports:
     - name: ng-control
-      port: 22222
-      targetPort: 22222
+      port: {{ .Values.rtpengine.ports.control }}
+      targetPort: {{ .Values.rtpengine.ports.control }}
       protocol: UDP
   selector:
     # This must perfectly match the labels on your RTPEngine DaemonSet pods

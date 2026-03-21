@@ -10,8 +10,8 @@ data:
     
     # --- GLOBAL CONFIGURATION ---
     #!define ASTERISK_HOST "asterisk.{{ .Release.Namespace }}.svc.cluster.local"
-    #!define ASTERISK_PORT "5060"
-    #!define RTPENGINE_SOCK "udp:rtpengine.{{ .Release.Namespace }}-rtpengine.svc.cluster.local:22222"
+    #!define ASTERISK_PORT "{{ .Values.asterisk.ports.sip }}"
+    #!define RTPENGINE_SOCK "udp:rtpengine.{{ .Release.Namespace }}-rtpengine.svc.cluster.local:{{ .Values.rtpengine.ports.control }}"
     
     # --- MODULES ---
     loadmodule "sl.so"

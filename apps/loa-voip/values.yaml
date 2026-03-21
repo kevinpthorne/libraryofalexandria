@@ -6,7 +6,7 @@ pki:
   certManagerNamespace: cert-manager
 
 global:
-  domain: "sip.yourdomain.com"
+  domain: "yourdomain.invalid"
 
 kamailio:
   replicaCount: 2
@@ -21,8 +21,7 @@ rtpengine:
   ports:
     min: 10000
     max: 20000
-  # You must tell RTPEngine its public IP for NAT traversal
-  externalIP: "198.51.100.10" 
+    control: 22222
 
 asterisk:
   replicaCount: 1

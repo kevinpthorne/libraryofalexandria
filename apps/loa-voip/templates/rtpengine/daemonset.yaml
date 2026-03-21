@@ -14,21 +14,65 @@ spec:
     spec:
       hostNetwork: true # CRITICAL: Bypasses K8s networking for RTP
       dnsPolicy: ClusterFirstWithHostNet
+      securityContext:
+        runAsUser: 0 
+        runAsNonRoot: false
+        fsGroup: 1000
+      initContainers:
+        - name: generate-config
+          # Using an alpine image instead of curl because it has native DNS tools
+          image: alpine:latest
+          env:
+            - name: INTERNAL_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            # Define your pfSense DDNS hostname here
+            - name: PUBLIC_HOSTNAME
+              value: "{{ .Values.global.domain }}"
+          volumeMounts:
+            - name: rtpengine-config
+              mountPath: /etc/rtpengine
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Use nslookup to resolve the IP, then use awk to grab just the IP address
+              PUBLIC_IP=$(nslookup -type=a $PUBLIC_HOSTNAME | awk '/^Address: / { print $2 }' | tail -n 1)
+              
+              if [ -z "$PUBLIC_IP" ]; then
+                echo "Failed to resolve public IP from $PUBLIC_HOSTNAME."
+                exit 1
+              fi
+              
+              echo "Resolved Public IP: $PUBLIC_IP"
+              
+              cat <<EOF > /etc/rtpengine/rtpengine.conf
+              [rtpengine]
+              interface = internal/${INTERNAL_IP}; external/${PUBLIC_IP}!${INTERNAL_IP}
+              listen-ng = ${INTERNAL_IP}:{{ .Values.rtpengine.ports.control }}
+              port-min = {{ .Values.rtpengine.ports.min }}
+              port-max = {{ .Values.rtpengine.ports.max }}
+              log-level = 6
+              EOF
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000 # This matches the fsGroup, allowing write access
+            capabilities:
+              drop:
+                - ALL
       containers:
         - name: rtpengine
           image: {{ .Values.rtpengine.image }}
           ports:
             - name: ng-control
-              containerPort: 22222 # Kamailio talks to RTPEngine here
+              containerPort: {{ .Values.rtpengine.ports.control }} # Kamailio talks to RTPEngine here
               protocol: UDP
-          env:
-            - name: INTERFACE
-              # Advertises the node's external IP to fix one-way audio
-              value: "pub/{{ .Values.rtpengine.externalIP }}"
-            - name: PORT_MIN
-              value: "{{ .Values.rtpengine.ports.min }}"
-            - name: PORT_MAX
-              value: "{{ .Values.rtpengine.ports.max }}"
           securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
             capabilities:
-              add: ["NET_ADMIN"] # Needed for eBPF/kernel packet pushing
+              drop:
+                - ALL
+              add: 
+                - NET_ADMIN # Needed for eBPF/kernel packet pushing

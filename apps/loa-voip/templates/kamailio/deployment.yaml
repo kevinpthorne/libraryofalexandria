@@ -31,6 +31,16 @@ spec:
             - name: kamailio-config-volume
               mountPath: /etc/kamailio/kamailio.cfg
               subPath: kamailio.cfg
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
       volumes:
         - name: kamailio-config-volume
           configMap:
