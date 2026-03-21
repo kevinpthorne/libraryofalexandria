@@ -219,7 +219,7 @@
             meta = {
                 nixpkgs = import inputs.nixpkgs {
                     system = "aarch64-linux"; # FIXME this will cause issues on x86 builder hosts
-                    hostPlatform = "aarch64-linux";
+                    # hostPlatform = "aarch64-linux";
                 };
                 nodeNixpkgs = builtins.mapAttrs (_: v: v.pkgs) config.nodes;
                 nodeSpecialArgs = builtins.mapAttrs (_: v: v._module.specialArgs) config.nodes;

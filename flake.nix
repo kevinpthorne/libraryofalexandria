@@ -29,7 +29,7 @@
     nixos-stig.url = "github:kevinpthorne/nixos-stig";
   };
 
-  outputs = inputs @ { self, nixpkgs, supported-arch, raspberry-pi-nix, nixos-stig, ... }:
+  outputs = inputs @ { self, nixpkgs, supported-arch, raspberry-pi-nix, nixos-stig, colmena, ... }:
   let
     customLib = import ./lib;
     localPkgs = import ./pkgs nixpkgs;
@@ -63,6 +63,7 @@
     } 
     // clusters.nixosConfigurations;
 
+    colmenaHive = colmena.lib.makeHive self.outputs.colmena;
     colmena = clusters.colmena;
     clusters = clusters;
 
