@@ -1,8 +1,8 @@
 { pkgs, clusterName ? "unknown", helmCharts ? [], lib, ... }:
 let
   # collect charts, images
-  chartPackages = builtins.map (chartModule: chartModule.config.chartPackage) helmCharts;
-  images = builtins.concatMap (chartModule: chartModule.config.images) helmCharts;
+  chartPackages = builtins.map (chartModule: chartModule.chartPackage) helmCharts;
+  images = builtins.concatMap (chartModule: chartModule.images) helmCharts;
 
   nullable = val: default: if val == null then default else val;
   localOciRepo = "oci-store";
@@ -30,11 +30,11 @@ let
         name = "${clusterName}-charts";
         required = true;
         charts = builtins.map (chartModule: {
-          name = chartModule.config.name;
-          namespace = nullable chartModule.config.namespace "default";
-          version = nullable chartModule.config.version "0.1.0";
-          localPath = "./charts/${baseNameOf chartModule.config.chartPackage}";
-          valuesFiles = [ "./charts/${baseNameOf chartModule.config.valuesPackage}" ];
+          name = chartModule.name;
+          namespace = nullable chartModule.namespace "default";
+          version = nullable chartModule.version "0.1.0";
+          localPath = "./charts/${baseNameOf (nullable chartModule.chartPackage "unlocked-chart-please-lock-charts")}";
+          valuesFiles = [ "./charts/${baseNameOf chartModule.valuesPackage}" ];
         }) helmCharts;
         # images = lib.mapAttrsToList (img: _: "oci://./oci-store/${img}") imageHashes;
         images = builtins.map (image: ociRefOf image) images;
@@ -78,8 +78,8 @@ pkgs.stdenv.mkDerivation {
 
     # copy charts and values
     ${lib.concatStringsSep "\n" (builtins.map (chartModule: ''
-      cp -r ${chartModule.config.chartPackage} ./charts/${baseNameOf chartModule.config.chartPackage} || true
-      cp -r ${chartModule.config.valuesPackage} ./charts/${baseNameOf chartModule.config.valuesPackage} || true
+      cp -r ${chartModule.chartPackage} ./charts/${baseNameOf chartModule.chartPackage} || true
+      cp -r ${chartModule.valuesPackage} ./charts/${baseNameOf chartModule.valuesPackage} || true
     '') helmCharts)}
 
     # Convert the dockerTools tarballs into an OCI layout that Zarf can read

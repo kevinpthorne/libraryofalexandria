@@ -21,8 +21,8 @@
             };
 
             deploymentMethod = lib.mkOption {
-                type = lib.types.enum [ "colmena" "manual" ];
-                default = "colmena";
+                type = lib.types.enum [ "colmena" "deploy-rs" "manual" ];
+                default = "deploy-rs";
             };
 
             masters = lib.mkOption {
@@ -90,6 +90,9 @@
             readOnly = true;
         };
         colmena = lib.mkOption {
+            # readOnly = true;
+        };
+        deploy-rs = lib.mkOption {
             readOnly = true;
         };
         packages = lib.mkOption {
@@ -214,8 +217,25 @@
         nixosConfigurations = config.nodes;
         # modules-only, for nixosTest
         modules = (collectModules masterModulesAttrSets) // (collectModules workerModulesAttrSets);
+        # deploy-rs
+        deploy-rs = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "deploy-rs") {
+            nodes = builtins.mapAttrs (name: value: {
+                hostname = value.config.libraryofalexandria.node.deployment.deploy-rs.hostName;
+                profiles.system = {
+                    user = "root";
+                    sshUser = value.config.libraryofalexandria.node.deployment.deploy-rs.userName;
+                    sshOpts = [ 
+                        "-A" 
+                        "-p" (toString value.config.libraryofalexandria.node.deployment.deploy-rs.port) 
+                        # "-i" "~/.ssh/deployment"
+                        # "-o" "StrictHostKeyChecking=no" 
+                    ];
+                    path = inputs.deploy-rs.lib.${value.config.nixpkgs.hostPlatform.system}.activate.nixos value;
+                };
+            }) (config.nodes);
+        };
         # colmena
-        colmena = lib.mkIf (config.libraryofalexandria.cluster.deploymentMethod == "colmena") ({
+        colmena = if (config.libraryofalexandria.cluster.deploymentMethod == "colmena") then ({
             meta = {
                 nixpkgs = import inputs.nixpkgs {
                     system = "aarch64-linux"; # FIXME this will cause issues on x86 builder hosts
@@ -232,7 +252,7 @@
         } // builtins.mapAttrs (name: value: {
             nixpkgs.hostPlatform = value.config.nixpkgs.hostPlatform;
             imports = value._module.args.modules;
-        }) (config.nodes));
+        }) (config.nodes)) else {};
         # packages
         # ..build-all-${clusterName}
         packages = lib2.eachArch (arch: let 

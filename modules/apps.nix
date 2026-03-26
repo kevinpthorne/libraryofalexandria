@@ -35,7 +35,6 @@
 
     config.libraryofalexandria.apps = {
         "${config.libraryofalexandria.cluster.name}-apps".enable = true;
-        
         loa-extras.enable = lib.mkDefault false;
         loa-voip.enable = lib.mkDefault false;
         loa-observability.enable = lib.mkDefault true;

@@ -8,6 +8,11 @@
 
     supported-arch.url = "github:nix-systems/default-linux";  # aarch64-linux and x86_64-linux
     
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     colmena = {
       url = "github:zhaofengli/colmena";
       inputs = {
@@ -65,6 +70,7 @@
 
     colmenaHive = colmena.lib.makeHive self.outputs.colmena;
     colmena = clusters.colmena;
+    deploy = clusters.deploy-rs;
     clusters = clusters;
 
     packages = deepMerge [ 

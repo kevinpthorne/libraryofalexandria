@@ -2,7 +2,7 @@
 let
     defaultModule = isMaster: id: let
             firstIpOctet = 21;
-            ipLastOctet = if isMaster then firstIpOctet + id else firstIpOctet + id + config.masters.count;
+            ipLastOctet = if isMaster then firstIpOctet + id else firstIpOctet + id + config.libraryofalexandria.cluster.masters.count;
         in 
         { pkgs, lib, ... }: {
             config = {

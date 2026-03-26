@@ -13,8 +13,8 @@
     config = let
       isMaster = config.libraryofalexandria.node.type == "master";
       isMaster0 = isMaster && config.libraryofalexandria.node.id == 0;
-      helmCharts = config.system.build.helmChartModules;
-      helmChartPackages = builtins.map (chartModule: chartModule.config.chartPackage) helmCharts;
+      helmCharts = config.libraryofalexandria.helmCharts.charts;
+      helmChartPackages = builtins.map (chartModule: chartModule.chartPackage) helmCharts;
       zarfBundlePackage = pkgs.zarf-bundle.override {
         clusterName = config.libraryofalexandria.cluster.name;
         inherit helmCharts;

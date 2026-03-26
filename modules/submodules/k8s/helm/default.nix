@@ -1,4 +1,8 @@
 { pkgs, config, lib, inputs, lib2, ... }:
+let
+    clusterName = config.libraryofalexandria.cluster.name;
+    chartLocks = builtins.fromJSON (builtins.readFile ../../../../clusters/${clusterName}/charts-lock.json);
+in
 {
     imports = [];
 
@@ -6,8 +10,13 @@
         libraryofalexandria.helmCharts = {
             enable = lib.mkEnableOption "Install helm charts on this cluster";
             charts = lib.mkOption {
-                # TODO replace this with submoduleWith!
-                type = lib.types.listOf (lib.types.submodule ./helm-chart.nix);
+                type = lib.types.listOf (lib.types.submoduleWith {
+                    modules = [ ./helm-chart.nix ];
+                    specialArgs = {
+                        inherit pkgs lib2 inputs;
+                        locks = chartLocks;
+                    };
+                });
             };
             installerEnabled = lib.mkEnableOption "Enabled installer systemd service";  # doesn't use local nix store charts unless specified
         };
@@ -15,45 +24,13 @@
 
     config = 
     let
-        clusterName = config.libraryofalexandria.cluster.name;
-        chartLocks = builtins.fromJSON (builtins.readFile ../../../../clusters/${clusterName}/charts-lock.json);
-        helmChartModules = (builtins.map (chart: 
-            let 
-                chartModule = inputs.nixpkgs.lib.evalModules {
-                    modules = [
-                        ./helm-chart.nix 
-                        # chart  # can't use since chartPackage somehow gets set
-                        {
-                            name = chart.name;  # TODO why do we need to copy the attrset?
-                            chart = chart.chart;
-                            version = chart.version;
-                            values = chart.values;
-                            namespace = chart.namespace;
-                            repo = chart.repo;
-                        }
-                        {
-                            inherit chartLocks;
-                        }
-                    ];
-                    specialArgs = {
-                        inherit inputs;
-                        inherit pkgs;
-                        inherit lib2;
-                    };
-                };
-
-            in
-                chartModule
-        ) config.libraryofalexandria.helmCharts.charts);
-        helmChartPackages = builtins.map (chartModule: chartModule.config.chartPackage) helmChartModules;
-        helmChartValuesPackages = builtins.map (chartModule: chartModule.config.valuesPackage) helmChartModules;
+        helmChartPackages = builtins.map (chartModule: chartModule.chartPackage) config.libraryofalexandria.helmCharts.charts;
+        helmChartValuesPackages = builtins.map (chartModule: chartModule.valuesPackage) config.libraryofalexandria.helmCharts.charts;
         k8sSystemdService = if config.libraryofalexandria.cluster.k8sEngine == "rke2" then "rke2-server" else "kubernetes";
         isMaster = config.libraryofalexandria.node.type == "master";
         isMaster0 = isMaster && config.libraryofalexandria.node.id == 0;
     in
         lib.mkIf (config.libraryofalexandria.helmCharts.enable && isMaster0) {
-            system.build.helmChartModules = helmChartModules;  # exposes for zarf
-
             # for systemd shipping, values are rendered at runtime. air-gapped shipping will also include valuesPackages
             environment.systemPackages = helmChartValuesPackages ++ (with pkgs; [
                 kubernetes-helm
@@ -69,7 +46,7 @@
                 requires = [ "k8s-api-waiter.service" ];
                 after = [ "k8s-api-waiter.service" ];
                 script = let
-                    forEachChartModule = func: builtins.map (chart: func chart) helmChartModules;
+                    forEachChartModule = func: builtins.map (chart: func chart) config.libraryofalexandria.helmCharts.charts;
                     concatCommands = commands: builtins.concatStringsSep "\n" commands;
                     kubeconfig = config.environment.variables."KUBECONFIG";
                 in ''
@@ -78,15 +55,15 @@
                     ${pkgs.kubernetes-helm}/bin/helm env
 
                     ${concatCommands (forEachChartModule (chart: (
-                        "${lib.optionalString (chart.config.repo != null) "${pkgs.kubernetes-helm}/bin/helm repo add ${chart.config.name} ${chart.config.repo}"}"
+                        "${lib.optionalString (chart.repo != null) "${pkgs.kubernetes-helm}/bin/helm repo add ${chart.name} ${chart.repo}"}"
                     )))}
 
                     ${pkgs.kubernetes-helm}/bin/helm repo update
 
                     ${concatCommands (forEachChartModule (chart: (
                         concatCommands [
-                            "echo \"Installing ${chart.config.name}\""
-                            "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.config.name} ${chart.config.chart} ${lib.optionalString (chart.config.version != null) "--version ${chart.config.version}"} -f ${chart.config.valuesPackage}/hc-${chart.config.name}-values.yaml ${lib.optionalString (chart.config.namespace != null) "--namespace ${chart.config.namespace} --create-namespace"} --kubeconfig ${kubeconfig} --wait"
+                            "echo \"Installing ${chart.name}\""
+                            "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.name} ${chart.chart} ${lib.optionalString (chart.version != null) "--version ${chart.version}"} -f ${chart.valuesPackage}/hc-${chart.name}-values.yaml ${lib.optionalString (chart.namespace != null) "--namespace ${chart.namespace} --create-namespace"} --kubeconfig ${kubeconfig} --wait"
                         ]
                     )))}
                 '';
@@ -97,7 +74,7 @@
                 after = [ "k8s-api-waiter.service" ];
                 enable = false;  # requires manual invocation
                 script = let
-                    forEachChartModule = func: builtins.map (chart: func chart) helmChartModules;
+                    forEachChartModule = func: builtins.map (chart: func chart) config.libraryofalexandria.helmCharts.charts;
                     concatCommands = commands: builtins.concatStringsSep "\n" commands;
                     kubeconfig = config.environment.variables."KUBECONFIG";
                 in ''
@@ -107,8 +84,8 @@
 
                     ${concatCommands (forEachChartModule (chart: (
                         concatCommands [
-                            "echo \"Removing ${chart.config.name}\""
-                            "${pkgs.kubernetes-helm}/bin/helm remove ${chart.config.name} ${lib.optionalString (chart.config.namespace != null) "--namespace ${chart.config.namespace} --create-namespace"} --kubeconfig ${kubeconfig} --wait"
+                            "echo \"Removing ${chart.name}\""
+                            "${pkgs.kubernetes-helm}/bin/helm remove ${chart.name} ${lib.optionalString (chart.namespace != null) "--namespace ${chart.namespace} --create-namespace"} --kubeconfig ${kubeconfig} --wait"
                         ]
                     )))}
                 '';

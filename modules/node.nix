@@ -62,7 +62,7 @@ in
             extraHostsStr = lib.concatStringsSep "\n" extraHostEntries;
         in lib.mkIf config.libraryofalexandria.node.enable {
 
-            libraryofalexandria.zarf.enable = true;
+            libraryofalexandria.zarf.enable = false;
 
             networking = {
                 hostName = config.libraryofalexandria.node.hostname;

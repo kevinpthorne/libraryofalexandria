@@ -8,6 +8,7 @@ let
 
             libraryofalexandria = {
                 node.deployment.colmena.hostName = "localhost";
+                node.deployment.deploy-rs.hostName = "localhost";
                 zarf.enable = lib.mkForce false;
                 helmCharts.installerEnabled = true;
             };

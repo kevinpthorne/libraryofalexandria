@@ -1,4 +1,4 @@
-{ pkgs, lib, config, lib2, inputs, ... }:
+{ pkgs, lib, config, lib2, inputs, locks, ... }:
 {
     options = {
         name = lib.mkOption {
@@ -22,11 +22,6 @@
         repo = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
             default = null;
-        };
-        # super options
-        chartLocks = lib.mkOption {
-            type = lib.types.attrs;
-            readOnly = true;
         };
         # generated
         isLocalChart = lib.mkOption {
@@ -58,7 +53,7 @@
 
     config = let 
         isLocalChart = config.version == null;
-        lock = config.chartLocks.${config.name} or null;
+        lock = locks.${config.name} or null;
         helmChartPackage = if lock == null 
         then builtins.trace "Chart ${config.name} not found in chart-locks.json" null 
         else if isLocalChart then config.chart else pkgs.fetchurl {
@@ -82,6 +77,6 @@
         chartPackage = helmChartPackage;
         valuesPackage = helmChartValuesPackage;
         images = lib.mapAttrsToList (_imgString: imgLock: imgLock) (lock.images or {});
-        chartLock = lock;
+        chartLock = lib2.nullable lock {};
     };
 }

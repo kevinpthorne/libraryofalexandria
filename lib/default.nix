@@ -15,4 +15,5 @@ rec {
     getRke2Arch = import ./get-rke2-arch.nix;
     getClusterConfig = import ./get-cluster-config.nix;
     range = n: builtins.genList (x: x) n;
+    nullable = val: default: if val == null then default else val;
 }
