@@ -22,7 +22,7 @@
 
             deploymentMethod = lib.mkOption {
                 type = lib.types.enum [ "colmena" "deploy-rs" "manual" ];
-                default = "deploy-rs";
+                default = "colmena";
             };
 
             masters = lib.mkOption {
@@ -250,7 +250,7 @@
                 };
             };
         } // builtins.mapAttrs (name: value: {
-            nixpkgs.hostPlatform = value.config.nixpkgs.hostPlatform;
+            nixpkgs.hostPlatform = "aarch64-linux"; # value.config.nixpkgs.hostPlatform;
             imports = value._module.args.modules;
         }) (config.nodes)) else {};
         # packages

@@ -68,7 +68,6 @@
     } 
     // clusters.nixosConfigurations;
 
-    colmenaHive = colmena.lib.makeHive self.outputs.colmena;
     colmena = clusters.colmena;
     deploy = clusters.deploy-rs;
     clusters = clusters;
@@ -93,6 +92,19 @@
       )
       clusters.packages
     ];
+
+    apps = eachArch (system:
+      let
+        systemPkgs = import nixpkgs {
+          inherit system;
+          overlays = with self.overlays; [ localPkgs ];
+        };
+      in
+        {
+          colmena = { type = "app"; program = "${systemPkgs.colmena}/bin/colmena"; };
+          deploy = { type = "app"; program = "${systemPkgs.deploy-rs}/bin/deploy-rs"; };
+        }
+    );
 
     # checks = deepMerge [
     #    (eachArch (system:
