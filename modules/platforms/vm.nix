@@ -10,6 +10,7 @@
 
     config = {
         libraryofalexandria.node.platform = "vmware";
+        vmware.baseImageSize = 32768;
 
         # Fix Virtualbox not finding disk
         boot.initrd.availableKernelModules = [ 
