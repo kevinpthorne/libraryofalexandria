@@ -1,17 +1,17 @@
 { lib, lib2, config, pkgs, ... }:
 {
-    imports = [ ../../helm ];
+    imports = [ ../helm ];
 
-    config = lib.mkIf config.libraryofalexandria.apps.cert-manager.enable {
+    config = lib.mkIf config.libraryofalexandria.control-plane.cert-manager.enable {
         libraryofalexandria.helmCharts.enable = true;
         libraryofalexandria.helmCharts.charts = [
             {
                 name = "cert-manager";
                 chart = "cert-manager/cert-manager";
-                version = config.libraryofalexandria.apps.cert-manager.version;
+                version = config.libraryofalexandria.control-plane.cert-manager.version;
                 values = lib2.deepMerge [{
                     crds.enabled = true;
-                } config.libraryofalexandria.apps.cert-manager.values];
+                } config.libraryofalexandria.control-plane.cert-manager.values];
                 namespace = "cert-manager";
                 repo = "https://charts.jetstack.io";
             }
@@ -31,7 +31,7 @@
             {
                 name = "cert-manager-csi-driver";
                 chart = "cert-manager/cert-manager-csi-driver";
-                version = config.libraryofalexandria.apps.cert-manager.csiVersion;
+                version = config.libraryofalexandria.control-plane.cert-manager.csiVersion;
                 values = {};
                 namespace = "cert-manager-system";
                 repo = "https://charts.jetstack.io";

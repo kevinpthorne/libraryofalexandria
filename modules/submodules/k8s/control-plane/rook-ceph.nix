@@ -1,8 +1,8 @@
 { lib, lib2, config, ... }:
 {
-    imports = [ ../../helm ];
+    imports = [ ../helm ];
 
-    options.libraryofalexandria.apps.rook-ceph = {
+    options.libraryofalexandria.control-plane.rook-ceph = {
         enable = lib.mkEnableOption "";
 
         version = lib.mkOption {
@@ -22,14 +22,14 @@
         };
     };
 
-    config = lib.mkIf config.libraryofalexandria.apps.rook-ceph.enable {
+    config = lib.mkIf config.libraryofalexandria.control-plane.rook-ceph.enable {
         libraryofalexandria.helmCharts.enable = true;
         libraryofalexandria.helmCharts.charts = [
             # rook-ceph https://rook.io/docs/rook/latest-release/Helm-Charts/operator-chart/
             {
                 name = "rook-ceph";
                 chart = "rook-ceph/rook-ceph";
-                version = config.libraryofalexandria.apps.rook-ceph.version;
+                version = config.libraryofalexandria.control-plane.rook-ceph.version;
                 values = {
                     csi = {
                         # nixos overrides
@@ -75,20 +75,20 @@
             {
                 name = "rook-ceph-cluster";
                 chart = "rook-ceph/rook-ceph-cluster"; # reuses repo from above
-                version = config.libraryofalexandria.apps.rook-ceph.version;
+                version = config.libraryofalexandria.control-plane.rook-ceph.version;
                 values = {
                     operatorNamespace = "rook-ceph";
                     cephClusterSpec = {
                         mgr.count = 
                             let
-                                mgrCount = if config.libraryofalexandria.apps.rook-ceph.devMode then 1 else 3;
+                                mgrCount = if config.libraryofalexandria.control-plane.rook-ceph.devMode then 1 else 3;
                             in
                             mgrCount;
                         mon = {
-                            allowMultiplePerNode = config.libraryofalexandria.apps.rook-ceph.devMode;
+                            allowMultiplePerNode = config.libraryofalexandria.control-plane.rook-ceph.devMode;
                             count = 
                             let
-                                monCount = if config.libraryofalexandria.apps.rook-ceph.devMode then 1 else 3;
+                                monCount = if config.libraryofalexandria.control-plane.rook-ceph.devMode then 1 else 3;
                             in
                             monCount;
                         };

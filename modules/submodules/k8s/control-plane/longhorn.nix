@@ -1,8 +1,8 @@
 { lib, lib2, config, pkgs, ... }:
 {
-    imports = [ ../../helm ];
+    imports = [ ../helm ];
 
-    config = lib.mkIf config.libraryofalexandria.apps.longhorn.enable {
+    config = lib.mkIf config.libraryofalexandria.control-plane.longhorn.enable {
         libraryofalexandria.helmCharts.charts = [
             {
                 name = "longhorn-namespace";
@@ -19,7 +19,7 @@
             {
                 name = "longhorn";
                 chart = "longhorn/longhorn";
-                version = config.libraryofalexandria.apps.longhorn.version;
+                version = config.libraryofalexandria.control-plane.longhorn.version;
                 # https://longhorn.io/docs/1.10.0/advanced-resources/deploy/customizing-default-settings/#using-helm
                 values = lib2.deepMerge [{
                     defaultSettings = {
@@ -29,7 +29,7 @@
                         replicaAutoBalance = "true";
                         defaultDataPath = "/var/lib/longhorn";  # ensure to line this up with disk mounts
                     };
-                } config.libraryofalexandria.apps.longhorn.values];
+                } config.libraryofalexandria.control-plane.longhorn.values];
                 namespace = "longhorn-system";
                 repo = "https://charts.longhorn.io";
             }

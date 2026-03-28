@@ -1,29 +1,40 @@
-{ pkgs, config, lib, lib2, inputs, ... }:
 {
-    imports = [  # top installs last
-        ./loa-extras.nix
-        ./loa-voip.nix
-        ./loa-observability.nix
-        ./loa-federation.nix
-        ./loa-authn.nix
-        ./loa-core.nix
-    ];
+  pkgs,
+  config,
+  lib,
+  lib2,
+  inputs,
+  ...
+}:
+{
+  imports = [
+    ../control-plane # expose argocd
+    ../helm # expose helm
+  ];
 
-    config = lib.mkIf (config.libraryofalexandria.apps.argocd.enable && config.libraryofalexandria.apps."${config.libraryofalexandria.cluster.name}-apps".enable) {
-        libraryofalexandria.helmCharts.enable = true;
-        libraryofalexandria.helmCharts.charts = lib.mkAfter [
-            {
-                name = "${config.libraryofalexandria.cluster.name}-apps";
-                chart = "${pkgs.argocd-app-helm}";
-                values = lib2.deepMerge [{
-                    source = {
-                        repoURL = "https://github.com/kevinpthorne/libraryofalexandria.git";
-                        path = "apps/${config.libraryofalexandria.cluster.name}-apps";
-                    };
-                    cluster = config.libraryofalexandria.cluster;
-                } config.libraryofalexandria.apps."${config.libraryofalexandria.cluster.name}-apps".values];
-                namespace = "argo-cd";
-            }
+  options.libraryofalexandria.apps = lib.mkOption {
+    default = { };
+    type = lib.types.attrsOf (lib.types.submodule ./_submodule.nix);
+  };
+
+  config = lib.mkIf config.libraryofalexandria.control-plane.argocd.enable {
+    libraryofalexandria.helmCharts.enable = true;
+    libraryofalexandria.helmCharts.charts = lib.mkAfter (
+      builtins.mapAttrs (name: app: {
+        name = name;
+        chart = "${pkgs.argocd-app-helm}";
+        values = lib2.deepMerge [
+          {
+            source = {
+              repoURL = app.repo;
+              path = app.subPath;
+            };
+            cluster = config.libraryofalexandria.cluster;
+          }
+          app.valuesOverrides
         ];
-    };
+        namespace = "argo-cd";
+      }) config.libraryofalexandria.cluster.apps
+    );
+  };
 }

@@ -41,26 +41,5 @@
         loa-federation.enable = lib.mkDefault true;
         loa-authn.enable = lib.mkDefault false;  # openldap is too crusty and old
         loa-core.enable = lib.mkDefault true;
-        headlamp = {
-            enable = lib.mkDefault true;
-            version = lib.mkDefault "0.40.0";
-        };
-        argocd = {
-            enable = lib.mkDefault true;
-            version = lib.mkDefault "9.4.10";
-        };
-        trust-manager = {
-            enable = lib.mkDefault true;
-            version = lib.mkDefault "v0.22.0";
-        };
-        cert-manager = {
-            enable = lib.mkDefault true;
-            version = lib.mkDefault "v1.20.0";
-            csiVersion = lib.mkDefault "v0.13.0";
-        };
-        longhorn = {
-            enable = lib.mkDefault true;
-            version = lib.mkDefault "1.11.0";
-        };
     };
 }

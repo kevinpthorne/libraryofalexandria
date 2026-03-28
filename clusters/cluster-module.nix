@@ -34,9 +34,26 @@
             };
 
             apps = lib.mkOption {
-                type = lib.types.attrs;
-                description = "Overrides for apps, usually placed in master0's config";
-                default = {};
+                type = lib.types.attrsOf (lib.types.submodule ../modules/submodules/k8s/apps/_submodule.nix);
+                description = "ArgoCD app configs, usually placed in master0's config";
+                default = {
+                    loa-core = {
+                        repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
+                        subPath = "apps/loa-core";
+                    };
+                    loa-federation = {
+                        repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
+                        subPath = "apps/loa-federation";
+                    };
+                    loa-observability = {
+                        repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
+                        subPath = "apps/loa-observability";
+                    };
+                    "${config.libraryofalexandria.cluster.name}-apps" = {
+                        repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
+                        subPath = "apps/${config.libraryofalexandria.cluster.name}-apps";
+                    };
+                };
             };
 
             virtualIps = let
@@ -250,7 +267,7 @@
                 };
             };
         } // builtins.mapAttrs (name: value: {
-            nixpkgs.hostPlatform = "aarch64-linux"; # value.config.nixpkgs.hostPlatform;
+            nixpkgs.hostPlatform = "aarch64-linux"; # value.config.nixpkgs.hostPlatform.system;
             imports = value._module.args.modules;
         }) (config.nodes)) else {};
         # packages
