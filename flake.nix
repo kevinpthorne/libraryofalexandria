@@ -69,7 +69,7 @@
     // clusters.nixosConfigurations;
 
     colmena = clusters.colmena;
-    deploy = clusters.deploy-rs;
+    # deploy = clusters.deploy-rs;
     clusters = clusters;
 
     packages = deepMerge [ 

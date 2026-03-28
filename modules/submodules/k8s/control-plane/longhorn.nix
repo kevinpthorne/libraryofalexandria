@@ -43,7 +43,7 @@
             nfs-utils   # for RWX volumes
             gnugrep     # docs say we need the rest of these
             gawkInteractive
-            utillinux
+            util-linux
             #findmnt
             #blkid
             #lsblk

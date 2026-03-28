@@ -9,6 +9,8 @@ in
     ./manifests.nix
     ./helm
     ./zarf.nix
+    ./control-plane
+    ./apps
   ];
 
   config = lib.mkIf (isMaster) {

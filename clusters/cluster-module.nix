@@ -36,24 +36,6 @@
             apps = lib.mkOption {
                 type = lib.types.attrsOf (lib.types.submodule ../modules/submodules/k8s/apps/_submodule.nix);
                 description = "ArgoCD app configs, usually placed in master0's config";
-                default = {
-                    loa-core = {
-                        repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
-                        subPath = "apps/loa-core";
-                    };
-                    loa-federation = {
-                        repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
-                        subPath = "apps/loa-federation";
-                    };
-                    loa-observability = {
-                        repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
-                        subPath = "apps/loa-observability";
-                    };
-                    "${config.libraryofalexandria.cluster.name}-apps" = {
-                        repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
-                        subPath = "apps/${config.libraryofalexandria.cluster.name}-apps";
-                    };
-                };
             };
 
             virtualIps = let
@@ -91,6 +73,7 @@
             };
         };
         # rendered options, never given outside this module
+        # TODO remove this pattern, it sucks
         masters = lib.mkOption {
             readOnly = true;
         };
@@ -110,7 +93,7 @@
             # readOnly = true;
         };
         deploy-rs = lib.mkOption {
-            readOnly = true;
+            # readOnly = true;
         };
         packages = lib.mkOption {
             readOnly = true;
@@ -218,6 +201,25 @@
             '';
         };
     in {
+        libraryofalexandria.cluster.apps = {
+            loa-core = {
+                repo = lib.mkDefault "https://github.com/kevinpthorne/libraryofalexandria.git";
+                subPath = lib.mkDefault "apps/loa-core";
+            };
+            loa-federation = {
+                repo = lib.mkDefault "https://github.com/kevinpthorne/libraryofalexandria.git";
+                subPath = lib.mkDefault "apps/loa-federation";
+            };
+            loa-observability = {
+                repo = lib.mkDefault "https://github.com/kevinpthorne/libraryofalexandria.git";
+                subPath = lib.mkDefault "apps/loa-observability";
+            };
+            "${config.libraryofalexandria.cluster.name}-apps" = {
+                repo = lib.mkDefault "https://github.com/kevinpthorne/libraryofalexandria.git";
+                subPath = lib.mkDefault "apps/${config.libraryofalexandria.cluster.name}-apps";
+            };
+        };
+
         # masters = collectAll (id: wrapNixosSystem id) masterSystems;
         masters = collectSystems masterSystems;
         # masters
@@ -268,7 +270,11 @@
             };
         } // builtins.mapAttrs (name: value: {
             nixpkgs.hostPlatform = "aarch64-linux"; # value.config.nixpkgs.hostPlatform.system;
-            imports = value._module.args.modules;
+            imports = [
+                (if value.config.libraryofalexandria.node.type == "master" 
+                 then getMasterMegaModule value.config.libraryofalexandria.node.id 
+                 else getWorkerMegaModule value.config.libraryofalexandria.node.id)
+            ];
         }) (config.nodes)) else {};
         # packages
         # ..build-all-${clusterName}

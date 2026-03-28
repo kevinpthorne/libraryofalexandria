@@ -53,7 +53,14 @@ in {
             ];
         };
 
-        apps.loa-extras.enable = true;
+        apps = lib.mkMerge [
+            {
+                loa-extras = {
+                    repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
+                    subPath = "apps/loa-extras";
+                };
+            }
+        ];
 
         virtualIps = {
             enable = true;

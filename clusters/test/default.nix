@@ -7,8 +7,8 @@ let
             # vmImage.size = "20G";
 
             libraryofalexandria = {
-                node.deployment.colmena.hostName = "localhost";
-                node.deployment.deploy-rs.hostName = "localhost";
+                node.deployment.colmena.hostName = "127.0.0.1";
+                node.deployment.deploy-rs.hostName = "127.0.0.1";
                 zarf.enable = lib.mkForce false;
                 helmCharts.installerEnabled = true;
             };
@@ -21,7 +21,7 @@ in {
 
         masters = {
             count = 3;
-            ips = [ "192.168.56.12" "192.168.56.13" "192.168.56.14" ];
+            ips = [ "192.168.56.15" "192.168.56.14" "192.168.56.13" ];
             modules = let cluster = config; in with config.libraryofalexandria.cluster; nodeId: [
                 (import ../../modules/platforms/vm.nix)
                 # (import ../../modules/submodules/stig.nix)
@@ -41,10 +41,9 @@ in {
             ];
         };
 
-        apps.loa-core.values.overrides.seaweedfs.size = "1G";
-        apps.loa-extras.enable = lib.mkForce false;
-        apps.loa-federation.values.overrides.pgedge.instances = "2"; # TODO make not require quotes
-        apps.loa-voip.enable = lib.mkForce true;
+        apps.loa-core.valuesOverrides.seaweedfs.size = "1G";
+        apps.loa-federation.valuesOverrides.overrides.pgedge.instances = "2"; # TODO make not require quotes
+        # apps.loa-voip.enable = lib.mkForce true;
 
         virtualIps = {
             enable = true;

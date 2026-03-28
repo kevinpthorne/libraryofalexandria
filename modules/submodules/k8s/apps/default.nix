@@ -20,8 +20,8 @@
   config = lib.mkIf config.libraryofalexandria.control-plane.argocd.enable {
     libraryofalexandria.helmCharts.enable = true;
     libraryofalexandria.helmCharts.charts = lib.mkAfter (
-      builtins.mapAttrs (name: app: {
-        name = name;
+      lib.mapAttrsToList (name: app: {
+        inherit name;
         chart = "${pkgs.argocd-app-helm}";
         values = lib2.deepMerge [
           {

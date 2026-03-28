@@ -36,13 +36,13 @@ let
     
     nixosConfigurations = collectAll (cluster: cluster.nixosConfigurations);
     colmena = collectAll (cluster: cluster.colmena);
-    deploy-rs = mergeAll (cluster: cluster.deploy-rs);
+    # deploy-rs = collectAll (cluster: cluster.deploy-rs);
     packages = mergeAll (cluster: cluster.packages);
 in
 {
     by_name = clusters;
     inherit nixosConfigurations;
     inherit colmena;
-    inherit deploy-rs;
+    # inherit deploy-rs;
     inherit packages;
 }
