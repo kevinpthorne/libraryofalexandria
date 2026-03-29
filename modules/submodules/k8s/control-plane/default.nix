@@ -10,6 +10,7 @@
     # top installs last
     ./headlamp.nix
     ./argocd.nix
+    ./eso.nix
     ./trust-manager.nix
     ./cert-manager.nix
     ./longhorn.nix
@@ -52,6 +53,10 @@
     argocd = {
       enable = lib.mkDefault true;
       version = lib.mkDefault "9.4.10";
+    };
+    external-secrets-operator = {
+      enable = lib.mkDefault true;
+      version = lib.mkDefault "1.2.0";
     };
     trust-manager = {
       enable = lib.mkDefault true;
