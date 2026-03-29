@@ -1,10 +1,16 @@
-{ pkgs, config, lib, inputs, ... }:
 {
-    imports = [
-        inputs.nixos-stig.nixosModules.nixos-stig
-    ];
+  pkgs,
+  config,
+  lib,
+  inputs,
+  ...
+}:
+{
+  imports = [
+    inputs.nixos-stig.nixosModules.nixos-stig
+  ];
 
-    config = {
-        stig.enable = true;
-    };
+  config = {
+    stig.enable = true;
+  };
 }

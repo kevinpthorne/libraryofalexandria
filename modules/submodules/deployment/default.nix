@@ -1,8 +1,8 @@
 { ... }:
 {
-    imports = [
-      ./colmena.nix
-      ./deploy-rs.nix
-      ./mgmt-vlan.nix
-    ];
+  imports = [
+    ./colmena.nix
+    ./deploy-rs.nix
+    ./mgmt-vlan.nix
+  ];
 }

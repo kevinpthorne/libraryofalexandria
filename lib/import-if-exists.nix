@@ -1,5 +1,5 @@
 # Conditionally import a module if a path exists, else return empty attrset.
-# nixosModules seems to accept an empty attrset when included in the 
+# nixosModules seems to accept an empty attrset when included in the
 # `modules` value of a nixosSystem.
 #
 # Also, default.nix will need to be specified directly if using
@@ -10,5 +10,4 @@
 #   myConditionalImport = importIfExists ./path/to/somewhere.nix
 # in
 #    # ....
-path:
-if (builtins.pathExists path) then import path else {}
+path: if (builtins.pathExists path) then import path else { }

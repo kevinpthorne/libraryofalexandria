@@ -1,14 +1,18 @@
-nixpkgs:
-pkgs:
+nixpkgs: pkgs:
 let
-    folderContents = builtins.readDir ./.;
-    folderDirectories = nixpkgs.lib.filterAttrs (
-        path: type: (type == "directory") && !(nixpkgs.lib.strings.hasPrefix "_" path)
-    ) folderContents;
-    localPkgs = prev: nixpkgs.lib.mapAttrs (path: _type: pkgs.callPackage ./${path} {
+  folderContents = builtins.readDir ./.;
+  folderDirectories = nixpkgs.lib.filterAttrs (
+    path: type: (type == "directory") && !(nixpkgs.lib.strings.hasPrefix "_" path)
+  ) folderContents;
+  localPkgs =
+    prev:
+    nixpkgs.lib.mapAttrs (
+      path: _type:
+      pkgs.callPackage ./${path} {
         inherit pkgs;
-    }) folderDirectories;
-    # overlay = nixpkgs.lib.mapAttrsToList (path: _type: import ./${path} args) folderDirectories;
+      }
+    ) folderDirectories;
+  # overlay = nixpkgs.lib.mapAttrsToList (path: _type: import ./${path} args) folderDirectories;
 in
 localPkgs
 # overlay

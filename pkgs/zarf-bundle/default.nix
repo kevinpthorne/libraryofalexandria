@@ -1,4 +1,10 @@
-{ pkgs, clusterName ? "unknown", helmCharts ? [], lib, ... }:
+{
+  pkgs,
+  clusterName ? "unknown",
+  helmCharts ? [ ],
+  lib,
+  ...
+}:
 let
   # collect charts, images
   chartPackages = builtins.map (chartModule: chartModule.chartPackage) helmCharts;
@@ -12,7 +18,9 @@ let
   # We use the oci:// prefix to tell Zarf to look at local folders, not the internet
   zarfConfig = {
     kind = "ZarfPackageConfig";
-    metadata = { name = "loa-${clusterName}-bootstrap-bundle"; };
+    metadata = {
+      name = "loa-${clusterName}-bootstrap-bundle";
+    };
     components = [
       # {
       #   # fixes helm crd upgrade problem
@@ -47,8 +55,11 @@ in
 pkgs.stdenv.mkDerivation {
   name = "loa-${clusterName}-zarf-bundle";
   src = ./.;
-  
-  nativeBuildInputs = [ pkgs.zarf pkgs.skopeo ];
+
+  nativeBuildInputs = [
+    pkgs.zarf
+    pkgs.skopeo
+  ];
 
   # No network access required here!
   buildPhase = ''
@@ -58,7 +69,7 @@ pkgs.stdenv.mkDerivation {
     # Create a fake home directory structure inside the Nix sandbox
     export HOME=$(pwd)
     mkdir -p $HOME/.config/containers
-    
+
     # Write a permissive policy to allow skopeo to read the local tarballs
     cat <<EOF > $HOME/.config/containers/policy.json
     {
@@ -77,16 +88,20 @@ pkgs.stdenv.mkDerivation {
     cp ${zarfYaml} ./zarf.yaml
 
     # copy charts and values
-    ${lib.concatStringsSep "\n" (builtins.map (chartModule: ''
-      cp -r ${chartModule.chartPackage} ./charts/${baseNameOf chartModule.chartPackage} || true
-      cp -r ${chartModule.valuesPackage} ./charts/${baseNameOf chartModule.valuesPackage} || true
-    '') helmCharts)}
+    ${lib.concatStringsSep "\n" (
+      builtins.map (chartModule: ''
+        cp -r ${chartModule.chartPackage} ./charts/${baseNameOf chartModule.chartPackage} || true
+        cp -r ${chartModule.valuesPackage} ./charts/${baseNameOf chartModule.valuesPackage} || true
+      '') helmCharts
+    )}
 
     # Convert the dockerTools tarballs into an OCI layout that Zarf can read
     # We map the pulledImages array into the oci-store directory
-    ${lib.concatStringsSep "\n" (builtins.map (image: ''
-      skopeo copy docker-archive:${image.package} ${ociRefOf image}
-    '') images)}
+    ${lib.concatStringsSep "\n" (
+      builtins.map (image: ''
+        skopeo copy docker-archive:${image.package} ${ociRefOf image}
+      '') images
+    )}
 
     chmod -R +w charts ${localOciRepo}
 

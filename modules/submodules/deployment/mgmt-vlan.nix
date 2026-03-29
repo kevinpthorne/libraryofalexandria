@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 {
   options.libraryofalexandria.node.deployment.mgmtVlan = {
     enable = lib.mkEnableOption "Configure a mgmt-specific vlan";
@@ -28,35 +33,42 @@
     };
   };
 
-  config = let 
-    thisConfig = config.libraryofalexandria.node.deployment.mgmtVlan;
-    mgmtVlan = "clustermgmt${toString thisConfig.vlanId}";
-    isStaticIpSet = thisConfig.staticIp != "";
-    shouldUseDhcp = !isStaticIpSet;
-  in lib.mkIf thisConfig.enable {
-    networking.vlans = {
-      "${mgmtVlan}" = { 
-        id = thisConfig.vlanId;
-        interface = thisConfig.iface;
+  config =
+    let
+      thisConfig = config.libraryofalexandria.node.deployment.mgmtVlan;
+      mgmtVlan = "clustermgmt${toString thisConfig.vlanId}";
+      isStaticIpSet = thisConfig.staticIp != "";
+      shouldUseDhcp = !isStaticIpSet;
+    in
+    lib.mkIf thisConfig.enable {
+      networking.vlans = {
+        "${mgmtVlan}" = {
+          id = thisConfig.vlanId;
+          interface = thisConfig.iface;
+        };
+      };
+
+      networking.interfaces.${mgmtVlan} = {
+        useDHCP = shouldUseDhcp;
+        ipv4.addresses = lib.mkIf isStaticIpSet [
+          {
+            address = thisConfig.staticIp;
+            prefixLength = thisConfig.staticIpPrefixLength;
+          }
+        ];
+      };
+
+      services.openssh = {
+        listenAddresses = lib.mkForce [
+          (
+            {
+              port = thisConfig.port;
+            }
+            // lib.mkIf isStaticIpSet {
+              addr = thisConfig.staticIp;
+            }
+          )
+        ];
       };
     };
-
-    networking.interfaces.${mgmtVlan} = {
-      useDHCP = shouldUseDhcp;
-      ipv4.addresses = lib.mkIf isStaticIpSet [
-        {
-          address = thisConfig.staticIp;
-          prefixLength = thisConfig.staticIpPrefixLength;
-        }
-      ];
-    };
-
-    services.openssh = {
-      listenAddresses = lib.mkForce [({
-        port = thisConfig.port;
-      } // lib.mkIf isStaticIpSet {
-        addr = thisConfig.staticIp;
-      })];
-    };
-  };
 }

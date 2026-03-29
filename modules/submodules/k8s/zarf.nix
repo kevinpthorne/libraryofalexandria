@@ -1,16 +1,23 @@
-{ pkgs, config, lib, inputs, ... }:
 {
-    imports = [
-      ./helm
-    ];
+  pkgs,
+  config,
+  lib,
+  inputs,
+  ...
+}:
+{
+  imports = [
+    ./helm
+  ];
 
-    options = {
-        libraryofalexandria.zarf = {
-            enable = lib.mkEnableOption "Enable zarf deployment";
-        };
+  options = {
+    libraryofalexandria.zarf = {
+      enable = lib.mkEnableOption "Enable zarf deployment";
     };
+  };
 
-    config = let
+  config =
+    let
       isMaster = config.libraryofalexandria.node.type == "master";
       isMaster0 = isMaster && config.libraryofalexandria.node.id == 0;
       helmCharts = config.libraryofalexandria.helmCharts.charts;
@@ -19,14 +26,18 @@
         clusterName = config.libraryofalexandria.cluster.name;
         inherit helmCharts;
       };
-      k8sSystemdService = if config.libraryofalexandria.cluster.k8sEngine == "rke2" then "rke2-server" else "kubernetes";
-    in lib.mkIf (config.libraryofalexandria.zarf.enable && isMaster0) {
-      environment.systemPackages = (with pkgs; [
+      k8sSystemdService =
+        if config.libraryofalexandria.cluster.k8sEngine == "rke2" then "rke2-server" else "kubernetes";
+    in
+    lib.mkIf (config.libraryofalexandria.zarf.enable && isMaster0) {
+      environment.systemPackages =
+        (with pkgs; [
           zarf
           skopeo
           zarf-init
           zarfBundlePackage
-      ]) ++ helmChartPackages;
+        ])
+        ++ helmChartPackages;
 
       systemd.services.zarf-init = {
         description = "Initialize Zarf Air-Gap Registry and Agent";
@@ -41,7 +52,10 @@
           RestartSec = "15s";
         };
 
-        path = [ pkgs.zarf pkgs.kubectl ];
+        path = [
+          pkgs.zarf
+          pkgs.kubectl
+        ];
         environment = {
           KUBECONFIG = config.environment.variables.KUBECONFIG;
         };
@@ -56,7 +70,7 @@
           fi
 
           echo "[+] Fresh cluster detected. Running Zarf Init..."
-          
+
           # We must point Zarf to the local init package from the Nix store
           # otherwise it will try to download it from GitHub.
           INIT_PKG=$(ls ${pkgs.zarf-init}/zarf-init-*.tar.zst | head -n 1)
@@ -65,7 +79,7 @@
             --components=git-server,registry,agent \
             --package="$INIT_PKG" \
             --confirm
-          
+
           echo "[+] Zarf initialization complete!"
         '';
       };
@@ -94,7 +108,7 @@
 
           BUNDLE_PATH=$(ls ${zarfBundlePackage}/zarf-package-*.tar.zst | head -n 1)
           echo "[+] Executing Zarf deployment from $BUNDLE_PATH..."
-          
+
           # Zarf deploy is natively idempotent. If the package is already applied 
           # and matches the exact hash, it does nothing.
           ${pkgs.zarf}/bin/zarf package deploy "$BUNDLE_PATH" --confirm

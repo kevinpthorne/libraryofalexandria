@@ -6,8 +6,8 @@
 
     raspberry-pi-nix.url = "github:nix-community/raspberry-pi-nix/master";
 
-    supported-arch.url = "github:nix-systems/default-linux";  # aarch64-linux and x86_64-linux
-    
+    supported-arch.url = "github:nix-systems/default-linux"; # aarch64-linux and x86_64-linux
+
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -34,51 +34,86 @@
     nixos-stig.url = "github:kevinpthorne/nixos-stig";
   };
 
-  outputs = inputs @ { self, nixpkgs, supported-arch, raspberry-pi-nix, nixos-stig, colmena, ... }:
-  let
-    customLib = import ./lib;
-    localPkgs = import ./pkgs nixpkgs;
-    eachArch = nixpkgs.lib.genAttrs (import supported-arch);
-    importableInputs = (builtins.removeAttrs inputs [ "self" "config" ]);
-    deepMerge = customLib.deepMerge nixpkgs.lib;
-    kubelib = inputs.kubegen.lib { pkgs = nixpkgs; };
-    clusters = import ./clusters (importableInputs // {
-      inherit eachArch;
-      inherit localPkgs;
-    });
-  in {
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      supported-arch,
+      raspberry-pi-nix,
+      nixos-stig,
+      colmena,
+      ...
+    }:
+    let
+      customLib = import ./lib;
+      localPkgs = import ./pkgs nixpkgs;
+      eachArch = nixpkgs.lib.genAttrs (import supported-arch);
+      importableInputs = (
+        builtins.removeAttrs inputs [
+          "self"
+          "config"
+        ]
+      );
+      deepMerge = customLib.deepMerge nixpkgs.lib;
+      kubelib = inputs.kubegen.lib { pkgs = nixpkgs; };
+      clusters = import ./clusters (
+        importableInputs
+        // {
+          inherit eachArch;
+          inherit localPkgs;
+        }
+      );
+    in
+    {
 
-    overlays = {
-      # runonce = import ./pkgs/runonce 
-      # runonce = final: prev: { runonce = import ./pkgs/runonce final; };
-      localPkgs = final: prev: localPkgs final;
-    };
+      overlays = {
+        # runonce = import ./pkgs/runonce
+        # runonce = final: prev: { runonce = import ./pkgs/runonce final; };
+        localPkgs = final: prev: localPkgs final;
+      };
 
-    nixosConfigurations = {
-      rpi-example = inputs.raspberry-pi-nix.nixosConfigurations.rpi-example;
+      nixosConfigurations = {
+        rpi-example = inputs.raspberry-pi-nix.nixosConfigurations.rpi-example;
 
-      # test = let 
-      #   config = import ./clusters/k importableInputs; 
-      # in 
-      #   nixpkgs.lib.nixosSystem {
-      #     system = config.system;
-      #     modules = config.masters.modules 0;
-      #     extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
-      #   };
-    } 
-    // clusters.nixosConfigurations;
+        # test = let
+        #   config = import ./clusters/k importableInputs;
+        # in
+        #   nixpkgs.lib.nixosSystem {
+        #     system = config.system;
+        #     modules = config.masters.modules 0;
+        #     extraModules = [ inputs.colmena.nixosModules.deploymentOptions ];
+        #   };
+      }
+      // clusters.nixosConfigurations;
 
-    colmena = clusters.colmena;
-    # deploy = clusters.deploy-rs;
-    clusters = clusters;
+      colmena = clusters.colmena;
+      # deploy = clusters.deploy-rs;
+      clusters = clusters;
 
-    packages = deepMerge [ 
-      # system-specific packages  
-      {
-        aarch64-linux = {};
-      } 
-      # for every supported system
-      (eachArch (system: 
+      packages = deepMerge [
+        # system-specific packages
+        {
+          aarch64-linux = { };
+        }
+        # for every supported system
+        (eachArch (
+          system:
+          let
+            systemPkgs = import nixpkgs {
+              inherit system;
+              overlays = with self.overlays; [ localPkgs ];
+            };
+          in
+          {
+            hello = nixpkgs.legacyPackages.${system}.hello;
+            runonce = systemPkgs.runonce;
+          }
+        ))
+        clusters.packages
+      ];
+
+      apps = eachArch (
+        system:
         let
           systemPkgs = import nixpkgs {
             inherit system;
@@ -86,41 +121,32 @@
           };
         in
         {
-          hello = nixpkgs.legacyPackages.${system}.hello;
-          runonce = systemPkgs.runonce;
-        })
-      )
-      clusters.packages
-    ];
-
-    apps = eachArch (system:
-      let
-        systemPkgs = import nixpkgs {
-          inherit system;
-          overlays = with self.overlays; [ localPkgs ];
-        };
-      in
-        {
-          colmena = { type = "app"; program = "${systemPkgs.colmena}/bin/colmena"; };
-          deploy = { type = "app"; program = "${systemPkgs.deploy-rs}/bin/deploy-rs"; };
+          colmena = {
+            type = "app";
+            program = "${systemPkgs.colmena}/bin/colmena";
+          };
+          deploy = {
+            type = "app";
+            program = "${systemPkgs.deploy-rs}/bin/deploy-rs";
+          };
         }
-    );
+      );
 
-    # checks = deepMerge [
-    #    (eachArch (system:
-    #     let
-    #       systemPkgs = import nixpkgs {
-    #         inherit system;
-    #         overlays = with self.overlays; [ runonce ];
-    #       };
-    #     in
-    #     {
-    #       helloTest = systemPkgs.callPackage ./tests/clusters/test/k8s-boot.nix { 
-    #         cluster = clusters.by_name.test;
-    #       };
-    #     })
-    #    ) 
-    # ];
+      # checks = deepMerge [
+      #    (eachArch (system:
+      #     let
+      #       systemPkgs = import nixpkgs {
+      #         inherit system;
+      #         overlays = with self.overlays; [ runonce ];
+      #       };
+      #     in
+      #     {
+      #       helloTest = systemPkgs.callPackage ./tests/clusters/test/k8s-boot.nix {
+      #         cluster = clusters.by_name.test;
+      #       };
+      #     })
+      #    )
+      # ];
 
-  };
+    };
 }

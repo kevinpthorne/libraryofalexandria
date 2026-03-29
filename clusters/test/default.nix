@@ -1,56 +1,78 @@
-{ lib, config, lib2, ... }:
+{
+  lib,
+  config,
+  lib2,
+  ...
+}:
 let
-    defaultModule = id: { pkgs, lib, ... }: {
-        config = {
-            time.timeZone = "Etc/UTC";
-            nixpkgs.hostPlatform = "aarch64-linux";
-            # vmImage.size = "20G";
+  defaultModule =
+    id:
+    { pkgs, lib, ... }:
+    {
+      config = {
+        time.timeZone = "Etc/UTC";
+        nixpkgs.hostPlatform = "aarch64-linux";
+        # vmImage.size = "20G";
 
-            libraryofalexandria = {
-                node.deployment.colmena.hostName = "127.0.0.1";
-                node.deployment.deploy-rs.hostName = "127.0.0.1";
-                zarf.enable = lib.mkForce false;
-                helmCharts.installerEnabled = true;
-            };
+        libraryofalexandria = {
+          node.deployment.colmena.hostName = "127.0.0.1";
+          node.deployment.deploy-rs.hostName = "127.0.0.1";
+          zarf.enable = lib.mkForce false;
+          helmCharts.installerEnabled = true;
         };
+      };
     };
-in {
-    config.libraryofalexandria.cluster = {
-        name = "test";
-        id = 1;
+in
+{
+  config.libraryofalexandria.cluster = {
+    name = "test";
+    id = 1;
 
-        masters = {
-            count = 3;
-            ips = [ "192.168.56.15" "192.168.56.14" "192.168.56.13" ];
-            modules = let cluster = config; in with config.libraryofalexandria.cluster; nodeId: [
-                (import ../../modules/platforms/vm.nix)
-                # (import ../../modules/submodules/stig.nix)
-                (defaultModule nodeId)
-                (lib2.importIfExistsArgs ./master.nix { inherit cluster nodeId; })
-                (lib2.importIfExistsArgs ./master-${toString nodeId}.nix { inherit cluster nodeId; })
-            ];
-        };
-        workers = {
-            count = 0;
-            modules = with config.libraryofalexandria.cluster; nodeId: [
-                (import ../../modules/platforms/vm.nix)
-                # (import ../../modules/submodules/stig.nix)
-                (defaultModule nodeId)
-                (lib2.importIfExistsArgs ./worker.nix { inherit cluster nodeId; })
-                (lib2.importIfExistsArgs ./worker-${toString nodeId}.nix { inherit cluster nodeId; })
-            ];
-        };
-
-        apps.loa-core.valuesOverrides.seaweedfs.size = "1G";
-        apps.loa-federation.valuesOverrides.overrides.pgedge.instances = "2"; # TODO make not require quotes
-        # apps.loa-voip.enable = lib.mkForce true;
-
-        virtualIps = {
-            enable = true;
-            blocks = [{
-                start = "192.168.56.100";
-                end = "192.168.56.200";
-            }];
-        };
+    masters = {
+      count = 3;
+      ips = [
+        "192.168.56.15"
+        "192.168.56.14"
+        "192.168.56.13"
+      ];
+      modules =
+        let
+          cluster = config;
+        in
+        with config.libraryofalexandria.cluster;
+        nodeId: [
+          (import ../../modules/platforms/vm.nix)
+          # (import ../../modules/submodules/stig.nix)
+          (defaultModule nodeId)
+          (lib2.importIfExistsArgs ./master.nix { inherit cluster nodeId; })
+          (lib2.importIfExistsArgs ./master-${toString nodeId}.nix { inherit cluster nodeId; })
+        ];
     };
+    workers = {
+      count = 0;
+      modules =
+        with config.libraryofalexandria.cluster;
+        nodeId: [
+          (import ../../modules/platforms/vm.nix)
+          # (import ../../modules/submodules/stig.nix)
+          (defaultModule nodeId)
+          (lib2.importIfExistsArgs ./worker.nix { inherit cluster nodeId; })
+          (lib2.importIfExistsArgs ./worker-${toString nodeId}.nix { inherit cluster nodeId; })
+        ];
+    };
+
+    apps.loa-core.valuesOverrides.seaweedfs.size = "1G";
+    apps.loa-federation.valuesOverrides.overrides.pgedge.instances = "2"; # TODO make not require quotes
+    # apps.loa-voip.enable = lib.mkForce true;
+
+    virtualIps = {
+      enable = true;
+      blocks = [
+        {
+          start = "192.168.56.100";
+          end = "192.168.56.200";
+        }
+      ];
+    };
+  };
 }

@@ -1,10 +1,10 @@
 { cluster, nodeId }:
-{ lib, config, ... }: 
+{ lib, config, ... }:
 {
-    config = {
-        libraryofalexandria = {
-            node.type = "master";
-            apps = cluster.apps;
-        };
+  config = {
+    libraryofalexandria = {
+      node.type = "master";
+      apps = cluster.apps;
     };
+  };
 }

@@ -1,4 +1,10 @@
-{ pkgs, lib, config, lib2, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  lib2,
+  ...
+}:
 {
   options = {
     imageName = lib.mkOption {
@@ -19,8 +25,8 @@
 
     # generated
     package = lib.mkOption {
-        type = lib.types.package;
-        readOnly = true;
+      type = lib.types.package;
+      readOnly = true;
     };
   };
 

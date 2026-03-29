@@ -1,7 +1,13 @@
-{ lib, config, pkgs, ... }:
-let 
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
+let
   isMaster = config.libraryofalexandria.node.type == "master";
-  k8sSystemdService = if config.libraryofalexandria.cluster.k8sEngine == "rke2" then "rke2-server" else "kubernetes";
+  k8sSystemdService =
+    if config.libraryofalexandria.cluster.k8sEngine == "rke2" then "rke2-server" else "kubernetes";
 in
 {
   imports = [
@@ -38,7 +44,7 @@ in
           echo "    API not ready yet, sleeping 5s..."
           sleep 5
         done
-        
+
         echo "[+] Kubernetes API is responsive. Checking Nodes..."
         until kubectl get nodes | grep -q " Ready"; do
           echo "    Nodes not ready yet, sleeping 5s..."
