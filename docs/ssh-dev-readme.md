@@ -15,6 +15,6 @@ ssh -i ~/.ssh/deployment colmena@localhost -p 3022
 ```bash
 # do all at once
 ssh -fN -L 3022:localhost:22 192.168.56.15 & \
-ssh -fN -L 3122:localhost:22 192.168.56.13 & \
-ssh -fN -L 3222:localhost:22 192.168.56.14
+ssh -fN -L 3122:localhost:22 192.168.56.14 & \
+ssh -fN -L 3222:localhost:22 192.168.56.15
 ```

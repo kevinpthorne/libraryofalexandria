@@ -45,12 +45,7 @@ in
           sleep 5
         done
 
-        echo "[+] Kubernetes API is responsive. Checking Nodes..."
-        until kubectl get nodes | grep -q " Ready"; do
-          echo "    Nodes not ready yet, sleeping 5s..."
-          sleep 5
-        done
-        echo "[+] Cluster is up and ready!"
+        echo "[+] Cluster is up!"
       '';
     };
   };
