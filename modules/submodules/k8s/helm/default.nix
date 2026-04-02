@@ -93,14 +93,22 @@ in
                 ${concatCommands (
                   forEachChartModule (
                     chart:
-                    (concatCommands [
-                      "echo \"Installing ${chart.name}\""
-                      "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.name} ${chart.chart} ${
-                        lib.optionalString (chart.version != null) "--version ${chart.version}"
-                      } -f ${chart.valuesPackage}/hc-${chart.name}-values.yaml ${
-                        lib.optionalString (chart.namespace != null) "--namespace ${chart.namespace} --create-namespace"
-                      } --kubeconfig ${kubeconfig} --wait"
-                    ])
+                    (concatCommands (
+                      [
+                        "echo \"Installing ${chart.name}\""
+                      ]
+                      ++ lib.optional chart._ensureOnce "if ! ${pkgs.kubernetes-helm}/bin/helm status ${chart.name} ${
+                        lib.optionalString (chart.namespace != null) "--namespace ${chart.namespace}"
+                      } --kubeconfig ${kubeconfig} >/dev/null 2>&1; then"
+                      ++ [
+                        "${pkgs.kubernetes-helm}/bin/helm upgrade --install ${chart.name} ${chart.chart} ${
+                          lib.optionalString (chart.version != null) "--version ${chart.version}"
+                        } -f ${chart.valuesPackage}/hc-${chart.name}-values.yaml ${
+                          lib.optionalString (chart.namespace != null) "--namespace ${chart.namespace} --create-namespace"
+                        } --kubeconfig ${kubeconfig} --wait"
+                      ]
+                      ++ lib.optional chart._ensureOnce "else echo \"${chart.name} already installed, skipping upgrade\"; fi"
+                    ))
                   )
                 )}
               '';
@@ -111,7 +119,7 @@ in
           {
             requires = [ "k8s-api-waiter.service" ];
             after = [ "k8s-api-waiter.service" ];
-            enable = false; # requires manual invocation
+            enable = true; # requires manual invocation
             script =
               let
                 forEachChartModule =
@@ -129,7 +137,7 @@ in
                     chart:
                     (concatCommands [
                       "echo \"Removing ${chart.name}\""
-                      "${pkgs.kubernetes-helm}/bin/helm remove ${chart.name} ${
+                      "${pkgs.kubernetes-helm}/bin/helm uninstall ${chart.name} ${
                         lib.optionalString (chart.namespace != null) "--namespace ${chart.namespace} --create-namespace"
                       } --kubeconfig ${kubeconfig} --wait"
                     ])

@@ -178,9 +178,10 @@
           name = "cilium-keys-gen-helm";
           chart = "${pkgs.cilium-keys-gen-helm}";
           namespace = "kube-system";
+          _ensureOnce = true;
         }
         {
-          name = "cilium-overrides";
+          name = "rke2-cilium";  # must be named this for it to work
           chart = "${pkgs.rke2-overrides-helm}";
           values = {
             valuesContent = ''
@@ -201,11 +202,13 @@
                 type: ipsec
                 ipsec:
                   secretName: cilium-ipsec-keys  # this matches cilium-keys-gen-helm default name value
+              dnsProxy:
+                enableTransparentMode: true  # required from IPSec
               # Enable L2 Announcements (MetalLB replacement)
               l2announcements:
-                enabled: ${builtins.toString config.libraryofalexandria.cluster.virtualIps.enable}
+                enabled: ${lib.boolToString config.libraryofalexandria.cluster.virtualIps.enable}
               externalIPs:
-                enabled: ${builtins.toString config.libraryofalexandria.cluster.virtualIps.enable}
+                enabled: ${lib.boolToString config.libraryofalexandria.cluster.virtualIps.enable}
 
               # Enable Gateway API (Nginx replacement)
               gatewayAPI:
@@ -218,6 +221,7 @@
             '';
           };
           namespace = "kube-system";
+          _ensureOnce = true;
         }
         (lib.mkIf config.libraryofalexandria.cluster.virtualIps.enable {
           name = "cilium-virtual-ips";

@@ -31,6 +31,11 @@
       type = lib.types.nullOr lib.types.str;
       default = null;
     };
+    _ensureOnce = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "If true, only install the chart if it doesn't already exist. Skip upgrade.";
+    };
     # generated
     isLocalChart = lib.mkOption {
       type = lib.types.bool;

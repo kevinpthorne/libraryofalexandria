@@ -22,6 +22,10 @@
         namespace = "cert-manager";
         repo = "https://charts.jetstack.io";
       }
+      {
+        name = "pki-bootstrap";
+        chart = "${pkgs.pki-bootstrap-helm}";
+      }
     ];
   };
 }

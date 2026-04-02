@@ -59,7 +59,7 @@
               start = lib.mkOption {
                 type = lib.types.str;
               };
-              end = lib.mkOption {
+              stop = lib.mkOption {
                 type = lib.types.str;
               };
             };

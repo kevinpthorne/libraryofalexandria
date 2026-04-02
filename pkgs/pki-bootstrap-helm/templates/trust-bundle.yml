@@ -22,5 +22,4 @@ spec:
     configMap:
       key: "ca-bundle.crt"
     namespaceSelector:
-      matchLabels:
-        kubernetes.io/metadata.name: "*"
+      matchLabels: {}
