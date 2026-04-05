@@ -1,0 +1,21 @@
+{{- $svcName := required "svcName is required" .Values.svcName -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: {{ if .Values.cert.secretName }}{{ .Values.cert.secretName }}{{ else }}{{ .Values.svcName }}-tls{{ end }}
+  dnsNames:
+    - {{ .Values.svcName }}
+    - {{ .Values.svcName }}.{{ .Release.Namespace }}.svc
+    - {{ .Values.svcName }}.{{ .Release.Namespace }}.svc.cluster.local
+    {{- if .Values.cluster.name }}
+    - {{ .Values.svcName }}.{{ .Values.cluster.name }}.loa.internal
+    {{- end }}
+    {{- if .Values.cert.sans }}
+{{ toYaml .Values.cert.sans | indent 4 }}
+    {{- end }}
+  issuerRef:
+    name: {{ .Values.ca.name }}
+    kind: {{ .Values.ca.kind }}

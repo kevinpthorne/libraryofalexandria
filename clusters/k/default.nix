@@ -90,9 +90,10 @@ in
 
     virtualIps = {
       enable = true;
+      k8sApiVip = "192.168.121.30";
       blocks = [
         {
-          start = "192.168.121.30";
+          start = "192.168.121.31";
           stop = "192.168.121.250";
         }
       ];

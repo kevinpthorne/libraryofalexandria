@@ -22,7 +22,7 @@
     libraryofalexandria.helmCharts.charts = lib.mkAfter (
       lib.mapAttrsToList (name: app: {
         inherit name;
-        chart = "${pkgs.argocd-app-helm}";
+        chart = "${pkgs.argocd-app-helm}/argocd-app-helm-0.1.0.tgz";
         values = lib2.deepMerge [
           {
             source = {

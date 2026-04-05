@@ -11,6 +11,7 @@ let
 in
 {
   imports = [
+    ./kube-api-vips.nix
     ./engines
     ./manifests.nix
     ./helm

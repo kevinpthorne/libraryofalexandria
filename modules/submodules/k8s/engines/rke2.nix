@@ -107,7 +107,15 @@
 
       services.rke2 =
         let
-          tlsSanFlags = builtins.map (ip: "--tls-san=${ip}") config.libraryofalexandria.node.masterIps;
+          tlsSanFlags = builtins.map (ip: "--tls-san=${ip}") (
+            config.libraryofalexandria.node.masterIps
+            ++ (
+              if config.libraryofalexandria.cluster.virtualIps.enable then
+                [ config.libraryofalexandria.k8sApiVirtualIps.vip ]
+              else
+                [ ]
+            )
+          );
           clusterCidr = "10.${toString config.libraryofalexandria.cluster.id}.0.0/16";
           servicesOctet = config.libraryofalexandria.cluster.id + 127;
           serviceCidr = "10.${toString servicesOctet}.0.0/16";
@@ -134,6 +142,82 @@
                 "rke2-ingress-nginx"
                 "rke2-servicelb"
               ];
+              manifests = lib.mkIf isMaster0 {
+                # no need to sync across masters
+                "rke2-cilium-config".content = {
+                  apiVersion = "helm.cattle.io/v1";
+                  kind = "HelmChartConfig";
+                  metadata = {
+                    name = "rke2-cilium";
+                    namespace = "kube-system";
+                  };
+                  spec.valuesContent = builtins.toJSON {
+                    cluster = {
+                      name = config.libraryofalexandria.cluster.name;
+                      id = config.libraryofalexandria.cluster.id;
+                    };  
+                    clustermesh = {
+                      useAPIServer = true;
+                      enabled = true;
+                      config.enabled = true;
+                      service.type =
+                        if config.libraryofalexandria.cluster.virtualIps.enable then "LoadBalancer" else "NodePort";
+                    };
+                    encryption = {
+                      enabled = true;
+                      type = "ipsec";
+                      ipsec.secretName = "cilium-ipsec-keys";
+                    };
+                    dnsProxy.enableTransparentMode = true;
+                    l2announcements.enabled = config.libraryofalexandria.cluster.virtualIps.enable;
+                    externalIPs.enabled = config.libraryofalexandria.cluster.virtualIps.enable;
+                    gatewayAPI.enabled = true;
+                    kubeProxyReplacement = true;
+                    k8sServiceHost =
+                      if config.libraryofalexandria.cluster.virtualIps.enable then
+                        config.libraryofalexandria.k8sApiVirtualIps.vip
+                      else
+                        "127.0.0.1";
+                    k8sServicePort =
+                      if config.libraryofalexandria.cluster.virtualIps.enable then
+                        config.libraryofalexandria.k8sApiVirtualIps.haproxyPort
+                      else
+                        config.libraryofalexandria.node.masterPort;
+                  };
+                };
+              };
+              # supposedly autoDeployCharts can deploy a local chart?
+              # charts = lib.mkIf isMaster0 (
+              #   let
+              #     localChartModules = builtins.filter (
+              #       chart: chart.isLocalChart
+              #     ) config.libraryofalexandria.helmCharts.charts;
+              #     localCharts = builtins.listToAttrs (
+              #       builtins.map (chart: {
+              #         name = chart.name;
+              #         value = chart.chart;
+              #       }) localChartModules
+              #     );
+              #   in
+              #   localCharts
+              # );
+              autoDeployCharts = lib.mkIf isMaster0 (
+                let
+                  chartToAttrs = chart: {
+                    name = chart.name;
+                    value = {
+                      package = chart.chartPackage;
+                      values = chart.valuesPackage;
+                      targetNamespace = chart.namespace;
+                      createNamespace = true;
+                    };
+                  };
+                  charts = builtins.listToAttrs (
+                    builtins.map (chartToAttrs) config.libraryofalexandria.helmCharts.charts
+                  );
+                in
+                charts
+              );
             }
           else
             {
@@ -173,59 +257,23 @@
 
       # cilium hardening
       libraryofalexandria.helmCharts.enable = true;
+      libraryofalexandria.helmCharts.installerEnabled = false;
       libraryofalexandria.helmCharts.charts = lib.mkBefore [
         {
-          name = "cilium-keys-gen-helm";
-          chart = "${pkgs.cilium-keys-gen-helm}";
+          name = "gateway-api-crds";
+          chart = "${pkgs.gateway-api-crds-helm}/gateway-api-crds-helm-0.1.0.tgz";
           namespace = "kube-system";
           _ensureOnce = true;
         }
         {
-          name = "rke2-cilium";  # must be named this for it to work
-          chart = "${pkgs.rke2-overrides-helm}";
-          values = {
-            valuesContent = ''
-              cluster:
-                name: ${config.libraryofalexandria.cluster.name}
-                id: ${toString config.libraryofalexandria.cluster.id}
-              clustermesh:
-                useAPIServer: true
-                enabled: true
-                config:
-                  enabled: true
-                service:
-                  type: ${
-                    if config.libraryofalexandria.cluster.virtualIps.enable then "LoadBalancer" else "NodePort"
-                  }
-              encryption:
-                enabled: true
-                type: ipsec
-                ipsec:
-                  secretName: cilium-ipsec-keys  # this matches cilium-keys-gen-helm default name value
-              dnsProxy:
-                enableTransparentMode: true  # required from IPSec
-              # Enable L2 Announcements (MetalLB replacement)
-              l2announcements:
-                enabled: ${lib.boolToString config.libraryofalexandria.cluster.virtualIps.enable}
-              externalIPs:
-                enabled: ${lib.boolToString config.libraryofalexandria.cluster.virtualIps.enable}
-
-              # Enable Gateway API (Nginx replacement)
-              gatewayAPI:
-                enabled: true
-
-              # Ensure eBPF replacement is active (Required for these features)
-              kubeProxyReplacement: true
-              k8sServiceHost: 127.0.0.1
-              k8sServicePort: 6443
-            '';
-          };
+          name = "cilium-keys-gen-helm";
+          chart = "${pkgs.cilium-keys-gen-helm}/cilium-keys-gen-helm-0.1.0.tgz";
           namespace = "kube-system";
           _ensureOnce = true;
         }
         (lib.mkIf config.libraryofalexandria.cluster.virtualIps.enable {
           name = "cilium-virtual-ips";
-          chart = "${pkgs.cilium-virtual-ips}";
+          chart = "${pkgs.cilium-virtual-ips}/cilium-virtual-ips-0.1.0.tgz";
           values = {
             blocks = config.libraryofalexandria.cluster.virtualIps.blocks;
             interfaces = config.libraryofalexandria.cluster.virtualIps.interfaces;

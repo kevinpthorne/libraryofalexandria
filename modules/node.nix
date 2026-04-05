@@ -2,13 +2,11 @@
   config,
   pkgs,
   lib,
+  lib2,
   ...
 }:
 let
   indexOf = val: lib.lists.findFirstIndex (x: x == val) null;
-  getHostname =
-    nodeType: nodeId: clusterName:
-    "${nodeType}${toString nodeId}-${clusterName}";
 in
 {
   imports = [
@@ -38,7 +36,7 @@ in
 
     hostname = lib.mkOption {
       type = lib.types.str;
-      default = with config.libraryofalexandria.node; getHostname type id clusterName; # e.g. worker0-k
+      default = with config.libraryofalexandria.node; lib2.getHostname type id clusterName; # e.g. worker0-k
     };
 
     masterIps = lib.mkOption {
@@ -66,7 +64,7 @@ in
         builtins.listToAttrs (
           builtins.map (ip: {
             name = ip;
-            value = getHostname "master" (indexOf ip masterIps) clusterName;
+            value = lib2.getHostname "master" (indexOf ip masterIps) clusterName;
           }) masterIps
         );
       extraHostEntries = map (entry: "${entry.name} ${entry.value}") (

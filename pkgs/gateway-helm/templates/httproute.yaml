@@ -1,0 +1,27 @@
+{{- range .Values.endpoints }}
+{{- $endpoint := . }}
+{{- range $endpoint.ports }}
+{{- if or (eq .protocol "HTTP") (eq .protocol "HTTPS") }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $endpoint.name }}-{{ .protocol | lower }}-{{ .port }}
+  namespace: {{ $endpoint.namespace | default $.Release.Namespace }}
+spec:
+  parentRefs:
+  - name: {{ $endpoint.name }}
+    sectionName: {{ .protocol | lower }}-{{ .port }}
+  {{- if $endpoint.hostnames }}
+  hostnames:
+  {{- range $endpoint.hostnames }}
+  - {{ . | quote }}
+  {{- end }}
+  {{- end }}
+  rules:
+  - backendRefs:
+    - name: {{ .targetService | default $endpoint.name }}
+      port: {{ .targetPort | default .port }}
+{{- end }}
+{{- end }}
+{{- end }}

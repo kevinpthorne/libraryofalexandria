@@ -106,8 +106,8 @@
           in
           {
             hello = nixpkgs.legacyPackages.${system}.hello;
-            runonce = systemPkgs.runonce;
-          }
+            # runonce = systemPkgs.runonce;
+          } // localPkgs systemPkgs systemPkgs
         ))
         clusters.packages
       ];

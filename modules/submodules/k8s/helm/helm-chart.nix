@@ -34,7 +34,12 @@
     _ensureOnce = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "If true, only install the chart if it doesn't already exist. Skip upgrade.";
+      description = "If true, acts as a shorthand for _maxRevisions = 1.";
+    };
+    _maxRevisions = lib.mkOption {
+      type = lib.types.nullOr lib.types.int;
+      default = if config._ensureOnce then 1 else null;
+      description = "If set, do not run helm upgrade if the current release revision is greater than or equal to this value.";
     };
     # generated
     isLocalChart = lib.mkOption {

@@ -14,6 +14,9 @@ rec {
   getGoArch = import ./get-go-arch.nix;
   getRke2Arch = import ./get-rke2-arch.nix;
   getClusterConfig = import ./get-cluster-config.nix;
+  getHostname = import ./get-hostname.nix;
   range = n: builtins.genList (x: x) n;
+  zipLists = import ./zip-lists.nix;
   nullable = val: default: if val == null then default else val;
+  buildHelmChart = import ./build-helm-chart.nix;
 }

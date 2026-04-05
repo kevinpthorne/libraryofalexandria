@@ -1,0 +1,25 @@
+
+ca:
+  kind: ClusterIssuer
+  name: pki-bootstrap
+cert:
+  secretName: ""
+  sans: []
+cluster: {}
+
+# A list of endpoints to expose via the Gateway API.
+endpoints: []
+# - name: example-app
+#   className: cilium # Default gateway class; optional
+#   hostnames:
+#     - "example.com"
+#   ports:
+#     - port: 80
+#       protocol: HTTP      # Supported: HTTP, HTTPS, TCP, UDP, TLS
+#       targetPort: 8080    # Optional: defaults to 'port'
+#       targetService: example-app # Optional: defaults to endpoint 'name'
+#     - port: 443
+#       protocol: HTTPS
+#       tls:
+#         mode: Terminate
+#         secretName: example-app-tls # Secret containing the TLS certificate

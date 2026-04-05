@@ -1,0 +1,32 @@
+{{- range .Values.endpoints }}
+{{- $endpoint := . }}
+{{- $needsCert := false }}
+{{- range $endpoint.ports }}
+  {{- $effMode := "Terminate" }}
+  {{- if eq .protocol "TLS" }}{{ $effMode = "Passthrough" }}{{ end }}
+  {{- if and .tls .tls.mode }}{{ $effMode = .tls.mode }}{{ end }}
+  {{- if and (eq $effMode "Terminate") (or (eq .protocol "HTTPS") (eq .protocol "TLS")) }}
+    {{- $needsCert = true }}
+  {{- end }}
+{{- end }}
+{{- if $needsCert }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $endpoint.name }}-tls
+  namespace: {{ $endpoint.namespace | default $.Release.Namespace }}
+spec:
+  secretName: {{ $endpoint.name }}-tls
+  dnsNames:
+    {{- if $endpoint.hostnames }}
+    {{- range $endpoint.hostnames }}
+    - {{ . | quote }}
+    {{- end }}
+    {{- end }}
+  issuerRef:
+    name: {{ $.Values.ca.name }}
+    kind: {{ $.Values.ca.kind }}
+{{- end }}
+
+{{- end }}

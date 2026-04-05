@@ -1,0 +1,32 @@
+{{- range .Values.endpoints }}
+{{- $endpoint := . }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ $endpoint.name }}
+  namespace: {{ $endpoint.namespace | default $.Release.Namespace }}
+spec:
+  gatewayClassName: {{ $endpoint.className | default "cilium" }}
+  listeners:
+  {{- range $endpoint.ports }}
+  - name: {{ .protocol | lower }}-{{ .port }}
+    port: {{ .port }}
+    protocol: {{ .protocol }}
+    {{- if or (eq .protocol "HTTPS") (eq .protocol "TLS") }}
+    tls:
+      {{- $effMode := "Terminate" }}
+      {{- if eq .protocol "TLS" }}{{ $effMode = "Passthrough" }}{{ end }}
+      {{- if and .tls .tls.mode }}{{ $effMode = .tls.mode }}{{ end }}
+      mode: {{ $effMode }}
+      {{- if eq $effMode "Terminate" }}
+      certificateRefs:
+      {{- if and .tls .tls.secretName }}
+      - name: {{ .tls.secretName }}
+      {{- else }}
+      - name: {{ $endpoint.name }}-tls
+      {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,21 @@
+{{- range .Values.endpoints }}
+{{- $endpoint := . }}
+{{- range $endpoint.ports }}
+{{- if eq .protocol "TCP" }}
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: {{ $endpoint.name }}-{{ .protocol | lower }}-{{ .port }}
+  namespace: {{ $endpoint.namespace | default $.Release.Namespace }}
+spec:
+  parentRefs:
+  - name: {{ $endpoint.name }}
+    sectionName: {{ .protocol | lower }}-{{ .port }}
+  rules:
+  - backendRefs:
+    - name: {{ .targetService | default $endpoint.name }}
+      port: {{ .targetPort | default .port }}
+{{- end }}
+{{- end }}
+{{- end }}

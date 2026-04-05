@@ -1,0 +1,8 @@
+svcName: ""
+ca:
+  kind: ClusterIssuer
+  name: pki-bootstrap
+cert:
+  secretName: ""
+  sans: []
+cluster: {}

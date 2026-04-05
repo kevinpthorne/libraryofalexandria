@@ -75,14 +75,18 @@
         lib.mkOption {
           type = lib.types.submodule {
             options = {
-              enable = lib.mkEnableOption "Set a virtual IP range for Cilium";
+              enable = lib.mkEnableOption "Set a virtual IP range for Cilium and Master HAProxy";
 
+              k8sApiVip = lib.mkOption {
+                type = lib.types.str;
+                description = "IPv4 address for the k8s API HAProxy";
+              };
               blocks = lib.mkOption {
                 type = lib.types.listOf (lib.types.either range cidr);
               };
               interfaces = lib.mkOption {
                 type = lib.types.listOf lib.types.str;
-                default = [ "eth0 " ];
+                default = [ "eth0" ];
               };
             };
           };

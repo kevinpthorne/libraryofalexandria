@@ -67,12 +67,14 @@ in
 
     virtualIps = {
       enable = true;
+      k8sApiVip = "192.168.56.100";
       blocks = [
         {
-          start = "192.168.56.100";
+          start = "192.168.56.101";
           stop = "192.168.56.200";
         }
       ];
+      interfaces = [ "enp0s8" ];
     };
   };
 }

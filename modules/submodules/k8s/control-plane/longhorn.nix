@@ -12,7 +12,7 @@
     libraryofalexandria.helmCharts.charts = [
       {
         name = "longhorn-namespace";
-        chart = "${pkgs.namespace-helm}";
+        chart = "${pkgs.namespace-helm}/namespace-helm-0.1.0.tgz";
         values = {
           name = "longhorn-system";
           podSecurityLevel = {
