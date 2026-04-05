@@ -142,8 +142,7 @@
                 "rke2-ingress-nginx"
                 "rke2-servicelb"
               ];
-              manifests = lib.mkIf isMaster0 {
-                # no need to sync across masters
+              manifests = lib.mkIf isMaster {
                 "rke2-cilium-config".content = {
                   apiVersion = "helm.cattle.io/v1";
                   kind = "HelmChartConfig";
@@ -155,7 +154,7 @@
                     cluster = {
                       name = config.libraryofalexandria.cluster.name;
                       id = config.libraryofalexandria.cluster.id;
-                    };  
+                    };
                     clustermesh = {
                       useAPIServer = true;
                       enabled = true;
@@ -187,33 +186,33 @@
                 };
               };
               # supposedly autoDeployCharts can deploy a local chart?
-              # charts = lib.mkIf isMaster0 (
-              #   let
-              #     localChartModules = builtins.filter (
-              #       chart: chart.isLocalChart
-              #     ) config.libraryofalexandria.helmCharts.charts;
-              #     localCharts = builtins.listToAttrs (
-              #       builtins.map (chart: {
-              #         name = chart.name;
-              #         value = chart.chart;
-              #       }) localChartModules
-              #     );
-              #   in
-              #   localCharts
-              # );
-              autoDeployCharts = lib.mkIf isMaster0 (
+              charts = lib.mkIf isMaster (
+                let
+                  localChartModules = builtins.filter (
+                    chart: chart.isLocalChart
+                  ) config.libraryofalexandria.helmCharts.charts;
+                  localCharts = builtins.listToAttrs (
+                    builtins.map (chart: {
+                      name = chart.name;
+                      value = chart.chart;
+                    }) localChartModules
+                  );
+                in
+                localCharts
+              );
+              autoDeployCharts = lib.mkIf isMaster (
                 let
                   chartToAttrs = chart: {
                     name = chart.name;
                     value = {
                       package = chart.chartPackage;
-                      values = chart.valuesPackage;
-                      targetNamespace = chart.namespace;
+                      values = chart.values;
+                      targetNamespace = if chart.namespace == null then "default" else chart.namespace;
                       createNamespace = true;
                     };
                   };
                   charts = builtins.listToAttrs (
-                    builtins.map (chartToAttrs) config.libraryofalexandria.helmCharts.charts
+                    builtins.map chartToAttrs config.libraryofalexandria.helmCharts.charts
                   );
                 in
                 charts
@@ -257,7 +256,7 @@
 
       # cilium hardening
       libraryofalexandria.helmCharts.enable = true;
-      libraryofalexandria.helmCharts.installerEnabled = false;
+      libraryofalexandria.helmCharts.installerEnabled = lib.mkForce false;
       libraryofalexandria.helmCharts.charts = lib.mkBefore [
         {
           name = "gateway-api-crds";

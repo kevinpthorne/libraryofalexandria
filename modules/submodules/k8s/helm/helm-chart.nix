@@ -13,7 +13,7 @@
       type = lib.types.str;
     };
     chart = lib.mkOption {
-      type = lib.types.str;
+      type = with lib.types; either path str;
     };
     version = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
@@ -47,7 +47,7 @@
       readOnly = true;
     };
     chartPackage = lib.mkOption {
-      type = lib.types.nullOr lib.types.package;
+      type = with lib.types; nullOr (either package path);
       readOnly = true;
     };
     valuesPackage = lib.mkOption {
@@ -76,10 +76,10 @@
       isLocalChart = config.version == null;
       lock = locks.${config.name} or null;
       helmChartPackage =
-        if lock == null then
-          builtins.trace "Chart ${config.name} not found in chart-locks.json" null
-        else if isLocalChart then
+        if isLocalChart then
           config.chart
+        else if lock == null then
+          builtins.trace "Chart ${config.name} not found in chart-locks.json" null
         else
           pkgs.fetchurl {
             # We explicitly set the name to ensure it ends with .tgz,

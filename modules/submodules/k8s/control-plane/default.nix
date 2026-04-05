@@ -47,7 +47,7 @@
 
   config.libraryofalexandria.control-plane = {
     headlamp = {
-      enable = lib.mkDefault true;
+      enable = lib.mkDefault false;
       version = lib.mkDefault "0.40.0";
     };
     argocd = {

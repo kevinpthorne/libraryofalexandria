@@ -1,18 +1,18 @@
 {
-  "cilium-keys-gen-helm": {
-    "url": "file:///nix/store/qg45944njd4bhnw2ngpxr5j3p41rgjsq-cilium-keys-gen-helm",
+  "gateway-api-crds": {
+    "url": "file:///nix/store/qjqf8g1nkmh68mxxz7miqrlw1nrnni5d-gateway-api-crds-helm/gateway-api-crds-helm-0.1.0.tgz",
     "images": {}
   },
-  "cilium-overrides": {
-    "url": "file:///nix/store/pi9dd49q5khqwvxdvab393asjrw8qzx7-rke2-overrides-helm",
+  "cilium-keys-gen-helm": {
+    "url": "file:///nix/store/k7rywnhlc0kr82svghs2ybcjb8xywj2a-cilium-keys-gen-helm/cilium-keys-gen-helm-0.1.0.tgz",
     "images": {}
   },
   "cilium-virtual-ips": {
-    "url": "file:///nix/store/7n4l0axfsvh9zi4ic5dxyhhabxwrvhm6-cilium-virtual-ips",
+    "url": "file:///nix/store/vakar5q5wxhy3j8i5jqr0wkhfmgijfdz-cilium-virtual-ips/cilium-virtual-ips-0.1.0.tgz",
     "images": {}
   },
   "longhorn-namespace": {
-    "url": "file:///nix/store/wkfiwv1vdxd4px1cskgs37b2sky0lzh4-namespace-helm",
+    "url": "file:///nix/store/ih28ds4v4vn0y6jzwqsy2azr7jyv7w94-namespace-helm/namespace-helm-0.1.0.tgz",
     "images": {}
   },
   "longhorn": {
@@ -70,7 +70,7 @@
     }
   },
   "cert-manager-system-namespace": {
-    "url": "file:///nix/store/wkfiwv1vdxd4px1cskgs37b2sky0lzh4-namespace-helm",
+    "url": "file:///nix/store/ih28ds4v4vn0y6jzwqsy2azr7jyv7w94-namespace-helm/namespace-helm-0.1.0.tgz",
     "images": {}
   },
   "cert-manager-csi-driver": {
@@ -97,10 +97,6 @@
       }
     }
   },
-  "pki-bootstrap": {
-    "url": "file:///nix/store/wbdbisc6d583vbn5lfaw1cpmmpvlqcbd-pki-bootstrap-helm",
-    "images": {}
-  },
   "trust-manager": {
     "url": "https://charts.jetstack.io/charts/trust-manager-v0.22.0.tgz",
     "hash": "sha256-Kan+ZhWPcaGmGm6VXeLVqLaLjLW0kaigcsb3s+shHQo=",
@@ -118,6 +114,26 @@
         "finalImageTag": "20230311-deb12u1.5"
       }
     }
+  },
+  "pki-bootstrap": {
+    "url": "file:///nix/store/0yjbnd9i8vslkacgd44wk1bnnclhdmbn-pki-bootstrap-helm/pki-bootstrap-helm-0.1.0.tgz",
+    "images": {}
+  },
+  "external-secrets": {
+    "url": "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-1.2.0/external-secrets-1.2.0.tgz",
+    "hash": "sha256-S1EGl2QECb6t4ITiZepc7LLwcwNDi3ggUiW1YfSNCqQ=",
+    "images": {
+      "ghcr.io/external-secrets/external-secrets:v1.2.0": {
+        "imageName": "ghcr.io/external-secrets/external-secrets",
+        "imageDigest": "sha256:9d9ef89a7e3832345039fbf49782f89e86f36f90b2aefaad1d7e84b364f1a019",
+        "hash": "sha256-uQi5YMcrC9sQEvZR30ntMf/orQ+i4YFuIAQbDdbTyIQ=",
+        "finalImageTag": "v1.2.0"
+      }
+    }
+  },
+  "argo-tls": {
+    "url": "file:///nix/store/30h175fnzgbnzm6mmvpchg4k7lrblqi7-service-tls-helm/service-tls-helm-0.1.0.tgz",
+    "images": {}
   },
   "argo": {
     "url": "https://github.com/argoproj/argo-helm/releases/download/argo-cd-9.4.10/argo-cd-9.4.10.tgz",
@@ -143,36 +159,24 @@
       }
     }
   },
-  "headlamp": {
-    "url": "https://github.com/kubernetes-sigs/headlamp/releases/download/headlamp-helm-0.40.0/headlamp-0.40.0.tgz",
-    "hash": "sha256-NR52Ylj8Sr9ZrdGi5OpSQGhJFs9rjlXmAoLIwOlhBTw=",
-    "images": {
-      "ghcr.io/headlamp-k8s/headlamp:v0.40.0": {
-        "imageName": "ghcr.io/headlamp-k8s/headlamp",
-        "imageDigest": "sha256:16c34eb5ef85e40bdbdeb5baebc70f7a6c59ae3739d8779bf896674c4d762ad5",
-        "hash": "sha256-487nCQrUsxLfiSSj9FT/ukHAq+6nrcPhypJmjn9Xb9Q=",
-        "finalImageTag": "v0.40.0"
-      }
-    }
-  },
-  "loa-core-app": {
-    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
+  "argocd-gateway": {
+    "url": "file:///nix/store/rjixjmha7x0ry4z0hqxzcz5dn5z519nn-gateway-helm/gateway-helm-0.1.0.tgz",
     "images": {}
   },
-  "loa-federation-app": {
-    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
+  "loa-core": {
+    "url": "file:///nix/store/zw1qhib9cd50g0jyz8jczqqynhf8fdgw-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   },
-  "loa-observability-app": {
-    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
+  "loa-federation": {
+    "url": "file:///nix/store/zw1qhib9cd50g0jyz8jczqqynhf8fdgw-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   },
-  "loa-extras-app": {
-    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
+  "loa-observability": {
+    "url": "file:///nix/store/zw1qhib9cd50g0jyz8jczqqynhf8fdgw-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   },
   "test-apps": {
-    "url": "file:///nix/store/pc091zvna6cbky9c9d6a0bnhsz0spv1f-argocd-app-helm",
+    "url": "file:///nix/store/zw1qhib9cd50g0jyz8jczqqynhf8fdgw-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   }
 }
