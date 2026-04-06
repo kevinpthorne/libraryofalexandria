@@ -96,6 +96,7 @@ in
           curl
           htop
           tcptraceroute
+          tcpdump
         ];
       };
 
