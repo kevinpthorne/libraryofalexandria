@@ -182,6 +182,11 @@
                         config.libraryofalexandria.k8sApiVirtualIps.haproxyPort
                       else
                         config.libraryofalexandria.node.masterPort;
+                    hubble = {
+                      enabled = true;
+                      relay.enabled = true;
+                      ui.enabled = true;
+                    };
                   };
                 };
               };
