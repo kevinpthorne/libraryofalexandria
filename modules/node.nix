@@ -95,6 +95,7 @@ in
           vim
           curl
           htop
+          tcptraceroute
         ];
       };
 
