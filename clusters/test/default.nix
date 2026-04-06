@@ -74,7 +74,7 @@ in
           stop = "192.168.56.200";
         }
       ];
-      interfaces = [ "enp0s8" ];
+      interfaces = [ "enp0s9" ];
     };
   };
 }
