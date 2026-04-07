@@ -15,7 +15,7 @@
         name = "argo-tls";
         chart = "${pkgs.service-tls-helm}/service-tls-helm-0.1.0.tgz";
         values = {
-            svcName = "argo-argocd-server";
+          svcName = "argo-argocd-server";
         };
         namespace = "argo-cd";
       }
@@ -25,7 +25,9 @@
         version = config.libraryofalexandria.control-plane.argocd.version;
         # https://artifacthub.io/packages/helm/k8s-dashboard/argo-cd?modal=values
         values = lib2.deepMerge [
-          { }
+          {
+            global.domain = "argocd.${config.libraryofalexandria.cluster.name}.loa.internal";
+          }
           config.libraryofalexandria.control-plane.argocd.values
         ];
         namespace = "argo-cd";
@@ -48,12 +50,13 @@
                   tls = {
                     mode = "Passthrough";
                   };
+                  targetService = "argo-argocd-server";
                 }
               ];
             }
           ];
         };
-        namespace = "kube-system";
+        namespace = "argo-cd";
       }
     ];
   };

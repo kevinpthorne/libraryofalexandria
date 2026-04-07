@@ -11,9 +11,9 @@
     ./headlamp.nix
     ./argocd.nix
     ./eso.nix
+    ./longhorn.nix
     ./trust-manager.nix
     ./cert-manager.nix
-    ./longhorn.nix
   ];
 
   options.libraryofalexandria.control-plane = lib.mkOption {
