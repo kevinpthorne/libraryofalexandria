@@ -1,0 +1,102 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: syncfolder.fs.loa.kevinpthorne.com
+spec:
+  compositeTypeRef:
+    apiVersion: fs.loa.kevinpthorne.com/v1alpha1
+    kind: SyncFolder
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          - name: filer-sync-deployment
+            base:
+              apiVersion: kubernetes.crossplane.io/v1alpha2
+              kind: Object
+              spec:
+                forProvider:
+                  manifest:
+                    apiVersion: apps/v1
+                    kind: Deployment
+                    metadata:
+                      name: seaweedfs-filer-sync-PLACEHOLDER
+                      namespace: seaweedfs-system
+                    spec:
+                      replicas: 1
+                      selector:
+                        matchLabels:
+                          app: seaweedfs-filer-sync
+                      template:
+                        metadata:
+                          labels:
+                            app: seaweedfs-filer-sync
+                        spec:
+                          containers:
+                          - name: filer-sync
+                            image: chrislusf/seaweedfs:4.0.401
+                            command:
+                              - "weed"
+                              - "filer.sync"
+                            # Placeholder args; patched by Crossplane
+                            args:
+                              - "-a=PLACEHOLDER_A" 
+                              - "-b=PLACEHOLDER_B"
+                              - "-a.path=PLACEHOLDER_PATH_A"
+                              - "-b.path=PLACEHOLDER_PATH_B"
+            patches:
+              # Patch the name of the deployment so multiple buckets can be synced
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: metadata.name
+                  strategy: string
+                  string:
+                    fmt: "seaweedfs-sync-%s"
+                toFieldPath: spec.forProvider.manifest.metadata.name
+              
+              # Patch Cluster A Filer Address (Index 0 in args)
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.sourceCluster
+                  strategy: string
+                  string:
+                    fmt: "-a=seaweedfs-filer.seaweedfs.svc.cluster.%s:8888"
+                toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].args[0]
+                
+              # Patch Cluster B Filer Address (Index 1 in args)
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.targetCluster
+                  strategy: string
+                  string:
+                    fmt: "-b=seaweedfs-filer.seaweedfs.svc.cluster.%s:8888"
+                toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].args[1]
+
+              # Patch Bucket Paths (Indices 2 and 3 in args)
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.path
+                  strategy: string
+                  string:
+                    fmt: "-a.path=%s"
+                toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].args[2]
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                    - fromFieldPath: spec.path
+                  strategy: string
+                  string:
+                    fmt: "-b.path=%s"
+                toFieldPath: spec.forProvider.manifest.spec.template.spec.containers[0].args[3]
+    - step: automatically-detect-readiness
+      functionRef:
+        name: function-auto-ready

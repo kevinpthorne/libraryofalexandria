@@ -1,0 +1,36 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: syncfolders.fs.loa.kevinpthorne.com
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+spec:
+  scope: Namespaced
+  group: fs.loa.kevinpthorne.com
+  names:
+    kind: SyncFolder
+    plural: syncfolders
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    path:
+                      type: string
+                    sourceCluster:
+                      type: string
+                      default: "local"  # cluster.local
+                    targetCluster:
+                      type: string
+                  required:
+                    - path
+                    - targetCluster

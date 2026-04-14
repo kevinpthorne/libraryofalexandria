@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: immich-restricted
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://immich-app.github.io/immich-charts
+    chart: immich/immich
+    targetRevision: 0.11.1
+    helm:
+      # We override the values to enforce a restricted security context
+      values: |
+        test
+    

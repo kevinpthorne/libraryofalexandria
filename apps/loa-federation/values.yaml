@@ -6,6 +6,6 @@ pki:
   certManagerNamespace: cert-manager
 
 pgedge:
-  instances: "{{ .Values.cluster.workers.count | default \"3\" }}"
+  instances: 1
   appName: "pgedge-cluster"
   namespace: pgedge

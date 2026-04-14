@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keydb-restricted
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://enapter.github.io/charts/
+    chart: enapter/keydb
+    targetRevision: 0.48.0
+    helm:
+      # We override the values to enforce a restricted security context
+      values: |
+        nodes: 1
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        keydb:
+          securityContext: # container
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL

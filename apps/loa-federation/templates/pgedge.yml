@@ -19,7 +19,7 @@ spec:
             - name: {{ .Values.cluster.name }}-data
               hostname: {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw
               clusterSpec:
-                instances: {{ tpl .Values.pgedge.instances . }}
+                instances: {{ .Values.pgedge.instances }}
                 imagePullPolicy: IfNotPresent
                 certificates:
                   serverTLSSecret: pgedge-{{ .Values.pgedge.appName }}-server-cert

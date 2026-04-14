@@ -1,0 +1,9 @@
+apiVersion: blob.loa.kevinpthorne.com/v1alpha1
+kind: PeerBucket
+metadata:
+  name: test-bucket-to-b
+  namespace: test-app-ns
+spec:
+  bucketName: test-bucket
+  targetCluster: test-cluster-b
+  sourceCluster: local
