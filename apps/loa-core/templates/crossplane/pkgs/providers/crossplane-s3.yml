@@ -2,6 +2,8 @@ apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
   name: provider-aws-s3
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   package: xpkg.crossplane.io/crossplane-contrib/provider-aws-s3:v2.0.0
   runtimeConfigRef:

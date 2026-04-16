@@ -4,6 +4,7 @@ metadata:
   name: privateschemas.db.loa.kevinpthorne.com
   annotations:
     argocd.argoproj.io/sync-options: ServerSideApply=true
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   scope: Namespaced
   group: db.loa.kevinpthorne.com

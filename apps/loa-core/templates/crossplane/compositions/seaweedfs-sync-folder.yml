@@ -2,6 +2,8 @@ apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
   name: syncfolder.fs.loa.kevinpthorne.com
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   compositeTypeRef:
     apiVersion: fs.loa.kevinpthorne.com/v1alpha1

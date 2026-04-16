@@ -2,6 +2,8 @@ apiVersion: pkg.crossplane.io/v1beta1
 kind: DeploymentRuntimeConfig
 metadata:
   name: hardened-runtime-config
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   deploymentTemplate:
     spec:
