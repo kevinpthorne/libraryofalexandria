@@ -29,11 +29,11 @@ in
     id = 1;
 
     masters = {
-      count = 3;
+      count = 1;
       ips = [
         "192.168.56.15"
-        "192.168.56.14"
-        "192.168.56.13"
+        # "192.168.56.14"
+        # "192.168.56.13"
       ];
       modules =
         let
@@ -62,7 +62,7 @@ in
     };
 
     apps.loa-core.valuesOverrides.seaweedfs.size = "1G";
-    apps.loa-federation.valuesOverrides.overrides.pgedge.instances = "2"; # TODO make not require quotes
+    federate-to = [ "k" ];
     # apps.loa-voip.enable = lib.mkForce true;
 
     virtualIps = {

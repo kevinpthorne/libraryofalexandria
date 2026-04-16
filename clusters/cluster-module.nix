@@ -51,6 +51,11 @@
         type = lib.types.attrsOf (lib.types.submodule ../modules/submodules/k8s/apps/_submodule.nix);
         description = "ArgoCD app configs, usually placed in master0's config";
       };
+      federate-to = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "List of cluster names to federate to";
+      };
 
       virtualIps =
         let
@@ -91,6 +96,16 @@
             };
           };
         };
+      federation = lib.mkOption {
+        # type = lib.types.attrsOf (
+        #   lib.types.submoduleWith {
+        #     modules = [ ./cluster-module.nix ];
+        #     specialArgs = { inherit inputs lib2 localPkgs; };
+        #   }
+        # );
+        type = with lib.types; attrsOf attrs;
+        readOnly = true;
+      };
     };
     # rendered options, never given outside this module
     # TODO remove this pattern, it sucks
@@ -265,6 +280,30 @@
           subPath = lib.mkDefault "apps/${config.libraryofalexandria.cluster.name}-apps";
         };
       };
+      libraryofalexandria.cluster.federation = builtins.listToAttrs (
+        builtins.map (
+          clusterName:
+          let
+            clusterModule = inputs.nixpkgs.lib.evalModules {
+              modules = [
+                ./cluster-module.nix
+                ./${clusterName}
+              ];
+              specialArgs = {
+                inherit inputs;
+                inherit lib2;
+                inherit localPkgs;
+              };
+            };
+            clusterConfig = lib2.getClusterConfig lib clusterModule.config.libraryofalexandria.cluster;
+            acyclicConfig = builtins.removeAttrs clusterConfig [ "federation" ];
+          in
+          {
+            name = clusterName;
+            value = acyclicConfig;
+          }
+        ) config.libraryofalexandria.cluster.federate-to
+      );
 
       # masters = collectAll (id: wrapNixosSystem id) masterSystems;
       masters = collectSystems masterSystems;

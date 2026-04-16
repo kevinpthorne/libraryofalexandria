@@ -12,6 +12,7 @@
 
   config =
     let
+      thisCluster = config.libraryofalexandria.cluster;
       isMaster = config.libraryofalexandria.node.type == "master";
       isWorker = !isMaster;
       isMaster0 = isMaster && config.libraryofalexandria.node.id == 0;
@@ -22,8 +23,14 @@
         else
           builtins.elemAt config.libraryofalexandria.node.masterIps config.libraryofalexandria.node.id;
     in
-    lib.mkIf (config.libraryofalexandria.cluster.k8sEngine == "rke2") {
+    lib.mkIf (thisCluster.k8sEngine == "rke2") {
       environment = {
+        etc."crictl.yaml".text = ''
+          runtime-endpoint: unix:///run/k3s/containerd/containerd.sock
+          image-endpoint: unix:///run/k3s/containerd/containerd.sock
+          timeout: 10
+          debug: false
+        '';
         variables = lib.mkIf isMaster {
           "KUBECONFIG" = "/etc/rancher/rke2/rke2.yaml"; # must match helm chart installer
         };
@@ -31,7 +38,7 @@
           with pkgs;
           [
             rke2
-            cri-o
+            cri-tools
             rke2-images
             rke2-images-cilium
           ]
@@ -44,6 +51,7 @@
                 argocd
                 argocd-vault-plugin
                 jq
+                yq
               ]
             else
               [ ]
@@ -61,13 +69,13 @@
 
       deployment.keys = {
         "token.key" = lib.mkIf isMaster {
-          keyFile = "/var/keys/clusters/${config.libraryofalexandria.cluster.name}/token.key";
+          keyFile = "/var/keys/clusters/${thisCluster.name}/token.key";
           destDir = "/var/keys";
           permissions = "0600";
           uploadAt = "pre-activation";
         };
         "agent-token.key" = lib.mkIf isWorker {
-          keyFile = "/var/keys/clusters/${config.libraryofalexandria.cluster.name}/agent-token.key";
+          keyFile = "/var/keys/clusters/${thisCluster.name}/agent-token.key";
           destDir = "/var/keys";
           permissions = "0600";
           uploadAt = "pre-activation";
@@ -110,15 +118,36 @@
           tlsSanFlags = builtins.map (ip: "--tls-san=${ip}") (
             config.libraryofalexandria.node.masterIps
             ++ (
-              if config.libraryofalexandria.cluster.virtualIps.enable then
-                [ config.libraryofalexandria.k8sApiVirtualIps.vip ]
-              else
-                [ ]
+              if thisCluster.virtualIps.enable then [ config.libraryofalexandria.k8sApiVirtualIps.vip ] else [ ]
             )
           );
-          clusterCidr = "10.${toString config.libraryofalexandria.cluster.id}.0.0/16";
-          servicesOctet = config.libraryofalexandria.cluster.id + 127;
-          serviceCidr = "10.${toString servicesOctet}.0.0/16";
+          clusterCidrOf = cluster: "10.${toString cluster.id}.0.0/16";
+          serviceCidrOf = cluster: "10.${toString (cluster.id + 127)}.0.0/16";
+          dnsIpOf = cluster: "10.${toString (cluster.id + 127)}.0.10";
+
+          federatedServers = lib.mapAttrsToList (clusterName: peerCluster: {
+            zones = [
+              {
+                zone = "cluster.${peerCluster.name}.";
+                use_tcp = true;
+              }
+            ];
+            port = 53;
+            plugins = [
+              { name = "errors"; }
+              {
+                name = "cache";
+                parameters = 30;
+              }
+              {
+                name = "forward";
+                parameters = ". ${dnsIpOf peerCluster}";
+              }
+              { name = "loop"; }
+              { name = "reload"; }
+              { name = "loadbalance"; }
+            ];
+          }) thisCluster.federation;
         in
         {
           enable = true;
@@ -134,8 +163,9 @@
               extraFlags = [
                 "--profile=cis"
                 "--disable-kube-proxy" # cilium to do
-                "--cluster-cidr=${clusterCidr}"
-                "--service-cidr=${serviceCidr}"
+                "--cluster-cidr=${clusterCidrOf thisCluster}"
+                "--service-cidr=${serviceCidrOf thisCluster}"
+                # do not set cluster domain here, set it in the coredns overrides below
               ]
               ++ tlsSanFlags;
               disable = [
@@ -152,15 +182,14 @@
                   };
                   spec.valuesContent = builtins.toJSON {
                     cluster = {
-                      name = config.libraryofalexandria.cluster.name;
-                      id = config.libraryofalexandria.cluster.id;
+                      name = thisCluster.name;
+                      id = thisCluster.id;
                     };
                     clustermesh = {
                       useAPIServer = true;
                       enabled = true;
                       config.enabled = true;
-                      service.type =
-                        if config.libraryofalexandria.cluster.virtualIps.enable then "LoadBalancer" else "NodePort";
+                      service.type = if thisCluster.virtualIps.enable then "LoadBalancer" else "NodePort";
                     };
                     encryption = {
                       enabled = true;
@@ -168,17 +197,18 @@
                       ipsec.secretName = "cilium-ipsec-keys";
                     };
                     dnsProxy.enableTransparentMode = true;
-                    l2announcements.enabled = config.libraryofalexandria.cluster.virtualIps.enable;
-                    externalIPs.enabled = config.libraryofalexandria.cluster.virtualIps.enable;
+                    l2announcements.enabled = thisCluster.virtualIps.enable;
+                    externalIPs.enabled = thisCluster.virtualIps.enable;
                     gatewayAPI.enabled = true;
+                    localRedirectPolicies.enabled = true;
                     kubeProxyReplacement = true;
                     k8sServiceHost =
-                      if config.libraryofalexandria.cluster.virtualIps.enable then
+                      if thisCluster.virtualIps.enable then
                         config.libraryofalexandria.k8sApiVirtualIps.vip
                       else
                         "127.0.0.1";
                     k8sServicePort =
-                      if config.libraryofalexandria.cluster.virtualIps.enable then
+                      if thisCluster.virtualIps.enable then
                         config.libraryofalexandria.k8sApiVirtualIps.haproxyPort
                       else
                         config.libraryofalexandria.node.masterPort;
@@ -187,6 +217,68 @@
                       relay.enabled = true;
                       ui.enabled = true;
                     };
+                  };
+                };
+                "rke2-coredns-config".content = {
+                  apiVersion = "helm.cattle.io/v1";
+                  kind = "HelmChartConfig";
+                  metadata = {
+                    name = "rke2-coredns";
+                    namespace = "kube-system";
+                  };
+                  spec.valuesContent = builtins.toJSON {
+                    nodelocal.enabled = true;
+                    # nodelocal.use_cilium_lrp = true;
+                    servers = federatedServers ++ [
+                      {
+                        zones = [
+                          {
+                            zone = ".";
+                            use_tcp = true;
+                          }
+                        ];
+                        port = 53;
+                        plugins = [
+                          {
+                            name = "errors";
+                          }
+                          {
+                            name = "health";
+                            configBlock = ''
+                              lameduck 10s
+                            '';
+                          }
+                          {
+                            name = "ready";
+                          }
+                          {
+                            name = "rewrite";
+                            parameters = "stop name suffix cluster.${thisCluster.name} .cluster.local";
+                          }
+                          {
+                            name = "kubernetes";
+                            parameters = "cluster.local in-addr.arpa ip6.arpa";
+                          }
+                          {
+                            name = "forward";
+                            parameters = ". /etc/resolv.conf";
+                          }
+                          {
+                            name = "cache";
+                            parameters = 30;
+                          }
+                          {
+                            name = "loop";
+                          }
+                          {
+                            name = "reload";
+                          }
+                          {
+                            name = "loadbalance";
+                          }
+                        ];
+                      }
+                    ];
                   };
                 };
               };
@@ -275,12 +367,12 @@
           namespace = "kube-system";
           _ensureOnce = true;
         }
-        (lib.mkIf config.libraryofalexandria.cluster.virtualIps.enable {
+        (lib.mkIf thisCluster.virtualIps.enable {
           name = "cilium-virtual-ips";
           chart = "${pkgs.cilium-virtual-ips}/cilium-virtual-ips-0.1.0.tgz";
           values = {
-            blocks = config.libraryofalexandria.cluster.virtualIps.blocks;
-            interfaces = config.libraryofalexandria.cluster.virtualIps.interfaces;
+            blocks = thisCluster.virtualIps.blocks;
+            interfaces = thisCluster.virtualIps.interfaces;
           };
           namespace = "kube-system";
         })

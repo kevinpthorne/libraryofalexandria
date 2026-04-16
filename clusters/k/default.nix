@@ -87,6 +87,7 @@ in
         };
       }
     ];
+    federate-to = [ "test" ];
 
     virtualIps = {
       enable = true;
