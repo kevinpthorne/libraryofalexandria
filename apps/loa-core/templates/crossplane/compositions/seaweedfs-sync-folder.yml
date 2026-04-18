@@ -4,6 +4,7 @@ metadata:
   name: syncfolder.fs.loa.kevinpthorne.com
   annotations:
     argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane installs in this app too; TODO put in other app
 spec:
   compositeTypeRef:
     apiVersion: fs.loa.kevinpthorne.com/v1alpha1

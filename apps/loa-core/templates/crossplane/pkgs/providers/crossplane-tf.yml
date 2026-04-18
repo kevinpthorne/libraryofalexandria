@@ -5,6 +5,7 @@ metadata:
   name: provider-opentofu
   annotations:
     argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane installs in this app too; TODO put in other app
 spec:
   package: xpkg.upbound.io/upbound/provider-opentofu:v1.0.3
   runtimeConfigRef:

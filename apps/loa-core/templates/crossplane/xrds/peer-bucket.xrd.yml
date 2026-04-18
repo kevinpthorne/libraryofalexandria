@@ -3,8 +3,8 @@ kind: CompositeResourceDefinition
 metadata:
   name: peerbuckets.blob.loa.kevinpthorne.com
   annotations:
-    argocd.argoproj.io/sync-options: ServerSideApply=true
     argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: ServerSideApply=true,SkipDryRunOnMissingResource=true  # crossplane installs in this app too; TODO put in other app
 spec:
   scope: Namespaced
   group: blob.loa.kevinpthorne.com
