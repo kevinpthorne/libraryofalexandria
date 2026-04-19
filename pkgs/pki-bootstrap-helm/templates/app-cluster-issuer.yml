@@ -1,10 +1,16 @@
 # 1. Generate the Root CA Certificate using your SelfSigned bootstrap
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-{{ .Release.Name }}-secret
+  namespace: {{ .Release.Namespace }}
+  labels:
+    pki.loa.kevinpthorne.com/trusted-ca: "true"
+---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: app-{{ .Release.Name }}
-  labels:
-    pki.loa.kevinpthorne.com/trusted-ca: "true"
 spec:
   isCA: true
   commonName: app-{{ .Release.Name }}

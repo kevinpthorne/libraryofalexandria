@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: pgedge-{{ .Values.pgedge.appName }}-client-ca-key-pair
-  namespace: {{ .Values.pgedge.certManagerNamespace }}
+  namespace: {{ .Values.pki.certManagerNamespace }}
   labels:
     pki.loa.kevinpthorne.com/trusted-ca: "true"
 ---

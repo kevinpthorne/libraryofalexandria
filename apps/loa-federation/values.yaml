@@ -9,3 +9,10 @@ pgedge:
   instances: 1
   appName: "pgedge-cluster"
   namespace: pgedge
+
+keydb:
+  instances: 1
+  namespace: keydb
+
+immich:
+  namespace: immich

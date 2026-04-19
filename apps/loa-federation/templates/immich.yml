@@ -12,5 +12,17 @@ spec:
     helm:
       # We override the values to enforce a restricted security context
       values: |
-        test
-    
+        {}
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: {{ .Values.immich.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    # pull from internet
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
