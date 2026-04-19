@@ -25,6 +25,7 @@
       {
         name = "pki-bootstrap";
         chart = "${pkgs.pki-bootstrap-helm}/pki-bootstrap-helm-0.1.0.tgz";
+        namespace = "cert-manager";
       }
     ];
   };

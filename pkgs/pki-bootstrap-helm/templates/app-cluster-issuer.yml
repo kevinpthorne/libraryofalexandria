@@ -12,6 +12,7 @@ spec:
   privateKey:
     algorithm: RSA
     size: 2048
+    rotationPolicy: Always
   issuerRef:
     name: {{ .Release.Name }}
     kind: ClusterIssuer
@@ -23,4 +24,4 @@ metadata:
   name: app-{{ .Release.Name }}-issuer
 spec:
   ca:
-    secretName: app-{{ .Release.Name }}
+    secretName: app-{{ .Release.Name }}-secret
