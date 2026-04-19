@@ -43,12 +43,12 @@ spec:
                         - ALL
                 # SPOCK MULTI-MASTER CONFIG (Required)
                 postgresql:
-                {{- if gt (int .Values.pgedge.instances) 1 -}}
+                  {{ if gt (int .Values.pgedge.instances) 1 }}
                   synchronous:
                     method: any
                     number: 1
                     dataDurability: required
-                {{- end -}}
+                  {{ end }}
                   parameters:
                     wal_level: "logical"
                     max_worker_processes: "20"
