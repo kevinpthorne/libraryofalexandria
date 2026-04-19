@@ -101,6 +101,10 @@ spec:
               mountPath: "/run/secrets/certs"
               readOnly: true
         filer:
+          data:
+            type: persistentVolumeClaim
+            size: {{ .Values.seaweedfs.size }}  # TODO fix this
+            storageClass: longhorn
           logs:
             type: to-stderr
           containerSecurityContext:
