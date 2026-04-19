@@ -19,7 +19,7 @@ spec:
     path: {{ .Values.source.path }}
     targetRevision: {{ .Values.source.targetRevision }}
     helm:
-      values: |
+      valuesObject:
         {{- with .Values.overrides }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

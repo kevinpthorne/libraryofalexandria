@@ -30,8 +30,8 @@
               path = app.subPath;
             };
             cluster = config.libraryofalexandria.cluster;
+            overrides = app.valuesOverrides;
           }
-          app.valuesOverrides
         ];
         namespace = "argo-cd";
       }) config.libraryofalexandria.cluster.apps
