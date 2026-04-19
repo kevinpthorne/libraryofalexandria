@@ -57,7 +57,7 @@ spec:
                 driver: csi.cert-manager.io
                 readOnly: true
                 volumeAttributes:
-                  csi.cert-manager.io/issuer-name: "app-pki-bootstrap"
+                  csi.cert-manager.io/issuer-name: "app-pki-bootstrap-issuer"
                   csi.cert-manager.io/issuer-kind: "ClusterIssuer"
                   csi.cert-manager.io/issuer-group: "cert-manager.io"
                   csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local,${POD_NAME}.${POD_NAMESPACE}.svc.cluster.{{ .Values.cluster.name }}"
@@ -92,7 +92,7 @@ spec:
                 driver: csi.cert-manager.io
                 readOnly: true
                 volumeAttributes:
-                  csi.cert-manager.io/issuer-name: "app-pki-bootstrap"
+                  csi.cert-manager.io/issuer-name: "app-pki-bootstrap-issuer"
                   csi.cert-manager.io/issuer-kind: "ClusterIssuer"
                   csi.cert-manager.io/issuer-group: "cert-manager.io"
                   csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local,${POD_NAME}.${POD_NAMESPACE}.svc.cluster.{{ .Values.cluster.name }}"
