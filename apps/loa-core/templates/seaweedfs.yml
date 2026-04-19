@@ -101,6 +101,8 @@ spec:
               mountPath: "/run/secrets/certs"
               readOnly: true
         filer:
+          logs:
+            type: to-stderr
           containerSecurityContext:
             enabled: true
             allowPrivilegeEscalation: false
