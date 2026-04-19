@@ -51,21 +51,20 @@ spec:
             runAsUser: 1001
             runAsGroup: 1001
             fsGroup: 1000
-          extraVolumes:
-          - name: tls-volume
-            csi:
-              driver: csi.cert-manager.io
+          extraVolumes: |
+            - name: tls-volume
+              csi:
+                driver: csi.cert-manager.io
+                readOnly: true
+                volumeAttributes:
+                  csi.cert-manager.io/issuer-name: "pki-bootstrap"
+                  csi.cert-manager.io/issuer-kind: "ClusterIssuer"
+                  csi.cert-manager.io/issuer-group: "cert-manager.io"
+                  csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local,${POD_NAME}.${POD_NAMESPACE}.svc.cluster.{{ .Values.cluster.name }}"
+          extraVolumeMounts: |
+            - name: tls-volume
+              mountPath: "/run/secrets/certs"
               readOnly: true
-              volumeAttributes:
-                issuerRef: |
-                  name: pki-bootstrap
-                  kind: ClusterIssuer
-                  group: cert-manager.io
-                dnsNames: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local"
-          extraVolumeMounts:
-          - name: tls-volume
-            mountPath: "/run/secrets/certs"
-            readOnly: true
         volume:
           replicas: 1
           dataDirs:
@@ -87,6 +86,20 @@ spec:
             runAsUser: 1001
             runAsGroup: 1001
             fsGroup: 1000
+          extraVolumes: |
+            - name: tls-volume
+              csi:
+                driver: csi.cert-manager.io
+                readOnly: true
+                volumeAttributes:
+                  csi.cert-manager.io/issuer-name: "pki-bootstrap"
+                  csi.cert-manager.io/issuer-kind: "ClusterIssuer"
+                  csi.cert-manager.io/issuer-group: "cert-manager.io"
+                  csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local,${POD_NAME}.${POD_NAMESPACE}.svc.cluster.{{ .Values.cluster.name }}"
+          extraVolumeMounts: |
+            - name: tls-volume
+              mountPath: "/run/secrets/certs"
+              readOnly: true
         filer:
           containerSecurityContext:
             enabled: true
@@ -104,6 +117,20 @@ spec:
             fsGroup: 1000
           s3:
             enabled: true
+          extraVolumes: |
+            - name: tls-volume
+              csi:
+                driver: csi.cert-manager.io
+                readOnly: true
+                volumeAttributes:
+                  csi.cert-manager.io/issuer-name: "pki-bootstrap"
+                  csi.cert-manager.io/issuer-kind: "ClusterIssuer"
+                  csi.cert-manager.io/issuer-group: "cert-manager.io"
+                  csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local,${POD_NAME}.${POD_NAMESPACE}.svc.cluster.{{ .Values.cluster.name }}"
+          extraVolumeMounts: |
+            - name: tls-volume
+              mountPath: "/run/secrets/certs"
+              readOnly: true
         sftp:
           enabled: false
           logs:
