@@ -26,3 +26,25 @@ metadata:
 spec:
   ca:
     secretName: pgedge-{{ .Values.pgedge.appName }}-client-ca-key-pair
+---
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  # This dictates the name of the Secret that will be created in the target namespace
+  name: pgedge-{{ .Values.pgedge.appName }}-client-ca-public
+spec:
+  sources:
+    - secret:
+        # The name of the master CA secret attached to your ClusterIssuer
+        name: pgedge-{{ .Values.pgedge.appName }}-client-ca-key-pair
+        # cert-manager usually stores the public certificate under 'tls.crt'
+        key: tls.crt
+  target:
+    # Tell trust-manager to output a Secret, not a ConfigMap
+    secret:
+      # CloudNativePG expects the key inside the secret to be named exactly 'ca.crt'
+      key: ca.crt
+    namespaceSelector:
+      matchLabels:
+        # This standard Kubernetes label ensures it only syncs to the pgedge namespace
+        kubernetes.io/metadata.name: {{ .Values.pgedge.namespace }}

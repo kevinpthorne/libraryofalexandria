@@ -24,7 +24,7 @@ spec:
                 certificates:
                   serverTLSSecret: pgedge-{{ .Values.pgedge.appName }}-server-cert
                   serverCASecret: pgedge-{{ .Values.pgedge.appName }}-server-cert
-                  clientCASecret: pgedge-{{ .Values.pgedge.appName }}-client-ca-key-pair
+                  clientCASecret: pgedge-{{ .Values.pgedge.appName }}-client-ca-public
                   replicationTLSSecret: streaming-replica-client-cert
                 # CloudNativePG Security Context Injection
                 image:

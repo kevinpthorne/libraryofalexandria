@@ -16,7 +16,14 @@
         chart = "trust-manager/trust-manager";
         version = config.libraryofalexandria.control-plane.trust-manager.version;
         values = lib2.deepMerge [
-          { }
+          {
+            secretTargets = {
+              enabled = true;
+              authorizedSecrets = [  # known exceptions
+                "pgedge-client-ca-public"  # cnpg requires a secret with public cert
+              ];
+            };
+          }
           config.libraryofalexandria.control-plane.trust-manager.values
         ];
         namespace = "cert-manager";
