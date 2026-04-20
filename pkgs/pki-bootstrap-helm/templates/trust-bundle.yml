@@ -4,9 +4,9 @@ metadata:
   name: trusted-ca-bundle
 spec:
   sources:
-  # 1. The Static Root CA (The anchor)
+  # 1. The Static Root App CA (The anchor)
   - secret:
-      name: {{ .Release.Name }}
+      name: app-{{ .Release.Name }}-secret
       key: "tls.crt"
   
   # 2. Dynamic Intermediates (The variable part)

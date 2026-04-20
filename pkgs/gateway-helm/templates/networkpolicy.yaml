@@ -1,0 +1,27 @@
+{{- range .Values.endpoints }}
+{{- $endpoint := . }}
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ $endpoint.name }}-gateway-policy
+  namespace: {{ $endpoint.namespace | default $.Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      {{- if $endpoint.selector }}
+{{ toYaml $endpoint.selector | indent 6 }}
+      {{- else }}
+      app.kubernetes.io/name: {{ $endpoint.targetService | default $endpoint.name }}
+      {{- end }}
+  ingress:
+  - fromEntities:
+    - world
+    - cluster
+    toPorts:
+    - ports:
+      {{- range $endpoint.ports }}
+      - port: {{ .targetPort | default .port | quote }}
+        protocol: {{ if eq "UDP" .protocol }}UDP{{ else }}TCP{{ end }}
+      {{- end }}
+{{- end }}
