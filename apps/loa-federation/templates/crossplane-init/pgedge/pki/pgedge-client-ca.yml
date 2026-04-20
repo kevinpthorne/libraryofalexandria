@@ -16,7 +16,7 @@ spec:
     rotationPolicy: Never
   issuerRef:
     name: {{ .Values.pki.rootCAIssuer }}
-    kind: Issuer
+    kind: ClusterIssuer
     group: cert-manager.io
 ---
 apiVersion: cert-manager.io/v1
