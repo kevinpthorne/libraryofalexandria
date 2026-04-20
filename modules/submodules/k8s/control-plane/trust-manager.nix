@@ -19,9 +19,7 @@
           {
             secretTargets = {
               enabled = true;
-              authorizedSecrets = [  # known exceptions
-                "pgedge-client-ca-public"  # cnpg requires a secret with public cert
-              ];
+              authorizedSecretsAll = true;
             };
           }
           config.libraryofalexandria.control-plane.trust-manager.values
