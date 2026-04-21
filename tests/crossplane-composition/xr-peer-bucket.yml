@@ -4,6 +4,7 @@ metadata:
   name: test-bucket-to-b
   namespace: test-app-ns
 spec:
-  bucketName: test-bucket
-  targetCluster: test-cluster-b
-  sourceCluster: local
+  parameters:
+    bucketName: test-bucket
+    targetCluster: test-cluster-b
+    sourceCluster: local

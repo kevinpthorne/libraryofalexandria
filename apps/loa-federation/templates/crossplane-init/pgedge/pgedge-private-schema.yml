@@ -39,12 +39,12 @@ spec:
                   # No passwordSecretRef needed because we use Cert Auth
                   passwordSecretRef: null 
             patches:  
-              - fromFieldPath: "spec.userName"
+              - fromFieldPath: "spec.parameters.userName"
                 toFieldPath: "spec.forProvider.name"
               - type: CombineFromComposite
                 combine:
                   variables:
-                  - fromFieldPath: spec.userName
+                  - fromFieldPath: spec.parameters.userName
                   strategy: string
                   string:
                     fmt: "pgedge-role-%s"
@@ -59,7 +59,6 @@ spec:
               kind: Certificate
               metadata:
                 name: PLACEHOLDER
-                namespace: PLACEHOLDER
               spec:
                 secretName: PLACEHOLDER
                 usages:
@@ -75,22 +74,22 @@ spec:
               - type: CombineFromComposite
                 combine:
                   variables:
-                  - fromFieldPath: spec.userName
+                  - fromFieldPath: spec.parameters.userName
                   strategy: string
                   string:
                     fmt: "pgedge-%s-client-cert"
                 toFieldPath: metadata.name
-              - fromFieldPath: spec.appNamespace
+              - fromFieldPath: spec.parameters.appNamespace
                 toFieldPath: metadata.namespace
               - type: CombineFromComposite
                 combine:
                   variables:
-                  - fromFieldPath: spec.userName
+                  - fromFieldPath: spec.parameters.userName
                   strategy: string
                   string:
                     fmt: "pgedge-%s-client-cert"
                 toFieldPath: spec.secretName
-              - fromFieldPath: spec.userName
+              - fromFieldPath: spec.parameters.userName
                 toFieldPath: spec.commonName
 
 
@@ -105,9 +104,9 @@ spec:
                 providerConfigRef:
                   name: pgedge-provider-config
             patches:
-              - fromFieldPath: "spec.schemaName"
+              - fromFieldPath: "spec.parameters.schemaName"
                 toFieldPath: "spec.forProvider.name"
-              - fromFieldPath: "spec.databaseName"
+              - fromFieldPath: "spec.parameters.databaseName"
                 toFieldPath: "spec.forProvider.database"
       
           # ------------------------------------------------------------------
@@ -126,11 +125,11 @@ spec:
                   database: PLACEHOLDER
                   schema: PLACEHOLDER
             patches:
-              - fromFieldPath: "spec.userName"
+              - fromFieldPath: "spec.parameters.userName"
                 toFieldPath: "spec.forProvider.role"
-              - fromFieldPath: "spec.databaseName"
+              - fromFieldPath: "spec.parameters.databaseName"
                 toFieldPath: "spec.forProvider.database"
-              - fromFieldPath: "spec.schemaName"
+              - fromFieldPath: "spec.parameters.schemaName"
                 toFieldPath: "spec.forProvider.schema"
       
           # ------------------------------------------------------------------
@@ -150,9 +149,9 @@ spec:
                   database: PLACEHOLDER
                   schema: PLACEHOLDER
             patches:
-              - fromFieldPath: "spec.databaseName"
+              - fromFieldPath: "spec.parameters.databaseName"
                 toFieldPath: "spec.forProvider.database"
-              - fromFieldPath: "spec.schemaName"
+              - fromFieldPath: "spec.parameters.schemaName"
                 toFieldPath: "spec.forProvider.schema"
     - step: automatically-detect-readiness
       functionRef:

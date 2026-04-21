@@ -57,7 +57,7 @@ spec:
               - type: CombineFromComposite
                 combine:
                   variables:
-                    - fromFieldPath: spec.bucketName
+                    - fromFieldPath: spec.parameters.bucketName
                   strategy: string
                   string:
                     fmt: "seaweedfs-sync-%s"
@@ -67,7 +67,7 @@ spec:
               - type: CombineFromComposite
                 combine:
                   variables:
-                    - fromFieldPath: spec.sourceCluster
+                    - fromFieldPath: spec.parameters.sourceCluster
                   strategy: string
                   string:
                     fmt: "-a=seaweedfs-filer.seaweedfs.svc.cluster.%s:8888"
@@ -77,7 +77,7 @@ spec:
               - type: CombineFromComposite
                 combine:
                   variables:
-                    - fromFieldPath: spec.targetCluster
+                    - fromFieldPath: spec.parameters.targetCluster
                   strategy: string
                   string:
                     fmt: "-b=seaweedfs-filer.seaweedfs.svc.cluster.%s:8888"
@@ -87,7 +87,7 @@ spec:
               - type: CombineFromComposite
                 combine:
                   variables:
-                    - fromFieldPath: spec.bucketName
+                    - fromFieldPath: spec.parameters.bucketName
                   strategy: string
                   string:
                     fmt: "-a.path=/buckets/%s"
@@ -95,7 +95,7 @@ spec:
               - type: CombineFromComposite
                 combine:
                   variables:
-                    - fromFieldPath: spec.bucketName
+                    - fromFieldPath: spec.parameters.bucketName
                   strategy: string
                   string:
                     fmt: "-b.path=/buckets/%s"

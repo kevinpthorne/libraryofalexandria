@@ -4,6 +4,7 @@ metadata:
   name: test-folder-on-b
   namespace: test-app-ns
 spec:
-  bucketName: test-folder
-  targetCluster: test-cluster-b
-  sourceCluster: local
+  parameters:
+    bucketName: test-folder
+    targetCluster: test-cluster-b
+    sourceCluster: local
