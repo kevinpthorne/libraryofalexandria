@@ -6,7 +6,7 @@ metadata:
 type: Opaque
 stringData:
   endpoint: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.pgedge.svc"
-  username: "admin"
+  username: "crossplane"
   password: "" # Empty for cert auth
   database: "app"
   port: "5432"

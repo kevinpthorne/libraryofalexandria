@@ -30,22 +30,22 @@ spec:
               volumeMounts:
                 - mountPath: /tmp
                   name: tmp-volume
-                - mountPath: /certificates/admin
-                  name: admin-client-cert
+                - mountPath: /certificates/crossplane
+                  name: crossplane-client-cert
                   readOnly: true
               env:
                 - name: PGSSLMODE
                   value: "verify-full"
                 - name: PGSSLROOTCERT
-                  value: "/certificates/admin/ca.crt"
+                  value: "/certificates/crossplane/ca.crt"
                 - name: PGSSLCERT
-                  value: "/certificates/admin/tls.crt"
+                  value: "/certificates/crossplane/tls.crt"
                 - name: PGSSLKEY
-                  value: "/certificates/admin/tls.key"
+                  value: "/certificates/crossplane/tls.key"
           volumes:
             - name: tmp-volume
               emptyDir: {}
-            - name: admin-client-cert
+            - name: crossplane-client-cert
               secret:
                 defaultMode: 420
                 items:
@@ -58,4 +58,4 @@ spec:
                   - key: ca.crt
                     mode: 384
                     path: ca.crt
-                secretName: admin-client-cert
+                secretName: crossplane-client-cert
