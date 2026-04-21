@@ -7,7 +7,7 @@ pki:
 
 pgedge:
   instances: 1
-  appName: "pgedge-cluster"
+  appName: main
   namespace: pgedge
 
 keydb:
