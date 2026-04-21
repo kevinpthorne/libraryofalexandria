@@ -59,6 +59,7 @@ spec:
               kind: Certificate
               metadata:
                 name: PLACEHOLDER
+                namespace: PLACEHOLDER
               spec:
                 secretName: PLACEHOLDER
                 usages:
@@ -79,6 +80,8 @@ spec:
                   string:
                     fmt: "pgedge-%s-client-cert"
                 toFieldPath: metadata.name
+              - fromFieldPath: spec.appNamespace
+                toFieldPath: metadata.namespace
               - type: CombineFromComposite
                 combine:
                   variables:

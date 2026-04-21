@@ -35,6 +35,10 @@ spec:
                   userName:
                     type: string
                     description: "User to create (CN will match this)"
+                  appNamespace:
+                    type: string
+                    description: "Namespace to save the certificate"
                 required:
                   - schemaName
                   - userName
+                  - appNamespace
