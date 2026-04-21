@@ -39,6 +39,10 @@ spec:
         name: pgedge-{{ .Values.pgedge.appName }}-client-ca-key-pair
         # cert-manager usually stores the public certificate under 'tls.crt'
         key: tls.crt
+    - secret:
+        # Includes the root CA certificate from the cert-manager secret
+        name: pgedge-{{ .Values.pgedge.appName }}-client-ca-key-pair
+        key: ca.crt
   target:
     # Tell trust-manager to output a Secret, not a ConfigMap
     secret:
