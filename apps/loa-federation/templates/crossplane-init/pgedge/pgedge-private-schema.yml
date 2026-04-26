@@ -38,8 +38,6 @@ spec:
                     inherit: true
                   # No passwordSecretRef needed because we use Cert Auth
                   passwordSecretRef: null
-                  providerConfigRef:
-                    name: pgedge-provider-config
             patches:  
               - fromFieldPath: "spec.parameters.userName"
                 toFieldPath: metadata.name
