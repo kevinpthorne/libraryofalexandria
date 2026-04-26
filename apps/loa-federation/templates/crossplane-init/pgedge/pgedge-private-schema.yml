@@ -37,17 +37,11 @@ spec:
                     createRole: false
                     inherit: true
                   # No passwordSecretRef needed because we use Cert Auth
-                  passwordSecretRef: null 
+                  passwordSecretRef: null
+                  providerConfigRef:
+                    name: pgedge-provider-config
             patches:  
               - fromFieldPath: "spec.parameters.userName"
-                toFieldPath: "spec.forProvider.name"
-              - type: CombineFromComposite
-                combine:
-                  variables:
-                  - fromFieldPath: spec.parameters.userName
-                  strategy: string
-                  string:
-                    fmt: "pgedge-role-%s"
                 toFieldPath: metadata.name
       
           # ------------------------------------------------------------------
@@ -100,12 +94,17 @@ spec:
             base:
               apiVersion: postgresql.sql.crossplane.io/v1alpha1
               kind: Schema
+              metadata:
+                name: PLACEHOLDER
               spec:
+                forProvider:
+                  database: PLACEHOLDER
+                  revokePublicOnSchema: true
                 providerConfigRef:
                   name: pgedge-provider-config
             patches:
               - fromFieldPath: "spec.parameters.schemaName"
-                toFieldPath: "spec.forProvider.name"
+                toFieldPath: "metadata.name"
               - fromFieldPath: "spec.parameters.databaseName"
                 toFieldPath: "spec.forProvider.database"
       
@@ -116,15 +115,27 @@ spec:
             base:
               apiVersion: postgresql.sql.crossplane.io/v1alpha1
               kind: Grant
+              metadata:
+                name: PLACEHOLDER
               spec:
                 providerConfigRef:
                   name: pgedge-provider-config
                 forProvider:
-                  privileges: ["USAGE", "CREATE"]
-                  objectType: SCHEMA
+                  privileges: ["ALL"]
+                  objectType: schema
                   database: PLACEHOLDER
                   schema: PLACEHOLDER
+                  role: PLACEHOLDER
             patches:
+              - type: CombineFromComposite
+                combine:
+                  variables:
+                  - fromFieldPath: spec.parameters.userName
+                  - fromFieldPath: spec.parameters.schemaName
+                  strategy: string
+                  string:
+                    fmt: "%s-on-%s"
+                toFieldPath: metadata.name
               - fromFieldPath: "spec.parameters.userName"
                 toFieldPath: "spec.forProvider.role"
               - fromFieldPath: "spec.parameters.databaseName"
@@ -135,24 +146,24 @@ spec:
           # ------------------------------------------------------------------
           # 5. SQL GRANT (The Revocation - Security)
           # ------------------------------------------------------------------
-          - name: pgedge-public-revoke
-            base:
-              apiVersion: postgresql.sql.crossplane.io/v1alpha1
-              kind: Grant
-              spec:
-                providerConfigRef:
-                  name: pgedge-provider-config
-                forProvider:
-                  role: PUBLIC
-                  privileges: [] # Revoke all
-                  objectType: SCHEMA
-                  database: PLACEHOLDER
-                  schema: PLACEHOLDER
-            patches:
-              - fromFieldPath: "spec.parameters.databaseName"
-                toFieldPath: "spec.forProvider.database"
-              - fromFieldPath: "spec.parameters.schemaName"
-                toFieldPath: "spec.forProvider.schema"
+          # - name: pgedge-public-revoke
+          #   base:
+          #     apiVersion: postgresql.sql.crossplane.io/v1alpha1
+          #     kind: Grant
+          #     spec:
+          #       providerConfigRef:
+          #         name: pgedge-provider-config
+          #       forProvider:
+          #         role: PUBLIC
+          #         privileges: [] # Revoke all
+          #         objectType: SCHEMA
+          #         database: PLACEHOLDER
+          #         schema: PLACEHOLDER
+          #   patches:
+          #     - fromFieldPath: "spec.parameters.databaseName"
+          #       toFieldPath: "spec.forProvider.database"
+          #     - fromFieldPath: "spec.parameters.schemaName"
+          #       toFieldPath: "spec.forProvider.schema"
     - step: automatically-detect-readiness
       functionRef:
         name: function-auto-ready
