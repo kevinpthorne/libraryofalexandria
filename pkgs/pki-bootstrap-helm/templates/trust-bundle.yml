@@ -7,7 +7,7 @@ spec:
   # 1. The Static Root App CA (The anchor)
   - secret:
       name: app-{{ .Release.Name }}-secret
-      key: "tls.crt"
+      key: "ca.crt"
   
   # 2. Dynamic Intermediates (The variable part)
   # Any secret in the 'cert-manager' namespace with this label 
