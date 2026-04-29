@@ -60,7 +60,8 @@ spec:
             issuerRef:
               name: {{ .Values.pki.rootCAIssuer }}
               kind: ClusterIssuer
-            dnsNames: ident.{{ .Values.cluster.name }}.loa.internal
+            dnsNames:
+            - ident.{{ .Values.cluster.name }}.loa.internal
 
         # 4. Volumes (CSI & Secrets)
         extraVolumes:
