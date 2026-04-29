@@ -62,6 +62,9 @@ spec:
               kind: ClusterIssuer
             dnsNames:
             - ident.{{ .Values.cluster.name }}.loa.internal
+            - localhost
+            - keycloak.keycloak.svc.cluster.local
+            - keycloak.keycloak.svc.cluster.{{ .Values.cluster.name }}
 
         # 4. Volumes (CSI & Secrets)
         extraVolumes:
