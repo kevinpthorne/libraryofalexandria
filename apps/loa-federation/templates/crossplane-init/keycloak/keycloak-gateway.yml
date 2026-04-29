@@ -17,6 +17,7 @@ spec:
           - ident.{{ .Values.cluster.name }}.loa.internal
           ports:
             - port: 443
+              targetPort: 8443
               protocol: TLS
               tls:
                 mode: Passthrough
