@@ -60,6 +60,7 @@ spec:
             issuerRef:
               name: {{ .Values.pki.rootCAIssuer }}
               kind: ClusterIssuer
+            dnsNames: ident.{{ .Values.cluster.name }}.loa.internal
 
         # 4. Volumes (CSI & Secrets)
         extraVolumes:
@@ -134,22 +135,6 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: ["ALL"]
-
-        # 7. Networking
-        service:
-          port: 443
-          targetPort: 8443
-
-        ingress:
-          enabled: true
-          className: nginx
-          rules:
-            - host: idp.{{ .Values.cluster.name }}.loa.internal
-              paths:
-                - path: /
-                  pathType: Prefix
-          annotations:
-            nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
         
         keycloak:
           production: true
