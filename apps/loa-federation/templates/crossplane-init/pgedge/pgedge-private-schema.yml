@@ -123,7 +123,6 @@ spec:
                   name: pgedge-provider-config
                 forProvider:
                   privileges: ["ALL"]
-                  revokePublicOnSchema: true
                   database: PLACEHOLDER
                   role: PLACEHOLDER
             patches:
