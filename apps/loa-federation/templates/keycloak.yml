@@ -138,6 +138,8 @@ spec:
         
         keycloak:
           production: true
+          httpEnabled: false
+          httpsEnabled: true
 
   destination:
     server: https://kubernetes.default.svc
