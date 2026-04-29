@@ -42,7 +42,7 @@ spec:
             value: app
           # Construct the JDBC URL parameters for Mutual TLS
           - name: KC_TRUSTSTORE_PATHS
-            value: "/etc/x509/cas/ca.crt"
+            value: "/etc/x509/cas/ca-bundle.crt"
           # - name: JAVA_OPTS_APPEND
           #   value: "-Djavax.net.debug=ssl,handshake"
           # Vital for functioning behind an Ingress
@@ -69,9 +69,8 @@ spec:
               secretName: pgedge-keycloak-client-cert
               defaultMode: 0400
           - name: cas
-            secret:
-              secretName: trusted-ca-bundle
-              defaultMode: 0400
+            configMap:
+              name: trusted-ca-bundle
           - name: tls-fixed
             emptyDir: {}
 
