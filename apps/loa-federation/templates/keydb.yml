@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://enapter.github.io/charts/
-    chart: enapter/keydb
+    chart: keydb
     targetRevision: 0.48.0
     helm:
       # We override the values to enforce a restricted security context
