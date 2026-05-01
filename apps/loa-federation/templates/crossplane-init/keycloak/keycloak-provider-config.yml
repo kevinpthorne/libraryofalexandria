@@ -1,0 +1,11 @@
+apiVersion: keycloak.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: keycloak-provider-config
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: keycloak-creds
+      key: credentials.json

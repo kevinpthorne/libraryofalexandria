@@ -1,0 +1,82 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: crossplane-eso-secret-reader
+  namespace: keycloak
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  # Optional: Restrict to ONLY the bootstrap secret for tight security
+  resourceNames: ["keycloak"] 
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: crossplane-eso-secret-reader-binding
+  namespace: keycloak
+subjects:
+- kind: ServiceAccount
+  name: crossplane
+  namespace: crossplane-system # Note: Pointing to the SA in the other namespace
+roleRef:
+  kind: Role
+  name: crossplane-eso-secret-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: keycloak-crossplane-bootstrap-creds
+  namespace: crossplane-system
+spec:
+  secretStoreRef:
+    name: k8s-local
+    kind: SecretStore
+  target:
+    name: keycloak-provider-bootstrap-creds
+    template:
+      engineVersion: v2
+      data:
+        credentials.json: |
+          {
+            "client_id": "admin",
+            "username": "admin",
+            "password": "{{ .admin_pass }}",
+            "url": "https://keycloak.keycloak.svc.cluster.local:8443"
+          }
+  data:
+    - secretKey: admin_pass
+      remoteRef:
+        key: secret/keycloak/keycloak
+        property: admin-password
+---
+apiVersion: keycloak.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: bootstrap
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: keycloak-provider-bootstrap-creds
+      key: credentials.json
+---
+apiVersion: openidclient.keycloak.crossplane.io/v1alpha1
+kind: Client
+metadata:
+  name: crossplane-client
+spec:
+  providerConfigRef:
+    name: bootstrap # Use the admin creds to make this
+  forProvider:
+    realmId: master
+    clientId: crossplane
+    enabled: true
+    serviceAccountsEnabled: true # This creates the machine account
+    standardFlowEnabled: false
+    # ... bind necessary admin roles to this client here ...
+  writeConnectionSecretToRef:
+    namespace: crossplane-system
+    name: keycloak-creds # It will output the client_secret here!

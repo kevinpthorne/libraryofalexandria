@@ -1,0 +1,14 @@
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: k8s-local
+  namespace: crossplane-system
+spec:
+  provider:
+    kubernetes:
+      server:
+        url: "https://kubernetes.default.svc.cluster.local"
+      auth:
+        serviceAccount:
+          # This matches the SA we bound the Role to
+          name: crossplane
