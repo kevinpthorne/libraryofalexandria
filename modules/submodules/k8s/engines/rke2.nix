@@ -22,6 +22,8 @@
           ""
         else
           builtins.elemAt config.libraryofalexandria.node.masterIps config.libraryofalexandria.node.id;
+      isClusterFederated = cluster: cluster.federate-to == [];
+      isThisClusterFederated = isClusterFederated thisCluster;
     in
     lib.mkIf (thisCluster.k8sEngine == "rke2") {
       environment = {
@@ -193,9 +195,9 @@
                     };
                     encryption = {
                       enabled = true;
-                      type = "ipsec";
-                      ipsec.secretName = "cilium-ipsec-keys";
+                      type = "wireguard";
                     };
+                    MTU = if isThisClusterFederated then 1200 else 0;  # double tunnel breaks
                     dnsProxy.enableTransparentMode = true;
                     l2announcements.enabled = thisCluster.virtualIps.enable;
                     externalIPs.enabled = thisCluster.virtualIps.enable;
