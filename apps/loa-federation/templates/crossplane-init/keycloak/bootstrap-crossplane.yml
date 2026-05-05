@@ -24,7 +24,7 @@ roleRef:
   name: crossplane-eso-secret-reader
   apiGroup: rbac.authorization.k8s.io
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: keycloak-crossplane-bootstrap-creds
@@ -51,10 +51,12 @@ spec:
         key: secret/keycloak/keycloak
         property: admin-password
 ---
-apiVersion: keycloak.crossplane.io/v1alpha1
+apiVersion: keycloak.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
   name: bootstrap
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
 spec:
   credentials:
     source: Secret
@@ -67,6 +69,8 @@ apiVersion: openidclient.keycloak.crossplane.io/v1alpha1
 kind: Client
 metadata:
   name: crossplane-client
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
 spec:
   providerConfigRef:
     name: bootstrap # Use the admin creds to make this

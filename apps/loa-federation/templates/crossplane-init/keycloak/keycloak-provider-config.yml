@@ -1,7 +1,9 @@
-apiVersion: keycloak.crossplane.io/v1alpha1
+apiVersion: keycloak.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
   name: keycloak-provider-config
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
 spec:
   credentials:
     source: Secret
