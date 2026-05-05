@@ -32,7 +32,7 @@ metadata:
 spec:
   secretStoreRef:
     name: k8s-local-crossplane
-    kind: SecretStore
+    kind: ClusterSecretStore
   target:
     name: keycloak-provider-bootstrap-creds
     template:

@@ -1,8 +1,7 @@
 apiVersion: external-secrets.io/v1
-kind: SecretStore
+kind: ClusterSecretStore
 metadata:
   name: k8s-local-crossplane
-  namespace: crossplane-system
 spec:
   provider:
     kubernetes:
@@ -12,7 +11,9 @@ spec:
           type: ConfigMap
           name: kube-root-ca.crt
           key: ca.crt
+          namespace: crossplane-system
       auth:
         serviceAccount:
           # This matches the SA we bound the Role to
           name: crossplane
+          namespace: crossplane-system

@@ -66,26 +66,6 @@ spec:
   symbols: 0 # Keeping to alphanumeric for API keys
   allowRepeat: true
 ---
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
-metadata:
-  name: generate-netbird-source-secret
-  namespace: {{ .Values.netbird.controllerNamespace }}
-spec:
-  # This creates the "Source of Truth" secret
-  target:
-    name: netbird-api-secret-source 
-  data:
-    - secretKey: netbird-api-key
-      remoteRef:
-        key: password
-      sourceRef:
-        generatorRef:
-          apiVersion: generators.external-secrets.io/v1alpha1
-          kind: Password
-          name: netbird-api-key-gen
-
----
 # -----------------------------------------------------------------------------
 # 3. BACKEND PROVIDER: Local Kubernetes Cluster
 # -----------------------------------------------------------------------------
@@ -110,6 +90,28 @@ spec:
           name: external-secrets
           namespace: external-secrets
 
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: generate-netbird-source-secret
+  namespace: {{ .Values.netbird.controllerNamespace }}
+spec:
+  secretStoreRef:
+    name: {{ .Values.netbird.controllerNamespace }}-store
+    kind: ClusterSecretStore
+  # This creates the "Source of Truth" secret
+  target:
+    name: netbird-api-secret-source 
+  data:
+    - secretKey: netbird-api-key
+      remoteRef:
+        key: password
+      sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: netbird-api-key-gen
 ---
 # -----------------------------------------------------------------------------
 # 4. DISTRIBUTION: Sync the generated key to target namespaces
