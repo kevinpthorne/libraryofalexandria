@@ -66,7 +66,7 @@ spec:
   symbols: 0 # Keeping to alphanumeric for API keys
   allowRepeat: true
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: generate-netbird-source-secret
@@ -87,7 +87,7 @@ spec:
 # -----------------------------------------------------------------------------
 # 3. BACKEND PROVIDER: Local Kubernetes Cluster
 # -----------------------------------------------------------------------------
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ClusterSecretStore
 metadata:
   name: "{{ .Values.netbird.controllerNamespace }}-store"
@@ -105,7 +105,7 @@ spec:
 # -----------------------------------------------------------------------------
 # 4. DISTRIBUTION: Sync the generated key to target namespaces
 # -----------------------------------------------------------------------------
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ClusterExternalSecret
 metadata:
   name: netbird-api-key-distributor
