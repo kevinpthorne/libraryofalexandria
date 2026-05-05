@@ -1,0 +1,132 @@
+# agent namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: eso-secret-writer
+  namespace: {{ .Values.netbird.namespace }}
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  # Optional: Restrict to ONLY the bootstrap secret for tight security
+  resourceNames: ["netbird-api-secret"] 
+  verbs: ["get", "list", "watch", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: eso-secret-writer-binding
+  namespace: {{ .Values.netbird.controllerNamespace }}
+subjects:
+- kind: ServiceAccount
+  name: external-secrets
+  namespace: external-secrets # Note: Pointing to the SA in the other namespace
+roleRef:
+  kind: Role
+  name: eso-secret-writer
+  apiGroup: rbac.authorization.k8s.io
+---
+# mgmt namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: eso-secret-writer
+  namespace: {{ .Values.netbird.controllerNamespace }}
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  # Optional: Restrict to ONLY the bootstrap secret for tight security
+  resourceNames: ["netbird-api-secret", "netbird-api-secret-source"] 
+  verbs: ["get", "list", "watch", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: eso-secret-writer-binding
+  namespace: {{ .Values.netbird.namespace }}
+subjects:
+- kind: ServiceAccount
+  name: external-secrets
+  namespace: external-secrets # Note: Pointing to the SA in the other namespace
+roleRef:
+  kind: Role
+  name: eso-secret-writer
+  apiGroup: rbac.authorization.k8s.io
+---
+# -----------------------------------------------------------------------------
+# 2. GENERATION: Create the API Key in the source namespace
+# -----------------------------------------------------------------------------
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: netbird-api-key-gen
+  namespace: {{ .Values.netbird.controllerNamespace }}
+spec:
+  length: 32
+  digits: 10
+  symbols: 0 # Keeping to alphanumeric for API keys
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: generate-netbird-source-secret
+  namespace: {{ .Values.netbird.controllerNamespace }}
+spec:
+  # This creates the "Source of Truth" secret
+  target:
+    name: netbird-api-secret-source 
+  data:
+    - secretKey: netbird-api-key
+      sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: netbird-api-key-gen
+
+---
+# -----------------------------------------------------------------------------
+# 3. BACKEND PROVIDER: Local Kubernetes Cluster
+# -----------------------------------------------------------------------------
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: "{{ .Values.netbird.controllerNamespace }}-store"
+spec:
+  provider:
+    kubernetes:
+      # Instructs the store to read secrets ONLY from our source namespace
+      remoteNamespace: "{{ .Values.netbird.controllerNamespace }}" 
+      auth:
+        serviceAccount:
+          name: external-secrets
+          namespace: external-secrets
+
+---
+# -----------------------------------------------------------------------------
+# 4. DISTRIBUTION: Sync the generated key to target namespaces
+# -----------------------------------------------------------------------------
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterExternalSecret
+metadata:
+  name: netbird-api-key-distributor
+spec:
+  namespaceSelector:
+    matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: In
+        values:
+          - "{{ .Values.netbird.namespace }}"
+          - "{{ .Values.netbird.controllerNamespace }}"
+  externalSecretSpec:
+    secretStoreRef:
+      name: "{{ .Values.netbird.controllerNamespace }}-store"
+      kind: ClusterSecretStore
+    target:
+      # The final secret name that your deployments will mount
+      name: netbird-api-secret 
+      creationPolicy: Owner
+    data:
+      - secretKey: netbird-api-key
+        remoteRef:
+          key: netbird-api-secret-source # Pulling from the source secret we generated above
+          property: netbird-api-key

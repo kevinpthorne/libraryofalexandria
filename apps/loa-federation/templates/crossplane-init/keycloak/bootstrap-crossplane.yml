@@ -31,7 +31,7 @@ metadata:
   namespace: crossplane-system
 spec:
   secretStoreRef:
-    name: k8s-local
+    name: k8s-local-crossplane
     kind: SecretStore
   target:
     name: keycloak-provider-bootstrap-creds

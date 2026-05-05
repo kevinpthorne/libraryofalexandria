@@ -16,3 +16,7 @@ keydb:
 
 immich:
   namespace: immich
+
+netbird:
+  namespace: netbird
+  controllerNamespace: netbird-controller
