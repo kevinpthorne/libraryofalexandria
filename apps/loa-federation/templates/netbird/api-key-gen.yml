@@ -96,6 +96,12 @@ spec:
     kubernetes:
       # Instructs the store to read secrets ONLY from our source namespace
       remoteNamespace: "{{ .Values.netbird.controllerNamespace }}" 
+      server:
+        url: "https://kubernetes.default.svc.cluster.local"
+        caProvider:
+          type: ConfigMap
+          name: kube-root-ca.crt
+          key: ca.crt
       auth:
         serviceAccount:
           name: external-secrets
