@@ -77,6 +77,8 @@ spec:
     name: netbird-api-secret-source 
   data:
     - secretKey: netbird-api-key
+      remoteRef:
+        key: password
       sourceRef:
         generatorRef:
           apiVersion: generators.external-secrets.io/v1alpha1
