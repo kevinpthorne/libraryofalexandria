@@ -75,6 +75,7 @@ spec:
   providerConfigRef:
     name: bootstrap # Use the admin creds to make this
   forProvider:
+    accessType: confidential
     realmId: master
     clientId: crossplane
     enabled: true
