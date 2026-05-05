@@ -25,13 +25,34 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: k8s-local-keycloak
+spec:
+  provider:
+    kubernetes:
+      remoteNamespace: keycloak
+      server:
+        url: "https://kubernetes.default.svc.cluster.local"
+        caProvider:
+          type: ConfigMap
+          name: kube-root-ca.crt
+          key: ca.crt
+          namespace: crossplane-system
+      auth:
+        serviceAccount:
+          # This matches the SA we bound the Role to
+          name: crossplane
+          namespace: crossplane-system
+---
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: keycloak-crossplane-bootstrap-creds
   namespace: crossplane-system
 spec:
   secretStoreRef:
-    name: k8s-local-crossplane
+    name: k8s-local-keycloak
     kind: ClusterSecretStore
   target:
     name: keycloak-provider-bootstrap-creds
@@ -48,7 +69,7 @@ spec:
   data:
     - secretKey: admin_pass
       remoteRef:
-        key: secret/keycloak/keycloak
+        key: keycloak
         property: admin-password
 ---
 apiVersion: keycloak.crossplane.io/v1beta1
