@@ -89,7 +89,6 @@ spec:
         serviceAccount:
           name: external-secrets
           namespace: external-secrets
-
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -97,21 +96,19 @@ metadata:
   name: generate-netbird-source-secret
   namespace: {{ .Values.netbird.controllerNamespace }}
 spec:
-  secretStoreRef:
-    name: {{ .Values.netbird.controllerNamespace }}-store
-    kind: ClusterSecretStore
   # This creates the "Source of Truth" secret
   target:
     name: netbird-api-secret-source 
-  data:
-    - secretKey: netbird-api-key
-      remoteRef:
-        key: password
-      sourceRef:
+  dataFrom:
+    - sourceRef:
         generatorRef:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
           name: netbird-api-key-gen
+      rewrite:
+        - regexp:
+            source: "^password$" # Looks for the default key output by the generator
+            target: "netbird-api-key" # Renames it to what you want in the final Secret
 ---
 # -----------------------------------------------------------------------------
 # 4. DISTRIBUTION: Sync the generated key to target namespaces
