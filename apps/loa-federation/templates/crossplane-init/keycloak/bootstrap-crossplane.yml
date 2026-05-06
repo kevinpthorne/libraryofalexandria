@@ -61,7 +61,7 @@ spec:
       data:
         credentials.json: |
           {
-            "client_id": "admin",
+            "client_id": "admin-cli",
             "username": "admin",
             "password": "{{ `{{ .admin_pass }}` }}",
             "url": "https://keycloak.keycloak.svc.cluster.local:8443",
