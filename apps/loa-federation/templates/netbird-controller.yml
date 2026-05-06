@@ -16,7 +16,7 @@ spec:
           host: {{ include "netbird-api-url" . }}
           keyFromSecret:
             name: "netbird-api-secret"
-            key: "NB_API_KEY"
+            key: "netbird-api-key"
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: {{ .Values.netbird.controllerNamespace }}

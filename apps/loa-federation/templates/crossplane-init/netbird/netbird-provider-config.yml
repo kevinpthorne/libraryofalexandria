@@ -1,0 +1,14 @@
+apiVersion: netbird.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: netbird-provider-config
+  namespace: crossplane-system
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      name: crossplane-netbird-creds
+      namespace: crossplane-system
+      key: credentials.json

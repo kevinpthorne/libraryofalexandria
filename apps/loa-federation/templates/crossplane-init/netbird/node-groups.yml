@@ -1,0 +1,21 @@
+apiVersion: netbird.io/v1alpha1
+kind: Group
+metadata:
+  name: cluster-local-group
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
+spec:
+  forProvider:
+    name: "cluster-local-nodes"
+---
+{{- range .Values.cluster.federated-to }}
+apiVersion: netbird.io/v1alpha1
+kind: Group
+metadata:
+  name: "cluster-{{ . }}-group"
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
+spec:
+  forProvider:
+    name: "cluster-{{ . }}-nodes"
+{{- end }}
