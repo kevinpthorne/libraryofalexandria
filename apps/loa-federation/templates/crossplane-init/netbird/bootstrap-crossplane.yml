@@ -102,11 +102,7 @@ spec:
     template:
       engineVersion: v2
       data:
-        credentials.json: |
-          {
-            "token": "{{ `{{ .api-secret }}` }}",
-            "endpoint": "{{ include "netbird-api-url" . }}"
-          }
+        token: {{ `{{ .api-secret }}` }}
   data:
     - secretKey: api-secret
       remoteRef:

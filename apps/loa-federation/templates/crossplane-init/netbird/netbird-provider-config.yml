@@ -5,9 +5,11 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
 spec:
+  management-uri: {{ include "netbird-api-url" . }}
+  credentials-type: token
   credentials:
     source: Secret
     secretRef:
       name: crossplane-netbird-creds
       namespace: crossplane-system
-      key: credentials.json
+      key: token

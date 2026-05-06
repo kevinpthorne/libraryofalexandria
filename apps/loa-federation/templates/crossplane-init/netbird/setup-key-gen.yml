@@ -7,6 +7,8 @@ metadata:
 spec:
   forProvider:
     name: "k8s-cluster-local-nodes"
+    allow_extra_dns_labels: true
+    revoked: false
     type: "reusable"
     ephemeral: true
     expires_in: 86400
