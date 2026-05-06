@@ -7,16 +7,66 @@ spec:
   project: default
   source:
     repoURL: 'https://netbirdio.github.io/helms'
-    targetRevision: '0.3.1' # Latest release
-    chart: kubernetes-operator
+    targetRevision: 1.8.0 # Latest release
+    chart: netbird
     helm:
       values: |
-        managementURL: {{ include "netbird-api-url" . }}
-        netbirdAPI:
-          host: {{ include "netbird-api-url" . }}
-          keyFromSecret:
-            name: "netbird-api-secret"
-            key: "netbird-api-key"
+        dashboard:
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 1003
+            runAsGroup: 1003
+            fsGroup: 1003
+            seccompProfile:
+              type: RuntimeDefault
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true 
+            capabilities:
+              drop:
+                - ALL
+        management:
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 1002
+            runAsGroup: 1002
+            fsGroup: 1002
+            seccompProfile:
+              type: RuntimeDefault
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true 
+            capabilities:
+              drop:
+                - ALL
+        relay:
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 1003
+            runAsGroup: 1003
+            fsGroup: 1003
+            seccompProfile:
+              type: RuntimeDefault
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true 
+            capabilities:
+              drop:
+                - ALL
+        signal:
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 1003
+            runAsGroup: 1003
+            fsGroup: 1003
+            seccompProfile:
+              type: RuntimeDefault
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true 
+            capabilities:
+              drop:
+                - ALL
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: {{ .Values.netbird.controllerNamespace }}
