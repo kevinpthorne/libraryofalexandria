@@ -107,7 +107,37 @@ spec:
     enabled: true
     serviceAccountsEnabled: true # This creates the machine account
     standardFlowEnabled: false
-    # ... bind necessary admin roles to this client here ...
   writeConnectionSecretToRef:
     namespace: crossplane-system
-    name: keycloak-creds # It will output the client_secret here!
+    name: keycloak-creds-source
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: keycloak-crossplane-creds
+  namespace: crossplane-system
+spec:
+  secretStoreRef:
+    name: k8s-local-keycloak
+    kind: ClusterSecretStore
+  target:
+    name: keycloak-creds
+    template:
+      engineVersion: v2
+      data:
+        credentials.json: |
+          {
+            "client_id": "crossplane",
+            "client_secret": "{{ `{{ .client_secret }}` }}",
+            "url": "https://keycloak.keycloak.svc.cluster.local:8443",
+            "root_ca_certificate": {{ `{{ .ca_crt | toJson }}` }}
+          }
+  data:
+    - secretKey: client_secret
+      remoteRef:
+        key: keycloak-creds-source
+        property: attribute.client_secret
+    - secretKey: ca_crt
+      remoteRef:
+        key: keycloak-tls
+        property: ca.crt
