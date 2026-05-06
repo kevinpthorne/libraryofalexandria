@@ -102,9 +102,9 @@ spec:
     template:
       engineVersion: v2
       data:
-        token: {{ `{{ .api-secret }}` }}
+        token: "{{ `{{ .api_secret }}` }}"
   data:
-    - secretKey: api-secret
+    - secretKey: api_secret
       remoteRef:
         key: netbird-api-secret
         property: netbird-api-key
