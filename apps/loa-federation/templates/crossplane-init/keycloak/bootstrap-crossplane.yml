@@ -9,6 +9,11 @@ rules:
   # Optional: Restrict to ONLY the bootstrap secret for tight security
   resourceNames: ["keycloak"] 
   verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  # Optional: Restrict to ONLY the bootstrap secret for tight security
+  resourceNames: ["keycloak-creds-source"] 
+  verbs: ["get", "list", "watch", "create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -108,7 +113,7 @@ spec:
     serviceAccountsEnabled: true # This creates the machine account
     standardFlowEnabled: false
   writeConnectionSecretToRef:
-    namespace: crossplane-system
+    namespace: keycloak
     name: keycloak-creds-source
 ---
 apiVersion: external-secrets.io/v1
