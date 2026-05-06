@@ -20,6 +20,10 @@ spec:
               type: RuntimeDefault
           containers:
             - name: package-runtime
+              env:
+                # Forces the Go HTTP client to trust this specific file
+                - name: SSL_CERT_FILE
+                  value: /etc/x509/ca-bundle.crt
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true 
@@ -32,6 +36,12 @@ spec:
               volumeMounts:
                 - mountPath: /tmp
                   name: tmp-volume
+                - name: trusted-ca-bundle
+                  mountPath: /etc/x509
+                  readOnly: true
           volumes:
             - name: tmp-volume
               emptyDir: {}
+            - name: trusted-ca-bundle
+              configMap:
+                name: trusted-ca-bundle

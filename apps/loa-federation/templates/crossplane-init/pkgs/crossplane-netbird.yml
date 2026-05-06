@@ -5,4 +5,4 @@ metadata:
 spec:
   package: ghcr.io/netbirdio/netbird-crossplane-provider:v0.4.2
   runtimeConfigRef:
-    name: netbird-hardened-runtime-config
+    name: hardened-runtime-config
