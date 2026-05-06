@@ -62,7 +62,7 @@ in
     };
 
     apps.loa-core.valuesOverrides.seaweedfs.size = "1G";
-    federate-to = [ "k" ];
+    federateTo = [ "k" ];
     # apps.loa-voip.enable = lib.mkForce true;
 
     virtualIps = {

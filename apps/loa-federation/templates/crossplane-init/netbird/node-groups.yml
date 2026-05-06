@@ -8,7 +8,7 @@ spec:
   forProvider:
     name: "cluster-local-nodes"
 ---
-{{- range .Values.cluster.federated-to }}
+{{- range .Values.cluster.federateTo }}
 apiVersion: netbird.io/v1alpha1
 kind: Group
 metadata:

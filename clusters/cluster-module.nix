@@ -51,7 +51,7 @@
         type = lib.types.attrsOf (lib.types.submodule ../modules/submodules/k8s/apps/_submodule.nix);
         description = "ArgoCD app configs, usually placed in master0's config";
       };
-      federate-to = lib.mkOption {
+      federateTo = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [ ];
         description = "List of cluster names to federate to";
@@ -302,7 +302,7 @@
             name = clusterName;
             value = acyclicConfig;
           }
-        ) config.libraryofalexandria.cluster.federate-to
+        ) config.libraryofalexandria.cluster.federateTo
       );
 
       # masters = collectAll (id: wrapNixosSystem id) masterSystems;
