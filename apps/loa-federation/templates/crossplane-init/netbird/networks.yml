@@ -1,0 +1,62 @@
+apiVersion: vpn.netbird.crossplane.io/v1alpha1
+kind: NbNetwork
+metadata:
+  name: cluster-local-net
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
+spec:
+  forProvider:
+    name: cluster-local
+  providerConfigRef:
+    name: netbird-provider-config
+---
+apiVersion: vpn.netbird.crossplane.io/v1alpha1
+kind: NbNetworkResource
+metadata:
+  name: cluster-local-net-resource
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
+spec:
+  forProvider:
+    description: Local cluster services
+    enabled: true
+    name: cluster-local-net-resource
+    groups:
+      - name: cluster-local-nodes
+    address: "{{ .Values.cluster.serviceCidr }}"
+    network_name: cluster-local-net
+  providerConfigRef:
+    name: netbird-provider-config
+{{- range .Values.cluster.federateTo }}
+{{- $federatedCluster := index $.Values.cluster.federation . }}
+---
+apiVersion: vpn.netbird.crossplane.io/v1alpha1
+kind: NbNetwork
+metadata:
+  name: cluster-{{ . }}-net
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
+spec:
+  forProvider:
+    name: cluster-{{ . }}
+  providerConfigRef:
+    name: netbird-provider-config
+---
+apiVersion: vpn.netbird.crossplane.io/v1alpha1
+kind: NbNetworkResource
+metadata:
+  name: cluster-{{ . }}-net-resource
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
+spec:
+  forProvider:
+    description: Remote cluster services of cluster {{ . }}
+    enabled: true
+    name: cluster-{{ . }}-net-resource
+    groups:
+      - name: cluster-{{ . }}-nodes
+    address: "{{ $federatedCluster.serviceCidr }}"
+    network_name: cluster-{{ . }}
+  providerConfigRef:
+    name: netbird-provider-config
+{{- end }}

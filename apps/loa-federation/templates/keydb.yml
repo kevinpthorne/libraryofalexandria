@@ -12,6 +12,7 @@ spec:
     helm:
       # We override the values to enforce a restricted security context
       values: |
+        imageTag: latest  # default pulls x86 image
         nodes: {{ .Values.keydb.instances }}
         securityContext:
           runAsNonRoot: true

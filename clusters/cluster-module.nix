@@ -106,6 +106,19 @@
         type = with lib.types; attrsOf attrs;
         readOnly = true;
       };
+
+      clusterCidr = lib.mkOption {
+        type = lib.types.str;
+        default = "10.${toString config.libraryofalexandria.cluster.id}.0.0/16";
+      };
+      serviceCidr = lib.mkOption {
+        type = lib.types.str;
+        default = "10.${toString (config.libraryofalexandria.cluster.id + 127)}.0.0/16";
+      };
+      dnsIp = lib.mkOption {
+        type = lib.types.str;
+        default = "10.${toString (config.libraryofalexandria.cluster.id + 127)}.0.10";
+      };
     };
     # rendered options, never given outside this module
     # TODO remove this pattern, it sucks

@@ -2,7 +2,6 @@ apiVersion: postgresql.sql.crossplane.io/v1alpha1
 kind: ProviderConfig
 metadata:
   name: pgedge-provider-config
-  namespace: crossplane-system
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true  # crossplane pkg CRD can lag
 spec:

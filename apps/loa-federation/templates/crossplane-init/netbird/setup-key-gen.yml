@@ -10,9 +10,9 @@ spec:
     type: "reusable"
     ephemeral: true
     # 0 = unlimited usage (required for K8s autoscaling)
-    usageLimit: 0 
+    # usageLimit: 0 
     # Link to the Crossplane Group resource above
-    autoGroupsRefs:
+    autoGroups:
       - name: cluster-local-group
   
   # THE GITOPS MAGIC:

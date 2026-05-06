@@ -123,9 +123,6 @@
               if thisCluster.virtualIps.enable then [ config.libraryofalexandria.k8sApiVirtualIps.vip ] else [ ]
             )
           );
-          clusterCidrOf = cluster: "10.${toString cluster.id}.0.0/16";
-          serviceCidrOf = cluster: "10.${toString (cluster.id + 127)}.0.0/16";
-          dnsIpOf = cluster: "10.${toString (cluster.id + 127)}.0.10";
 
           federatedServers = lib.mapAttrsToList (clusterName: peerCluster: {
             zones = [
@@ -143,7 +140,7 @@
               }
               {
                 name = "forward";
-                parameters = ". ${dnsIpOf peerCluster}";
+                parameters = ". ${peerCluster.dnsIp}";
               }
               { name = "loop"; }
               { name = "reload"; }
@@ -165,8 +162,8 @@
               extraFlags = [
                 "--profile=cis"
                 "--disable-kube-proxy" # cilium to do
-                "--cluster-cidr=${clusterCidrOf thisCluster}"
-                "--service-cidr=${serviceCidrOf thisCluster}"
+                "--cluster-cidr=${thisCluster.clusterCidr}"
+                "--service-cidr=${thisCluster.serviceCidr}"
                 # do not set cluster domain here, set it in the coredns overrides below
               ]
               ++ tlsSanFlags;

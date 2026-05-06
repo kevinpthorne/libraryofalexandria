@@ -1,5 +1,5 @@
-apiVersion: netbird.io/v1alpha1
-kind: Group
+apiVersion: vpn.netbird.crossplane.io/v1alpha1
+kind: NbGroup
 metadata:
   name: cluster-local-group
   annotations:
@@ -7,10 +7,10 @@ metadata:
 spec:
   forProvider:
     name: "cluster-local-nodes"
----
 {{- range .Values.cluster.federateTo }}
-apiVersion: netbird.io/v1alpha1
-kind: Group
+---
+apiVersion: vpn.netbird.crossplane.io/v1alpha1
+kind: NbGroup
 metadata:
   name: "cluster-{{ . }}-group"
   annotations:
