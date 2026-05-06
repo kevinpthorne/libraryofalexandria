@@ -1,5 +1,5 @@
-apiVersion: netbird.io/v1alpha1
-kind: SetupKey
+apiVersion: vpn.netbird.crossplane.io/v1alpha1
+kind: NbSetupKey
 metadata:
   name: cluster-local-setup-key
   annotations:
@@ -9,15 +9,12 @@ spec:
     name: "k8s-cluster-local-nodes"
     type: "reusable"
     ephemeral: true
-    # 0 = unlimited usage (required for K8s autoscaling)
-    # usageLimit: 0 
-    # Link to the Crossplane Group resource above
-    autoGroups:
-      - name: cluster-local-group
-  
-  # THE GITOPS MAGIC:
-  # Crossplane will extract the created Setup Key from the NetBird API 
-  # and write it into this local Kubernetes Secret.
+    expires_in: 86400
+    usage_limit: 0
+    auto_groups:
+      - cluster-local-group
+  providerConfigRef:
+    name: netbird-provider-config
   writeConnectionSecretToRef:
     name: netbird-setup-key
     namespace: netbird

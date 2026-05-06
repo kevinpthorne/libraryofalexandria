@@ -7,6 +7,8 @@ metadata:
 spec:
   forProvider:
     name: "cluster-local-nodes"
+  providerConfigRef:
+    name: netbird-provider-config
 {{- range .Values.cluster.federateTo }}
 ---
 apiVersion: vpn.netbird.crossplane.io/v1alpha1
@@ -18,4 +20,6 @@ metadata:
 spec:
   forProvider:
     name: "cluster-{{ . }}-nodes"
+  providerConfigRef:
+    name: netbird-provider-config
 {{- end }}
