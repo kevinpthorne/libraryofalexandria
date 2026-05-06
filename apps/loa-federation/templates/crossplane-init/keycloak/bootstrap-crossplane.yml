@@ -64,13 +64,18 @@ spec:
             "client_id": "admin",
             "username": "admin",
             "password": "{{ `{{ .admin_pass }}` }}",
-            "url": "https://keycloak.keycloak.svc.cluster.local:8443"
+            "url": "https://keycloak.keycloak.svc.cluster.local:8443",
+            "root_ca_certificate": {{ `{{ .ca_crt | toJson }}` }}
           }
   data:
     - secretKey: admin_pass
       remoteRef:
         key: keycloak
         property: admin-password
+    - secretKey: ca_crt
+      remoteRef:
+        key: keycloak-tls
+        property: ca.crt
 ---
 apiVersion: keycloak.crossplane.io/v1beta1
 kind: ProviderConfig
