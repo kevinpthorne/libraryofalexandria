@@ -78,6 +78,7 @@ in
 
       networking = {
         hostName = config.libraryofalexandria.node.hostname;
+        hostId = config.libraryofalexandria.node.hostname;
         extraHosts = extraHostsStr;
         firewall.enable = false;
         # firewall done by cilium
