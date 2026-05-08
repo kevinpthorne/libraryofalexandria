@@ -113,7 +113,8 @@
           {
             hello = nixpkgs.legacyPackages.${system}.hello;
             # runonce = systemPkgs.runonce;
-          } // localPkgs systemPkgs systemPkgs
+          }
+          // localPkgs systemPkgs systemPkgs
         ))
         clusters.packages
       ];
@@ -139,19 +140,21 @@
       );
 
       # checks = deepMerge [
-      #    (eachArch (system:
+      #   (eachArch (
+      #     system:
       #     let
       #       systemPkgs = import nixpkgs {
       #         inherit system;
-      #         overlays = with self.overlays; [ runonce ];
+      #         overlays = with self.overlays; [ localPkgs ];
       #       };
       #     in
       #     {
-      #       helloTest = systemPkgs.callPackage ./tests/clusters/test/k8s-boot.nix {
-      #         cluster = clusters.by_name.test;
-      #       };
-      #     })
-      #    )
+      #       # helloTest = systemPkgs.callPackage ./tests/clusters/test/k8s-boot.nix {
+      #       #   cluster = clusters.by_name.test;
+      #       # };
+      #       getHostIdTest = systemPkgs.callPackage ./tests/lib/get-host-id.nix (with systemPkgs; { inherit lib; });
+      #     }
+      #   ))
       # ];
 
     };

@@ -6,6 +6,7 @@ let
   lib2 = lib2Pre // {
     deepMerge = lib2Pre.deepMerge inputs.nixpkgs.lib;
     zipLists = lib2Pre.zipLists inputs.nixpkgs.lib;
+    getHostId = lib2Pre.getHostId inputs.nixpkgs.lib;
   };
   #
   folderContents = builtins.readDir ./.;

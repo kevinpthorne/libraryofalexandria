@@ -36,7 +36,7 @@
     ../submodules/arm64/etcd-fix.nix
     ../submodules/rpi/cgroup.nix
     inputs.disko.nixosModules.disko
-    ../submodules/disko-layouts/simple-zfs.nix
+    ../submodules/disko-layouts/simple-rpi-zfs.nix
   ];
 
   config = {

@@ -16,6 +16,7 @@ rec {
   getRke2Arch = import ./get-rke2-arch.nix;
   getClusterConfig = import ./get-cluster-config.nix;
   getHostname = import ./get-hostname.nix;
+  getHostId = import ./get-host-id.nix;
   range = n: builtins.genList (x: x) n;
   zipLists = import ./zip-lists.nix;
   nullable = val: default: if val == null then default else val;

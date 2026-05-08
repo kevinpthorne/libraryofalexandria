@@ -78,7 +78,7 @@ in
 
       networking = {
         hostName = config.libraryofalexandria.node.hostname;
-        hostId = config.libraryofalexandria.node.hostname;
+        hostId = with config.libraryofalexandria; lib2.getHostId cluster node;
         extraHosts = extraHostsStr;
         firewall.enable = false;
         # firewall done by cilium
