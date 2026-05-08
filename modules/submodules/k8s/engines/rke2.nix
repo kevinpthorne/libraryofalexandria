@@ -146,7 +146,7 @@
               { name = "reload"; }
               { name = "loadbalance"; }
             ];
-          }) thisCluster.federation;
+          }) thisCluster.federation.peers;
         in
         {
           enable = true;

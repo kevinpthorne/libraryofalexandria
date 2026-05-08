@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
-    raspberry-pi-nix.url = "github:nix-community/raspberry-pi-nix/master";
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
     supported-arch.url = "github:nix-systems/default-linux"; # aarch64-linux and x86_64-linux
 
@@ -34,12 +34,20 @@
     nixos-stig.url = "github:kevinpthorne/nixos-stig";
   };
 
+  nixConfig = {
+    extra-substituters = [
+      "https://nixos-raspberrypi.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+    ];
+  };
+
   outputs =
     inputs@{
       self,
       nixpkgs,
       supported-arch,
-      raspberry-pi-nix,
       nixos-stig,
       colmena,
       ...
@@ -73,8 +81,6 @@
       };
 
       nixosConfigurations = {
-        rpi-example = inputs.raspberry-pi-nix.nixosConfigurations.rpi-example;
-
         # test = let
         #   config = import ./clusters/k importableInputs;
         # in

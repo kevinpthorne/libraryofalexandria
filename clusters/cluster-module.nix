@@ -97,14 +97,19 @@
           };
         };
       federation = lib.mkOption {
-        # type = lib.types.attrsOf (
-        #   lib.types.submoduleWith {
-        #     modules = [ ./cluster-module.nix ];
-        #     specialArgs = { inherit inputs lib2 localPkgs; };
-        #   }
-        # );
-        type = with lib.types; attrsOf attrs;
-        readOnly = true;
+        type = lib.types.submodule {
+          options = {
+            name = lib.mkOption {
+              type = lib.types.str;
+              default = lib2.getFederationName config.libraryofalexandria.cluster.name config.libraryofalexandria.cluster.federateTo;
+              description = "Deterministic ID for a set of federated clusters, or just one, unfederated cluster. Used for external DNS";
+            };
+
+            peers = lib.mkOption {
+              type = with lib.types; attrsOf attrs;  # normally, we'd do a submoduleWith, but this very key (peers) makes this cyclical. Below breaks the cycle.
+            };
+          };
+        };
       };
 
       clusterCidr = lib.mkOption {
@@ -118,6 +123,9 @@
       dnsIp = lib.mkOption {
         type = lib.types.str;
         default = "10.${toString (config.libraryofalexandria.cluster.id + 127)}.0.10";
+      };
+      externalDomain = lib.mkOption {
+        type = lib.types.str;
       };
     };
     # rendered options, never given outside this module
@@ -180,10 +188,8 @@
       };
       systemSpecialArgs =
         nodeId: with config.libraryofalexandria; {
-          inherit inputs;
-          inherit lib2;
-          inherit cluster;
-          inherit nodeId;
+          inherit inputs lib2 cluster nodeId;
+          nixos-raspberrypi = inputs.nixos-raspberrypi;  # per nvmd readmes, this is required
         };
 
       # For building (flake nixosConfigurations), we'll stack everything as nixosSystems
@@ -293,7 +299,7 @@
           subPath = lib.mkDefault "apps/${config.libraryofalexandria.cluster.name}-apps";
         };
       };
-      libraryofalexandria.cluster.federation = builtins.listToAttrs (
+      libraryofalexandria.cluster.federation.peers = builtins.listToAttrs (
         builtins.map (
           clusterName:
           let

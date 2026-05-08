@@ -76,5 +76,6 @@ in
       ];
       interfaces = [ "enp0s9" ];
     };
+    externalDomain = "test.loa.internal";
   };
 }

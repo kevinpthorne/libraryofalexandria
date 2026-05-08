@@ -3,18 +3,40 @@
   config,
   lib,
   inputs,
+  nixos-raspberrypi,
   ...
 }:
 {
-  imports = [
+  imports = with nixos-raspberrypi.nixosModules; [
     ../platform.nix
-    inputs.raspberry-pi-nix.nixosModules.raspberry-pi
-    inputs.raspberry-pi-nix.nixosModules.sd-image
+    # nvmd
+    # Required: Add necessary overlays with kernel, firmware, vendor packages
+    nixos-raspberrypi.lib.inject-overlays
+
+    # Binary cache with prebuilt packages for the currently locked `nixpkgs`,
+    # see `devshells/nix-build-to-cachix.nix` for a list
+    trusted-nix-caches
+
+    # Optional: All RPi and RPi-optimised packages to be available in `pkgs.rpi`
+    nixpkgs-rpi
+
+    # Optonal: add overlays with optimised packages into the global scope
+    # provides: ffmpeg_{4,6,7}, kodi, libcamera, vlc, etc.
+    # This overlay may cause lots of rebuilds (however many
+    #  packages should be available from the binary cache)
+    nixos-raspberrypi.lib.inject-overlays-global
+    # nvmd rpi 5
+    raspberry-pi-5.base
+    raspberry-pi-5.page-size-16k
+    raspberry-pi-5.display-vc4
+    raspberry-pi-5.bluetooth
+    # our stuff
     ../submodules/imageable.nix
     ../submodules/arm64/coredns-fix.nix
     ../submodules/arm64/etcd-fix.nix
     ../submodules/rpi/cgroup.nix
     inputs.disko.nixosModules.disko
+    ../submodules/disko-layouts/simple-gpt.nix
     # ../submodules/disko-layouts/one-data-partition.nix
   ];
 
@@ -26,37 +48,17 @@
       useDHCP = false;
       interfaces = {
         wlan0.useDHCP = lib.mkDefault false;
-        eth0.useDHCP = lib.mkDefault true; # master IPs need to be reserved in DHCP server
       };
     };
-    raspberry-pi-nix.board = "bcm2712"; # pi 5
     security.rtkit.enable = true;
 
-    sdImage.imageBaseName = config.networking.hostName;
     system.builder = {
-      package = config.system.build.sdImage;
+      package = nixos-raspberrypi.installerImages.rpi5;
       outputDir = "sd-image";
     };
 
-    # TODO throw in separate optional module; pi5+nvme ssd
     boot.kernelModules = [ "sdhci_pci" ];
-    fileSystems."/var" = {
-      device = "/dev/nvme0n1";
-      fsType = "ext4";
-      # autoFormat = true;  # letting disko do this instead
-      options = [
-        "defaults"
-        "noatime"
-      ];
-      # Ensure this directory is created on system activation
-      neededForBoot = true;
-    };
-    services.fstrim.enable = true;
-    environment.systemPackages = with pkgs; [
-      e2fsprogs # Provides filesystem utilities like tune2fs, fsck for ext4
-    ];
-    disko.devices.disk.data = {
-      # disk is called 'data'
+    disko.devices.disk.main = {
       imageSize = "2T";
       device = "/dev/nvme0n1";
     };

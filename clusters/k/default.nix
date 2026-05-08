@@ -100,5 +100,6 @@ in
       ];
       interfaces = [ "eth0.121" ];
     };
+    externalDomain = "k.kpt.link";
   };
 }
