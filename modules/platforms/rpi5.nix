@@ -57,7 +57,7 @@
       outputDir = "sd-image";
     };
 
-    boot.kernelModules = [ "sdhci_pci" ];
+    boot.loader.raspberry-pi.bootloader = "kernel";
     disko.devices.disk.main = {
       imageSize = "2T";
       device = "/dev/nvme0n1";
