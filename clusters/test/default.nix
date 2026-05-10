@@ -24,6 +24,12 @@ let
           zarf.enable = lib.mkForce false;
           helmCharts.installerEnabled = true;
         };
+
+        security.pam.u2f.settings = {
+          # we're abusing the k cluster's kevint module
+          origin = lib.mkForce "pam://k.loa.internal";
+          appid = lib.mkForce "pam://k.loa.internal";
+        };
       };
     };
 in

@@ -37,13 +37,29 @@ Several root-level helper scripts simplify operational tasks:
 
 ## Usage
 
+### Building initial boot images
+
+```bash
+# Build a specific host
+nix build '.#nixosConfigurations.$hostname.config.system.builder.package'
+
+# Build the entire cluster
+nix build '.#packages.aarch64-linux.build-all-$cluster_name'
+
+# For rpi5, you'll need to use the installer to get off the sd card
+# Root password displays on hdmi screen after boot
+```bash
+nix run .#nixosConfigurations.$hostname.config.system.builder.package
+nixos-anywhere --flake '.#$hostname' root@$INSTALLER_IP
+```
+
 ### Managing the Cluster Infrastructure
 
 Colmena is used to configure the base hosts. 
 
 ```bash
 # Example to deploy to the test cluster using colmena
-colmena apply --on @test
+nix run .#apps.aarch64-linux.colmena -- apply --on @cluster=test -v --show-trace
 ```
 
 ### Locking Helm Charts

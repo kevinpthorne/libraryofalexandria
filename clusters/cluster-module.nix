@@ -374,6 +374,7 @@
                   inherit lib;
                   inherit inputs;
                   inherit lib2;
+                  nixos-raspberrypi = inputs.nixos-raspberrypi;  # per nvmd readmes, this is required
                 };
               };
             }

@@ -44,6 +44,8 @@
         settings = {
           cue = true; # Tells you to touch the key
           authfile = "/etc/Yubico/u2f_keys"; # Force it to use the declarative file
+          origin = "pam://${config.libraryofalexandria.cluster.name}.loa.internal";
+          appid = "pam://${config.libraryofalexandria.cluster.name}.loa.internal";
         };
       };
 
