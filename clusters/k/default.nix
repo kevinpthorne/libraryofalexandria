@@ -17,6 +17,10 @@ let
     in
     { pkgs, lib, ... }:
     {
+      imports = [
+        ./submodules/kevint.nix
+      ];
+
       config = {
         time.timeZone = "Etc/UTC";
 

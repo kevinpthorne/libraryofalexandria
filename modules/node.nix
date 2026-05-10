@@ -101,13 +101,6 @@ in
         ];
       };
 
-      users.users.kevint = {
-        isNormalUser = true;
-        openssh.authorizedKeys.keys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFz9z1zkXXO45SjKKbryrXZip/HEvZSAV2D/WpygFSFK kevint@Laptop4.local"
-        ];
-      };
-
       # show IP on login screen
       environment.etc."issue.d/ip.issue".text = "\\4\n";
       networking.dhcpcd.runHook = "${pkgs.util-linux}/bin/agetty --reload";
