@@ -27,17 +27,18 @@ let
         libraryofalexandria.node.deployment.mgmtVlan = {
           enable = true;
           vlanId = 101;
+          iface = "end0";
           staticIp = "192.168.101.${toString ipLastOctet}";
         };
 
         networking = {
           vlans.lowtrust121 = {
             id = 121;
-            interface = "eth0";
+            interface = "end0";
           };
 
           interfaces = {
-            eth0.useDHCP = false;
+            end0.useDHCP = false;
 
             lowtrust121.ipv4.addresses = [
               {
