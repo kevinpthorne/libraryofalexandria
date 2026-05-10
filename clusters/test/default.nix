@@ -9,6 +9,10 @@ let
     id:
     { pkgs, lib, ... }:
     {
+      imports = [
+        ../k/submodules/kevint.nix
+      ];
+
       config = {
         time.timeZone = "Etc/UTC";
         nixpkgs.hostPlatform = "aarch64-linux";
