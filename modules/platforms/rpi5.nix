@@ -97,16 +97,27 @@
             enable = true;
             value = "on";
           };
+          # TODO get shielded cables to stop 3.0 from breaking. Forcing gen 2
           # PCIe Gen 3.0
           # https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#pcie-gen-3-0
           pciex1_gen = {
             enable = true;
-            value = "3";
+            value = "2";
           };
 
         };
 
       };
+    };
+
+    services.smartd = {
+      enable = true;
+      notifications.wall.enable = true; # Sends a terminal alert on failure
+
+      # Scan all devices, but use specific settings for NVMe
+      # -H: Check health status
+      # -W: Track temperature (Warn at 55°C, Critical at 60°C)
+      defaults.monitored = "-a -H -W 0,55,60";
     };
 
   };

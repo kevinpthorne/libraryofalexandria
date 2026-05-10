@@ -50,6 +50,7 @@ nix build '.#packages.aarch64-linux.build-all-$cluster_name'
 # Root password displays on hdmi screen after boot
 ```bash
 nix run .#nixosConfigurations.$hostname.config.system.builder.package
+# you will need to set the pci gen speed to 2.0 if you don't have shielded cable
 nixos-anywhere --flake '.#$hostname' root@$INSTALLER_IP
 ```
 
