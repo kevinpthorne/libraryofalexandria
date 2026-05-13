@@ -36,7 +36,7 @@
     ../submodules/arm64/etcd-fix.nix
     ../submodules/rpi/cgroup.nix
     inputs.disko.nixosModules.disko
-    ../submodules/disko-layouts/simple-rpi-zfs.nix
+    ../submodules/disko-layouts/simple-rpi-ext4.nix
   ];
 
   config = {
@@ -57,14 +57,16 @@
     };
 
     boot.loader.raspberry-pi.bootloader = "kernel";
+    # Fix for NVMe dropouts, maybe due to sleep->wake power spikes
+    boot.kernelParams = [
+      "nvme_core.default_ps_max_latency_us=0"
+      "pcie_aspm=off"
+      "pcie_port_pm=off"
+    ];
     disko.devices.disk.main = {
       imageSize = "2T";
       device = "/dev/nvme0n1";
     };
-    boot.supportedFilesystems = [ "zfs" ];
-    # networking.hostId is set somewhere else
-    services.zfs.autoScrub.enable = true;
-    services.zfs.trim.enable = true;
 
     hardware.raspberry-pi.config = {
       all = {
@@ -102,7 +104,7 @@
           # https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#pcie-gen-3-0
           pciex1_gen = {
             enable = true;
-            value = "2";
+            value = "3";
           };
 
         };
