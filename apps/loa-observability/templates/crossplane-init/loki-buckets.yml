@@ -3,6 +3,8 @@ kind: Role
 metadata:
   name: crossplane-eso-secret-reader
   namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
@@ -15,6 +17,8 @@ kind: RoleBinding
 metadata:
   name: crossplane-eso-secret-writer-binding
   namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 subjects:
 - kind: ServiceAccount
   name: crossplane
@@ -29,6 +33,8 @@ apiVersion: iam.aws.upbound.io/v1beta1
 kind: User
 metadata:
   name: loki-app-user
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   forProvider: {}
   providerConfigRef:
@@ -40,6 +46,8 @@ apiVersion: iam.aws.upbound.io/v1beta1
 kind: AccessKey
 metadata:
   name: loki-app-user-key
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   forProvider:
     userNameRef:
@@ -56,6 +64,8 @@ apiVersion: s3.aws.upbound.io/v1beta1
 kind: Bucket
 metadata:
   name: loki-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   forProvider:
     region: unused
@@ -69,6 +79,8 @@ apiVersion: s3.aws.upbound.io/v1beta1
 kind: Bucket
 metadata:
   name: loki-ruler
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   forProvider:
     region: unused
@@ -81,6 +93,8 @@ apiVersion: s3.aws.upbound.io/v1beta1
 kind: Bucket
 metadata:
   name: loki-admin
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   forProvider:
     region: unused
@@ -93,6 +107,8 @@ apiVersion: iam.aws.upbound.io/v1beta1
 kind: UserPolicy
 metadata:
   name: loki-app-user-policy
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   forProvider:
     name: loki-s3-access-policy
