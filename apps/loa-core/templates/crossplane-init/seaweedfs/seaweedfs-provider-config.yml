@@ -1,0 +1,18 @@
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: seaweedfs-provider-config
+spec:
+  # Reference the secret holding your SeaweedFS access/secret keys
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: seaweedfs-system
+      name: seaweedfs-creds
+      key: credentials
+  # CRITICAL: Force Crossplane to talk to SeaweedFS instead of AWS
+  endpoint:
+    url:
+      type: Static
+      static: http://seaweedfs-s3.seaweedfs-system.svc.cluster.local:8333
+    services: [s3]

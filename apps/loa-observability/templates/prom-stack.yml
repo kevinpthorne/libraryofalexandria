@@ -1,0 +1,71 @@
+---
+# 1. THE METRICS & VISUALIZATION STACK
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus-stack
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: 'https://prometheus-community.github.io/helm-charts'
+    chart: kube-prometheus-stack
+    targetRevision: 58.x.x
+    helm:
+      values: |
+        # Tolerate RKE2 Control Plane taints so Node Exporter can scrape server nodes
+        prometheus-node-exporter:
+          tolerations:
+            - effect: NoSchedule
+              operator: Exists
+            - effect: NoExecute
+              operator: Exists
+              
+        grafana:
+          enabled: true
+          # Pre-wire Loki into Grafana
+          additionalDataSources:
+            - name: Loki
+              type: loki
+              url: http://loki.observability.svc.cluster.local:3100
+              access: proxy
+              isDefault: false
+          # Strict Security Context for Grafana
+          containerSecurityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+
+        prometheus:
+          prometheusSpec:
+            # Strict Security Context for Prometheus
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              fsGroup: 2000
+              seccompProfile:
+                type: RuntimeDefault
+            containerSecurityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: ["ALL"]
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    # Instruct ArgoCD to label the namespace to allow the privileged collectors
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged

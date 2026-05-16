@@ -1,0 +1,127 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: crossplane-eso-secret-reader
+  namespace: observability
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  # Optional: Restrict to ONLY the bootstrap secret for tight security
+  resourceNames: ["loki-s3-creds"] 
+  verbs: ["get", "list", "watch", "create", "edit"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: crossplane-eso-secret-writer-binding
+  namespace: observability
+subjects:
+- kind: ServiceAccount
+  name: crossplane
+  namespace: crossplane-system # Note: Pointing to the SA in the other namespace
+roleRef:
+  kind: Role
+  name: crossplane-eso-secret-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+# 2. Create the IAM User in SeaweedFS
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: User
+metadata:
+  name: loki-app-user
+spec:
+  forProvider: {}
+  providerConfigRef:
+    name: seaweedfs-provider
+
+---
+# 3. Generate the Access Key for that User
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: AccessKey
+metadata:
+  name: loki-app-user-key
+spec:
+  forProvider:
+    userNameRef:
+      name: loki-app-user
+  providerConfigRef:
+    name: seaweedfs-provider
+  # Crossplane will save the dynamically generated SeaweedFS Key & Secret here
+  writeConnectionSecretToRef:
+    namespace: observability
+    name: loki-s3-creds
+    
+---    
+apiVersion: s3.aws.upbound.io/v1beta1
+kind: Bucket
+metadata:
+  name: loki-data
+spec:
+  forProvider:
+    region: unused
+    # SeaweedFS / Minio require path-style routing
+    objectLockEnabled: false
+  providerConfigRef:
+    name: seaweedfs-provider-config
+
+---
+apiVersion: s3.aws.upbound.io/v1beta1
+kind: Bucket
+metadata:
+  name: loki-ruler
+spec:
+  forProvider:
+    region: unused
+    objectLockEnabled: false
+  providerConfigRef:
+    name: seaweedfs-provider-config
+
+---
+apiVersion: s3.aws.upbound.io/v1beta1
+kind: Bucket
+metadata:
+  name: loki-admin
+spec:
+  forProvider:
+    region: unused
+    objectLockEnabled: false
+  providerConfigRef:
+    name: seaweedfs-provider-config
+---
+# 4. Grant the IAM User permission to use the Loki buckets
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: UserPolicy
+metadata:
+  name: loki-app-user-policy
+spec:
+  forProvider:
+    name: loki-s3-access-policy
+    # Dynamically reference the user Crossplane created
+    userNameRef:
+      name: loki-app-user
+    # Standard AWS IAM JSON policy document
+    policy: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "s3:ListBucket",
+              "s3:PutObject",
+              "s3:GetObject",
+              "s3:DeleteObject"
+            ],
+            "Resource": [
+              "arn:aws:s3:::loki-data",
+              "arn:aws:s3:::loki-data/*",
+              "arn:aws:s3:::loki-ruler",
+              "arn:aws:s3:::loki-ruler/*",
+              "arn:aws:s3:::loki-admin",
+              "arn:aws:s3:::loki-admin/*"
+            ]
+          }
+        ]
+      }
+  providerConfigRef:
+    name: seaweedfs-provider

@@ -123,6 +123,8 @@ spec:
             fsGroup: 1000
           s3:
             enabled: true
+            extraArgs:
+              - "-config=/etc/seaweedfs/s3.json"
           extraVolumes: |
             - name: tls-volume
               csi:
@@ -133,9 +135,16 @@ spec:
                   csi.cert-manager.io/issuer-kind: "ClusterIssuer"
                   csi.cert-manager.io/issuer-group: "cert-manager.io"
                   csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local,${POD_NAME}.${POD_NAMESPACE}.svc.cluster.{{ .Values.cluster.name }}"
+            - name: s3-config-volume
+              secret:
+                secretName: seaweedfs-s3-config
           extraVolumeMounts: |
             - name: tls-volume
               mountPath: "/run/secrets/certs"
+              readOnly: true
+            - name: s3-config-volume
+              mountPath: /etc/seaweedfs/s3.json
+              subPath: s3.json
               readOnly: true
         sftp:
           enabled: false

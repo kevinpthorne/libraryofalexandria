@@ -1,0 +1,88 @@
+# 2. THE LOG STORAGE BACKEND
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: 'https://grafana.github.io/helm-charts'
+    chart: loki
+    targetRevision: 5.x.x
+    helm:
+      values: |
+        loki:
+          auth_enabled: false
+          commonConfig:
+            replication_factor: 1
+
+          storage:
+            type: s3
+            bucketNames:
+              chunks: loki-data
+              ruler: loki-ruler
+              admin: loki-admin
+            s3:
+              endpoint: "seaweedfs-s3.seaweedfs-system.svc.cluster.local:8333"
+              region: "us-east-1"
+              s3ForcePathStyle: true
+              insecure: false
+        
+          # Strict Security Context for Loki
+          podSecurityContext:
+            fsGroup: 10001
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          containerSecurityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+              
+        singleBinary:
+          replicas: 1
+
+          extraVolumes:
+            - name: ca-bundle-volume
+              configMap:
+                name: trusted-ca-bundle
+                
+          # 3. MOUNT THE VOLUME INTO THE POD
+          extraVolumeMounts:
+            - name: ca-bundle-volume
+              mountPath: /etc/loki/certs
+              readOnly: true
+              
+          extraEnv:
+            # 4. INSTRUCT LOKI'S S3 CLIENT TO TRUST THE MOUNTED BUNDLE
+            - name: SSL_CERT_FILE
+              value: "/etc/loki/certs/ca-bundle.crt"
+              
+            # (Keep your AWS credentials from earlier)
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: loki-s3-creds
+                  key: access_key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: loki-s3-creds
+                  key: secret_key
+        read:
+          replicas: 0
+        backend:
+          replicas: 0
+        write:
+          replicas: 0
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

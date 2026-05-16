@@ -1,0 +1,71 @@
+# 3. THE TELEMETRY COLLECTOR
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana-alloy
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: 'https://grafana.github.io/helm-charts'
+    chart: grafana-alloy
+    targetRevision: 0.x.x
+    helm:
+      values: |
+        alloy:
+          # Tolerate RKE2 Control Plane taints so Alloy runs on every node
+          controller:
+            tolerations:
+              - effect: NoSchedule
+                operator: Exists
+              - effect: NoExecute
+                operator: Exists
+                
+          # Enforce RuntimeDefault seccomp profile
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+              
+          configMap:
+            content: |
+              discovery.kubernetes "pods" {
+                role = "pod"
+              }
+
+              discovery.relabel "pod_logs" {
+                targets = discovery.kubernetes.pods.targets
+                
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_namespace"]
+                  action = "replace"
+                  target_label = "namespace"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_name"]
+                  action = "replace"
+                  target_label = "pod"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_pod_container_name"]
+                  action = "replace"
+                  target_label = "container"
+                }
+              }
+
+              loki.source.kubernetes "pod_logs" {
+                targets    = discovery.relabel.pod_logs.output
+                forward_to = [loki.write.local.receiver]
+              }
+
+              loki.write "local" {
+                endpoint {
+                  url = "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+                }
+              }
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
