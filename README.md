@@ -48,8 +48,7 @@ nix build '.#packages.aarch64-linux.build-all-$cluster_name'
 
 # For rpi5, you'll need to use the installer to get off the sd card
 # Root password displays on hdmi screen after boot
-```bash
-nix run .#nixosConfigurations.$hostname.config.system.builder.package
+nix run '.#nixosConfigurations.$hostname.config.system.builder.package'
 # you will need to set the pci gen speed to 2.0 if you don't have shielded cable
 nixos-anywhere --flake '.#$hostname' root@$INSTALLER_IP
 ```
