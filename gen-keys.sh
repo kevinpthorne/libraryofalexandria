@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash -p openssl
 
 # 1. Validate that a cluster name argument was provided
 if [ -z "$1" ]; then

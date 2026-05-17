@@ -68,6 +68,10 @@
               addr = thisConfig.staticIp;
             }
           )
+          ({
+            port = thisConfig.port;
+            addr = "localhost";
+          })
         ];
       };
     };

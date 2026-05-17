@@ -24,11 +24,16 @@ let
       config = {
         time.timeZone = "Etc/UTC";
 
-        libraryofalexandria.node.deployment.mgmtVlan = {
-          enable = true;
-          vlanId = 101;
-          iface = "end0";
-          staticIp = "192.168.101.${toString ipLastOctet}";
+        libraryofalexandria.node.deployment = {
+          mgmtVlan = {
+            enable = true;
+            vlanId = 101;
+            iface = "end0";
+            staticIp = "192.168.101.${toString ipLastOctet}";
+          };
+          colmena.hostName = "192.168.101.${toString ipLastOctet}";
+          # writing note for posterity: 1) sshOptions isn't real in this version of colmena
+          # meaning 2) laptop4-builder currently has all sshOptions manually set in ~/.ssh/config
         };
 
         networking = {
