@@ -34,6 +34,9 @@ let
           colmena.hostName = "192.168.101.${toString ipLastOctet}";
           # writing note for posterity: 1) sshOptions isn't real in this version of colmena
           # meaning 2) laptop4-builder currently has all sshOptions manually set in ~/.ssh/config
+          # 3) the buidler VM can't reach the mgmt vlan directly, so I set up a jumphost on the host
+          # 4) colmena's key is on my mac user, gross
+          # 5) mac becomes jumphost
         };
 
         networking = {
@@ -41,6 +44,8 @@ let
             id = 121;
             interface = "end0";
           };
+
+          nameservers = [ "192.168.121.1" ];
 
           interfaces = {
             end0.useDHCP = false;
