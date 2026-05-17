@@ -40,23 +40,21 @@ let
         };
 
         networking = {
-          vlans.lowtrust121 = {
-            id = 121;
-            interface = "end0";
-          };
+          enableIPv6 = false;
 
           nameservers = [ "192.168.121.1" ];
           defaultGateway = "192.168.121.1";
 
           interfaces = {
-            end0.useDHCP = false;
-
-            lowtrust121.ipv4.addresses = [
-              {
-                address = "192.168.121.${toString ipLastOctet}";
-                prefixLength = 24; # Equivalent to subnet mask 255.255.255.0
-              }
-            ];
+            end0 = {
+              useDHCP = false;
+              ipv4.addresses = [
+                {
+                  address = "192.168.121.${toString ipLastOctet}";
+                  prefixLength = 24; # Equivalent to subnet mask 255.255.255.0
+                }
+              ];
+            };
           };
         };
       };
