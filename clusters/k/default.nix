@@ -46,6 +46,7 @@ let
           };
 
           nameservers = [ "192.168.121.1" ];
+          defaultGateway = "192.168.121.1";
 
           interfaces = {
             end0.useDHCP = false;
