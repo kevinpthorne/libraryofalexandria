@@ -35,6 +35,7 @@ podSecurityContext:
     type: RuntimeDefault
 
 securityContext:
+  allowPrivilegeEscalation: false
   capabilities:
     drop:
     - ALL
