@@ -76,7 +76,7 @@
           permissions = "0600";
           uploadAt = "pre-activation";
         };
-        "agent-token.key" = lib.mkIf isWorker {
+        "agent-token.key" = {
           keyFile = "/var/keys/clusters/${thisCluster.name}/agent-token.key";
           destDir = "/var/keys";
           permissions = "0600";
@@ -159,6 +159,7 @@
               cni = "cilium";
               nodeIP = thisMasterIp;
               tokenFile = "/var/keys/token.key";
+              agentTokenFile = "/var/keys/agent-token.key";
               extraFlags = [
                 "--profile=cis"
                 "--disable-kube-proxy" # cilium to do
@@ -317,12 +318,10 @@
           else
             {
               role = "agent";
-              agentTokenFile = "/var/keys/agent-token.key";
+              tokenFile = "/var/keys/agent-token.key";
               extraFlags = [
                 "--profile=cis"
-                "--disable-kube-proxy"
-              ]
-              ++ tlsSanFlags;
+              ];
             }
         );
 
