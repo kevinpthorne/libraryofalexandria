@@ -11,8 +11,8 @@ spec:
       sectionName: mc-java
   rules:
     - backendRefs:
-        - name: minecraft-minecraft-server
-          port: {{ .Values.service.javaPort }}
+      - name: minecraft-minecraft-server
+        port: {{ .Values.service.javaPort }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
@@ -26,8 +26,8 @@ spec:
       sectionName: mc-bedrock-tcp
   rules:
     - backendRefs:
-        - name: minecraft-minecraft-server
-          port: {{ .Values.service.bedrockPort }}
+      - name: minecraft-minecraft-server
+        port: {{ .Values.service.bedrockPort }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: UDPRoute
@@ -41,6 +41,6 @@ spec:
       sectionName: mc-bedrock-udp
   rules:
     - backendRefs:
-        - name: minecraft-minecraft-server
-          port: {{ .Values.service.bedrockPort }}
+      - name: minecraft-minecraft-server
+        port: {{ .Values.service.bedrockPort }}
 {{- end }}
