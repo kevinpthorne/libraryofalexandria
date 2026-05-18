@@ -1,0 +1,46 @@
+{{- if .Values.gateway.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: TCPRoute
+metadata:
+  name: mc-java-route
+  labels:
+    {{- include "minecraft-server.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: minecraft-gateway
+      sectionName: mc-java
+  rules:
+    - backendRefs:
+        - name: minecraft-svc
+          port: {{ .Values.service.javaPort }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: TCPRoute
+metadata:
+  name: mc-bedrock-tcp-route
+  labels:
+    {{- include "minecraft-server.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: minecraft-gateway
+      sectionName: mc-bedrock-tcp
+  rules:
+    - backendRefs:
+        - name: minecraft-svc
+          port: {{ .Values.service.bedrockPort }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: UDPRoute
+metadata:
+  name: mc-bedrock-udp-route
+  labels:
+    {{- include "minecraft-server.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: minecraft-gateway
+      sectionName: mc-bedrock-udp
+  rules:
+    - backendRefs:
+        - name: minecraft-svc
+          port: {{ .Values.service.bedrockPort }}
+{{- end }}
