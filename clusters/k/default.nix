@@ -112,7 +112,7 @@ in
           stop = "192.168.121.250";
         }
       ];
-      interfaces = [ "eth0.121" ];
+      interfaces = [ "end0" ];
     };
     externalDomain = "k.kpt.link";
   };
