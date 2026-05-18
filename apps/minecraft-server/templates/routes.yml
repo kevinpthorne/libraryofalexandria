@@ -1,5 +1,5 @@
 {{- if .Values.gateway.enabled }}
-apiVersion: gateway.networking.k8s.io/v1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
 metadata:
   name: mc-java-route
@@ -14,7 +14,7 @@ spec:
         - name: minecraft-svc
           port: {{ .Values.service.javaPort }}
 ---
-apiVersion: gateway.networking.k8s.io/v1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
 metadata:
   name: mc-bedrock-tcp-route
@@ -29,7 +29,7 @@ spec:
         - name: minecraft-svc
           port: {{ .Values.service.bedrockPort }}
 ---
-apiVersion: gateway.networking.k8s.io/v1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: UDPRoute
 metadata:
   name: mc-bedrock-udp-route
