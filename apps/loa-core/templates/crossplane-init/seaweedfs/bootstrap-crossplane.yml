@@ -90,10 +90,8 @@ spec:
           aws_access_key_id = {{ .access_key }}
           aws_secret_access_key = {{ .secret_key }}
           
-  data:
-    # Tell ESO to generate the Access Key
-    - secretKey: access_key
-      sourceRef:
+  dataFrom:
+    - sourceRef:
         generatorRef:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
@@ -102,10 +100,8 @@ spec:
         - regexp:
             source: "password"
             target: "access_key"
-          
-    # Tell ESO to generate the Secret Key
-    - secretKey: secret_key
-      sourceRef:
+            
+    - sourceRef:
         generatorRef:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
@@ -147,9 +143,8 @@ spec:
             ]
           }
           
-  data:
-    - secretKey: access_key
-      sourceRef:
+  dataFrom:
+    - sourceRef:
         generatorRef:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
@@ -158,8 +153,8 @@ spec:
         - regexp:
             source: "password"
             target: "access_key"
-    - secretKey: secret_key
-      sourceRef:
+            
+    - sourceRef:
         generatorRef:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
