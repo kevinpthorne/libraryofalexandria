@@ -98,7 +98,7 @@ spec:
           name: seaweed-access-key-gen
       rewrite:
         - regexp:
-            source: "password"
+            source: "^password$"
             target: "access_key"
             
     - sourceRef:
@@ -108,7 +108,7 @@ spec:
           name: seaweed-secret-key-gen
       rewrite:
         - regexp:
-            source: "password"
+            source: "^password$"
             target: "secret_key"
 ---
 apiVersion: external-secrets.io/v1
@@ -151,7 +151,7 @@ spec:
           name: seaweed-access-key-gen
       rewrite:
         - regexp:
-            source: "password"
+            source: "^password$"
             target: "access_key"
             
     - sourceRef:
@@ -161,5 +161,5 @@ spec:
           name: seaweed-secret-key-gen
       rewrite:
         - regexp:
-            source: "password"
+            source: "^password$"
             target: "secret_key"
