@@ -107,7 +107,7 @@ spec:
           kind: Password
           name: seaweed-secret-key-gen
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: generate-seaweedfs-s3-json
