@@ -17,5 +17,5 @@ spec:
   endpoint:
     url:
       type: Static
-      static: http://seaweedfs-s3.seaweedfs-system.svc.cluster.local:8333
-    services: [s3]
+      static: https://seaweedfs-s3.seaweedfs-system.svc.cluster.local:8333
+    services: [s3, iam]
