@@ -98,6 +98,10 @@ spec:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
           name: seaweed-access-key-gen
+      rewrite:
+        - regexp:
+            source: "password"
+            target: "access_key"
           
     # Tell ESO to generate the Secret Key
     - secretKey: secret_key
@@ -106,6 +110,10 @@ spec:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
           name: seaweed-secret-key-gen
+      rewrite:
+        - regexp:
+            source: "password"
+            target: "secret_key"
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -146,9 +154,17 @@ spec:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
           name: seaweed-access-key-gen
+      rewrite:
+        - regexp:
+            source: "password"
+            target: "access_key"
     - secretKey: secret_key
       sourceRef:
         generatorRef:
           apiVersion: generators.external-secrets.io/v1alpha1
           kind: Password
           name: seaweed-secret-key-gen
+      rewrite:
+        - regexp:
+            source: "password"
+            target: "secret_key"
