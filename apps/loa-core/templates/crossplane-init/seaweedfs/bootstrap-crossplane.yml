@@ -87,8 +87,8 @@ spec:
       data:
         credentials: |
           [default]
-          aws_access_key_id = {{ .access_key }}
-          aws_secret_access_key = {{ .secret_key }}
+          aws_access_key_id = {{ `{{ .access_key }}` }}
+          aws_secret_access_key = {{ `{{ .secret_key }}` }}
           
   dataFrom:
     - sourceRef:
@@ -134,8 +134,8 @@ spec:
                 "name": "crossplane-admin",
                 "credentials": [
                   {
-                    "accessKey": "{{ .access_key }}",
-                    "secretKey": "{{ .secret_key }}"
+                    "accessKey": "{{ `{{ .access_key }}` }}",
+                    "secretKey": "{{ `{{ .secret_key }}` }}"
                   }
                 ],
                 "actions": ["Admin", "Read", "Write", "List", "Tagging"]
