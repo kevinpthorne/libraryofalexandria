@@ -99,12 +99,12 @@
             enable = true;
             value = "on";
           };
-          # TODO get shielded cables to stop 3.0 from breaking. Forcing gen 2
+          # TODO Forcing gen 2 for temps
           # PCIe Gen 3.0
           # https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#pcie-gen-3-0
           pciex1_gen = {
             enable = true;
-            value = "3";
+            value = "2";
           };
 
         };
@@ -118,8 +118,25 @@
 
       # Scan all devices, but use specific settings for NVMe
       # -H: Check health status
-      # -W: Track temperature (Warn at 55°C, Critical at 60°C)
-      defaults.monitored = "-a -H -W 0,55,60";
+      # -W: Track temperature (Warn at 65°C, Critical at 70°C)
+      defaults.monitored = "-a -H -W 0,65,70";
+    };
+    environment.systemPackages = with pkgs; [
+      nvme-cli
+    ];
+
+    services.chrony = {
+      # theres no easy stupid RTC battery
+      extraFlags = [ "-s" ];
+    
+      extraConfig = ''
+        # Keep your makestep so it instantly jumps to the true time once NTP connects
+        makestep 1.0 3
+        
+        # Forces Chrony to write measurement history to disk on a clean shutdown,
+        # ensuring the file timestamp is as recent as possible.
+        dumponexit
+      '';
     };
 
   };
