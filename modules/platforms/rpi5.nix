@@ -118,8 +118,9 @@
 
       # Scan all devices, but use specific settings for NVMe
       # -H: Check health status
-      # -W: Track temperature (Warn at 65°C, Critical at 70°C)
-      defaults.monitored = "-a -H -W 0,65,70";
+      # -W: Track temperature (Warn at 70°C, Critical at 75°C)
+      # https://documents.sandisk.com/content/dam/asset-library/en_us/assets/public/sandisk/product/internal-drives/wd-black-ssd/data-sheet-wd-black-sn770m-nvme-ssd.pdf
+      defaults.monitored = "-a -H -W 0,70,75";  # outside of op is 85
     };
     environment.systemPackages = with pkgs; [
       nvme-cli
