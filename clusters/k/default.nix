@@ -93,14 +93,14 @@ in
         ];
     };
 
-    apps = lib.mkMerge [
-      {
-        loa-extras = {
-          repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
-          subPath = "apps/loa-extras";
-        };
-      }
-    ];
+    # apps = lib.mkMerge [
+    #   {
+    #     loa-extras = {
+    #       repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
+    #       subPath = "apps/loa-extras";
+    #     };
+    #   }
+    # ];
     federateTo = [ "test" ];
 
     virtualIps = {
