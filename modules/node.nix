@@ -126,6 +126,9 @@ in
         serverOption = "iburst";
       };
 
+      users.motd = "=== LoA Cluster ${config.libraryofalexandria.cluster.name} ===";
+      services.openssh.settings.PrintMotd = true;
+
       system.stateVersion = "25.11";
     };
 }
