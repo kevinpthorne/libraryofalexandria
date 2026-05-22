@@ -2,11 +2,15 @@
   config,
   pkgs,
   lib,
+  lib2,
   ...
 }:
+let
+  haProxyRke2Port = "9346";
+in
 {
   imports = [
-    ../../nixstore-linker.nix
+    ./rke2
     ../helm
   ];
 
@@ -54,13 +58,6 @@
                 argocd-vault-plugin
                 jq
                 yq
-              ]
-            else
-              [ ]
-          )
-          ++ (
-            if isMaster0 then
-              [
                 rke2-overrides-helm
                 cilium-keys-gen-helm
               ]
@@ -68,52 +65,6 @@
               [ ]
           );
       };
-
-      deployment.keys = {
-        "token.key" = lib.mkIf isMaster {
-          keyFile = "/var/keys/clusters/${thisCluster.name}/token.key";
-          destDir = "/var/keys";
-          permissions = "0600";
-          uploadAt = "pre-activation";
-        };
-        "agent-token.key" = {
-          keyFile = "/var/keys/clusters/${thisCluster.name}/agent-token.key";
-          destDir = "/var/keys";
-          permissions = "0600";
-          uploadAt = "pre-activation";
-        };
-      };
-
-      services.nixstore-linker = {
-        # https://docs.rke2.io/install/airgap?airgap-load-images=Manually+Deploy+Images&airgap-upgrade=Manual+Upgrade&installation-methods=Script+install#1-load-images
-        rke2-images = {
-          targetPackage = pkgs.rke2-images;
-          targetPackageSubpath = "asset/rke2-images";
-          linkPath = "/var/lib/rancher/rke2/agent/images/";
-          ensureDirectories = [ "/var/lib/rancher/rke2/agent/images/" ];
-        };
-        rke2-images-cilium = {
-          targetPackage = pkgs.rke2-images-cilium;
-          targetPackageSubpath = "asset/rke2-images-cilium";
-          linkPath = "/var/lib/rancher/rke2/agent/images/";
-          ensureDirectories = [ "/var/lib/rancher/rke2/agent/images/" ];
-        };
-      };
-
-      # k8s protect kernel
-      # vm.overcommit_memory=1
-      # kernel.panic=10
-      # kernel.panic_on_oops=1
-      # already set in 25.11
-      # boot.kernelParams = [
-      #     "panic_on_oops=1"
-      #     "panic=10"
-      # ];
-      # boot.kernel.sysctl = {
-      #     "vm.overcommit_memory" = 1;
-      #     "kernel.panic_on_oops" = 1;
-      #     "kernel.panic" = 10;
-      # };
 
       services.rke2 =
         let
@@ -150,7 +101,7 @@
         in
         {
           enable = true;
-          serverAddr = if isMaster0 then "" else "https://${master0Ip}:9345"; # default rke2 port
+          serverAddr = if thisCluster.virtualIps.enable then "https://${config.libraryofalexandria.k8sApiVirtualIps.vip}:${haProxyRke2Port}" else "https://${master0Ip}:9345"; # default rke2 port
         }
         // (
           if isMaster then
@@ -158,8 +109,8 @@
               role = "server";
               cni = "cilium";
               nodeIP = thisMasterIp;
-              tokenFile = "/var/keys/token.key";
-              agentTokenFile = "/var/keys/agent-token.key";
+              tokenFile = "/var/keys/token.key";  # match rke2/deployment.nix
+              agentTokenFile = "/var/keys/agent-token.key";  # match rke2/deployment.nix
               extraFlags = [
                 "--profile=cis"
                 "--disable-kube-proxy" # cilium to do
@@ -325,11 +276,39 @@
             }
         );
 
-      systemd.services.rke2-server = {
-        unitConfig = {
-          # The service will stay in 'inactive' state until this file exists
-          AssertPathExists = if isMaster then "/var/keys/token.key" else "/var/keys/agent-token.key";
-        };
+      # load balance rke2 service
+      services.haproxy = lib.mkIf thisCluster.virtualIps.enable {
+        enable = true;
+        config = let 
+          # TODO dedupe this code with kube-api-vips
+          masterIps = config.libraryofalexandria.node.masterIps;
+          masterHostnameOf = id: with config.libraryofalexandria.node; lib2.getHostname "master" id clusterName;
+          masterHostnames = builtins.map masterHostnameOf (
+            lib2.range config.libraryofalexandria.cluster.masters.count
+          );
+          masterHostnamesAndIps = lib2.zipLists masterHostnames masterIps;
+          haProxyBackendServersList = builtins.map (
+            hostname:
+            let
+              physicalIp = masterHostnamesAndIps.${hostname};
+              port = "9345";  # rke2 default port
+            in
+            "server ${hostname} ${physicalIp}:${port} check"
+          ) masterHostnames;
+          haProxyBackendServers = builtins.concatStringsSep "\n  " haProxyBackendServersList;
+        # let k8s api module define defaults
+        in lib.mkAfter ''
+          frontend rke2_api_frontend
+            bind ${config.libraryofalexandria.k8sApiVirtualIps.vip}:${haProxyRke2Port}
+            default_backend rke2_api_backend
+
+          backend rke2_api_backend
+            balance roundrobin
+            option ssl-hello-chk
+            
+            # server <hostname> <ip>:<port> check
+            ${haProxyBackendServers}
+        '';
       };
 
       # etcd hardening
