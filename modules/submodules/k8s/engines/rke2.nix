@@ -101,7 +101,13 @@ in
         in
         {
           enable = true;
-          serverAddr = if thisCluster.virtualIps.enable then "https://${config.libraryofalexandria.k8sApiVirtualIps.vip}:${haProxyRke2Port}" else "https://${master0Ip}:9345"; # default rke2 port
+          serverAddr =
+            if isMaster0 then
+              ""  # master0 is bootstrap node
+            else if thisCluster.virtualIps.enable then
+              "https://${config.libraryofalexandria.k8sApiVirtualIps.vip}:${haProxyRke2Port}"
+            else
+              "https://${master0Ip}:9345"; # default rke2 port
         }
         // (
           if isMaster then
@@ -109,8 +115,8 @@ in
               role = "server";
               cni = "cilium";
               nodeIP = thisMasterIp;
-              tokenFile = "/var/keys/token.key";  # match rke2/deployment.nix
-              agentTokenFile = "/var/keys/agent-token.key";  # match rke2/deployment.nix
+              tokenFile = "/var/keys/token.key"; # match rke2/deployment.nix
+              agentTokenFile = "/var/keys/agent-token.key"; # match rke2/deployment.nix
               extraFlags = [
                 "--profile=cis"
                 "--disable-kube-proxy" # cilium to do
@@ -277,38 +283,40 @@ in
         );
 
       # load balance rke2 service
-      services.haproxy = lib.mkIf thisCluster.virtualIps.enable {
-        enable = true;
-        config = let 
-          # TODO dedupe this code with kube-api-vips
-          masterIps = config.libraryofalexandria.node.masterIps;
-          masterHostnameOf = id: with config.libraryofalexandria.node; lib2.getHostname "master" id clusterName;
-          masterHostnames = builtins.map masterHostnameOf (
-            lib2.range config.libraryofalexandria.cluster.masters.count
-          );
-          masterHostnamesAndIps = lib2.zipLists masterHostnames masterIps;
-          haProxyBackendServersList = builtins.map (
-            hostname:
-            let
-              physicalIp = masterHostnamesAndIps.${hostname};
-              port = "9345";  # rke2 default port
-            in
-            "server ${hostname} ${physicalIp}:${port} check"
-          ) masterHostnames;
-          haProxyBackendServers = builtins.concatStringsSep "\n  " haProxyBackendServersList;
-        # let k8s api module define defaults
-        in lib.mkAfter ''
-          frontend rke2_api_frontend
-            bind ${config.libraryofalexandria.k8sApiVirtualIps.vip}:${haProxyRke2Port}
-            default_backend rke2_api_backend
+      services.haproxy = lib.mkIf (thisCluster.virtualIps.enable && isMaster) {
+        config =
+          let
+            # TODO dedupe this code with kube-api-vips
+            masterIps = config.libraryofalexandria.node.masterIps;
+            masterHostnameOf =
+              id: with config.libraryofalexandria.node; lib2.getHostname "master" id clusterName;
+            masterHostnames = builtins.map masterHostnameOf (
+              lib2.range config.libraryofalexandria.cluster.masters.count
+            );
+            master0Name = with config.libraryofalexandria.node; lib2.getHostname "master" 0 clusterName;
+            masterHostnamesAndIps = lib2.zipLists masterHostnames masterIps;
+            haProxyBackendServersList = builtins.map (
+              hostname:
+              let
+                physicalIp = masterHostnamesAndIps.${hostname};
+                port = "9345"; # rke2 default port
+              in
+              "server ${hostname} ${physicalIp}:${port} check ${if hostname == master0Name then "" else "backup"}"
+            ) masterHostnames;
+            haProxyBackendServers = builtins.concatStringsSep "\n  " haProxyBackendServersList;
+            # let k8s api module define defaults
+          in
+          lib.mkAfter ''
+            frontend rke2_api_frontend
+              bind ${config.libraryofalexandria.k8sApiVirtualIps.vip}:${haProxyRke2Port}
+              default_backend rke2_api_backend
 
-          backend rke2_api_backend
-            balance roundrobin
-            option ssl-hello-chk
-            
-            # server <hostname> <ip>:<port> check
-            ${haProxyBackendServers}
-        '';
+            backend rke2_api_backend
+              option ssl-hello-chk
+              
+              # server <hostname> <ip>:<port> check
+              ${haProxyBackendServers}
+          '';
       };
 
       # etcd hardening

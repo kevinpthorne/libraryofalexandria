@@ -118,9 +118,9 @@
 
       # Scan all devices, but use specific settings for NVMe
       # -H: Check health status
-      # -W: Track temperature (Warn at 70°C, Critical at 75°C)
+      # -W: Track temperature (Warn at 55°C, Critical at 60°C)
       # https://documents.sandisk.com/content/dam/asset-library/en_us/assets/public/sandisk/product/internal-drives/wd-black-ssd/data-sheet-wd-black-sn770m-nvme-ssd.pdf
-      defaults.monitored = "-a -H -W 0,70,75";  # outside of op is 85
+      defaults.monitored = "-a -H -W 0,55,60"; # outside of op is 85
     };
     environment.systemPackages = with pkgs; [
       nvme-cli
@@ -129,14 +129,37 @@
     services.chrony = {
       # theres no easy stupid RTC battery
       extraFlags = [ "-s" ];
-    
+
+      # Disable chrony's direct RTC trimming that expects missing hardware interrupts
+      enableRTCTrimming = false;
+
       extraConfig = ''
+        # Instruct the Linux kernel to sync system time to the RTC every 11 minutes safely
+        rtcsync
+
         # Keep your makestep so it instantly jumps to the true time once NTP connects
         makestep 1.0 3
-        
+
         # Forces Chrony to write measurement history to disk on a clean shutdown,
         # ensuring the file timestamp is as recent as possible.
         dumponexit
+      '';
+    };
+
+    # etcd fails to reconnect after a reboot due to time slip
+    systemd.services.rke2-server = {
+      # Strictly require chronyd to be active
+      requires = [ "chronyd.service" ];
+      after = [
+        "time-sync.target"
+        "chronyd.service"
+      ];
+      wants = [ "time-sync.target" ];
+
+      preStart = ''
+        echo "Strictly blocking RKE2 until chronyd synchronizes the system clock..."
+        # '0' tells chrony to retry infinitely instead of timing out
+        ${pkgs.chrony}/bin/chronyc waitsync 0
       '';
     };
 
