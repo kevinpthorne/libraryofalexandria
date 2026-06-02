@@ -1,5 +1,7 @@
 {
+  config,
   pkgs,
+  lib,
   ...
 }:
 {
@@ -8,7 +10,7 @@
   ];
 
   config = {
-    services.nixstore-linker = {
+    services.nixstore-linker = lib.mkIf (config.libraryofalexandria.cluster.k8sEngine == "rke2") {
       # https://docs.rke2.io/install/airgap?airgap-load-images=Manually+Deploy+Images&airgap-upgrade=Manual+Upgrade&installation-methods=Script+install#1-load-images
       rke2-images = {
         targetPackage = pkgs.rke2-images;
