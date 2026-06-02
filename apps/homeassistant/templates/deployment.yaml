@@ -64,12 +64,9 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           securityContext:
-            allowPrivilegeEscalation: false
             capabilities:
               drop:
               - ALL
-            runAsNonRoot: true
-            runAsUser: 6000
           volumeMounts:
             - name: tls-certs
               mountPath: /ssl
