@@ -6,7 +6,7 @@
   ...
 }:
 let
-  haProxyRke2Port = "9346";
+  haProxyRke2Port = "9345";  # rke2 hardcodes this port ugh
 in
 {
   imports = [
@@ -122,6 +122,7 @@ in
                 "--disable-kube-proxy" # cilium to do
                 "--cluster-cidr=${thisCluster.clusterCidr}"
                 "--service-cidr=${thisCluster.serviceCidr}"
+                "--bind-address=${thisMasterIp}"
                 # do not set cluster domain here, set it in the coredns overrides below
               ]
               ++ tlsSanFlags;
