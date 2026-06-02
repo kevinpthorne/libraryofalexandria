@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: akri
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://project-akri.github.io/akri/
+    targetRevision: 0.12.13
+    chart: akri
+    helm:
+      valuesObject:
+        udev:
+          discovery:
+            enabled: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: akri
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

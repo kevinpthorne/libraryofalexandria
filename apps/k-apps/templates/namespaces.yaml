@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: akri
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    zarf.dev/agent: "ignore"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: homeassistant
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    zarf.dev/agent: "ignore"

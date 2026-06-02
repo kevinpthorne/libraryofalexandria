@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homeassistant-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: homeassistant
+            hostnames:
+              - "homeassistant.k.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 8123
+                targetService: homeassistant
+              - port: 5353
+                protocol: UDP
+                targetPort: 5353
+                targetService: homeassistant
+              - port: 5683
+                protocol: UDP
+                targetPort: 5683
+                targetService: homeassistant
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homeassistant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

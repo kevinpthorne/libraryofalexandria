@@ -1,16 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: homeassistant
+  name: homeassistant-tls
   namespace: {{ .Values.argoNamespace }}
 spec:
   project: default
   source:
     repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
-    path: apps/homeassistant
+    path: pkgs/service-tls-helm
     targetRevision: HEAD
     helm:
-      valuesObject: {}
+      valuesObject:
+        svcName: "homeassistant"
+        cert:
+          sans:
+            - "homeassistant.k.loa.internal"
   destination:
     server: https://kubernetes.default.svc
     namespace: homeassistant
