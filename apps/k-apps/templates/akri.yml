@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://project-akri.github.io/akri/
-    targetRevision: 0.12.13
+    targetRevision: 0.13.8
     chart: akri
     helm:
       valuesObject:

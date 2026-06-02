@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Chart.Name }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      hostNetwork: true
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 6000
+        runAsGroup: 6000
+        fsGroup: 6000
+        seccompProfile:
+          type: RuntimeDefault
+        supplementalGroups: [20] # Grant access to the host's dialout group for USB serial access
+      initContainers:
+        - name: bootstrap-config
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              if [ ! -f /config/configuration.yaml ]; then
+                cp /bootstrap/configuration.yaml /config/configuration.yaml
+                echo "Bootstrap configuration.yaml copied."
+              else
+                echo "configuration.yaml already exists. Skipping bootstrap."
+              fi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: bootstrap
+              mountPath: /bootstrap
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            - name: TZ
+              value: {{ .Values.timezone }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            runAsNonRoot: true
+            runAsUser: 6000
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /ssl
+              readOnly: true
+            {{- if .Values.persistence.enabled }}
+            - name: config
+              mountPath: {{ .Values.persistence.mountPath }}
+            {{- end }}
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: homeassistant-tls
+        - name: bootstrap
+          configMap:
+            name: {{ .Chart.Name }}-bootstrap-config
+        {{- if .Values.persistence.enabled }}
+        - name: config
+          persistentVolumeClaim:
+            claimName: {{ .Chart.Name }}-pvc
+        {{- end }}
