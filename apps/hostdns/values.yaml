@@ -19,7 +19,7 @@ external-dns:
     # Use TXT registry for state tracking
     registry: txt
     # Give your cluster a unique ID so it only manages its own TXT records
-    txtOwnerId: {{ .Values.cluster.name }}
+    txtOwnerId: unknown
 
     env:
       - name: EXTERNAL_DNS_PDNS_API_KEY
