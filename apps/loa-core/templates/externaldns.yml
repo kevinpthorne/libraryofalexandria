@@ -1,0 +1,59 @@
+{{- if .Values.externaldns.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: externaldns
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    chart: external-dns
+    targetRevision: 1.21.1
+    helm:
+      valuesObject:
+        provider:
+          name: cloudflare
+
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+          fsGroup: 65534
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+          seccompProfile:
+            type: RuntimeDefault
+
+        env:
+          - name: CF_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.externaldns.apiKeySecret }}
+                key: {{ .Values.externaldns.apiKeySecretKey }}
+
+        # Tell ExternalDNS to watch the Gateway API
+        sources:
+          - gateway-tlsroute
+          - gateway
+
+        extraArgs:
+          - --annotation-filter=external-dns.loa.internal/expose=public
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: externaldns
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    # pull from internet
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

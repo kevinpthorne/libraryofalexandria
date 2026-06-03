@@ -1,0 +1,34 @@
+{{- if .Values.hostdns.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hostdns
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    subPath: apps/hostdns
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        {{- $dns := (((.Values.cluster | default dict).virtualIps | default dict).reservations | default dict).dns }}
+        {{- if $dns }}
+        staticIP: {{ $dns }}
+        {{- else }}
+        {}
+        {{- end }}
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: hostdns
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    # pull from internet
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

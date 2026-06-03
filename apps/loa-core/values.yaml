@@ -11,5 +11,5 @@ externaldns:
   apiKeySecret: ~
   apiKeySecretKey: ~
 
-hostDns:
+hostdns:
   enabled: true

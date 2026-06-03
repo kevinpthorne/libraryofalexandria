@@ -1,0 +1,36 @@
+argoNamespace: argo-cd
+
+namespace: hostdns
+
+staticIP: ~
+
+external-dns:
+  provider:
+    name: powerdns
+    powerdns:
+      apiUrl: "http://powerdns.hostdns.svc.cluster.local:8081"
+      apiKey: "YourSuperSecretKey"
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: RuntimeDefault
+
+  sources:
+    - gateway-tlsroute
+    - gateway-tcproute
+    - gateway-udproute
+    - gateway
+
+  # filter to non-federation services/gateways
+  extraArgs:
+    - --annotation-filter=external-dns.loa.internal/expose!=federation

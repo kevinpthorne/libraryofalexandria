@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: powerdns
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: powerdns
+spec:
+  selector:
+    app: powerdns
+  ports:
+    - name: dns-udp
+      port: 53
+      targetPort: 5353
+      protocol: UDP
+    - name: dns-tcp
+      port: 53
+      targetPort: 5353
+      protocol: TCP
+    - name: api
+      port: 8081
+      targetPort: 8081
+      protocol: TCP
