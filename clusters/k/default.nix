@@ -19,6 +19,7 @@ let
     {
       imports = [
         ./submodules/kevint.nix
+        # ./submodules/akri.nix
       ];
 
       config = {
@@ -112,6 +113,9 @@ in
           stop = "192.168.121.250";
         }
       ];
+      reservations = {
+        dns = "192.168.121.249";
+      };
       interfaces = [ "end0" ];
     };
     externalDomain = "k.kpt.link";

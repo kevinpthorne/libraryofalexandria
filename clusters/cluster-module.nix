@@ -84,7 +84,7 @@
 
               k8sApiVip = lib.mkOption {
                 type = lib.types.str;
-                description = "IPv4 address for the k8s API HAProxy";
+                description = "IPv4 address for the k8s (and rke2 if applicable) API HAProxy";
               };
               blocks = lib.mkOption {
                 type = lib.types.listOf (lib.types.either range cidr);
@@ -92,6 +92,10 @@
               interfaces = lib.mkOption {
                 type = lib.types.listOf lib.types.str;
                 default = [ "eth0" ];
+              };
+              reservations = lib.mkOption {
+                type = lib.types.attrs;
+                default = {};
               };
             };
           };
