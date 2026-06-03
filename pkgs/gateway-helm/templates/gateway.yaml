@@ -10,9 +10,11 @@ spec:
   gatewayClassName: {{ $endpoint.className | default "cilium" }}
   {{- if $endpoint.addresses }}
   addresses:
-  {{- range $type, $value := $endpoint.addresses }}
+  {{- range $address := $endpoint.addresses }}
+  {{- range $type, $value := $address }}
     - type: {{ $type }}
       value: {{ $value | quote }}
+  {{- end }}
   {{- end }}
   {{- end }}
   listeners:
