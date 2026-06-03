@@ -15,9 +15,10 @@ spec:
         - name: powerdns-app
           hostnames:
           - dns.{{ .Values.cluster.name }}.loa.internal  # kind of pointless
-          
+          {{- if .Values.staticIP }}
           addresses:
-            IPAddress: 
+            - IPAddress: {{ .Values.staticIP }}
+          {{- end }}
           ports:
             - port: 53
               targetPort: 5353

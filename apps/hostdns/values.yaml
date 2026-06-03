@@ -1,4 +1,5 @@
 argoNamespace: argo-cd
+cluster: {}
 
 namespace: hostdns
 
