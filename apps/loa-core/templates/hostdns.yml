@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
-    subPath: apps/hostdns
+    path: apps/hostdns
     targetRevision: HEAD
     helm:
       valuesObject:
