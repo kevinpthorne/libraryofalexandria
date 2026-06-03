@@ -12,11 +12,10 @@ spec:
     targetRevision: HEAD
     helm:
       valuesObject:
+        cluster: {{ .Values.cluster }}
         {{- $dns := (((.Values.cluster | default dict).virtualIps | default dict).reservations | default dict).dns }}
         {{- if $dns }}
         staticIP: {{ $dns }}
-        {{- else }}
-        {}
         {{- end }}
   destination:
     server: 'https://kubernetes.default.svc'
