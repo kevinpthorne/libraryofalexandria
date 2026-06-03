@@ -15,30 +15,15 @@ spec:
         port: {{ .Values.service.javaPort }}
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TCPRoute
-metadata:
-  name: mc-bedrock-tcp-route
-  labels:
-    {{- include "minecraft-server.labels" . | nindent 4 }}
-spec:
-  parentRefs:
-    - name: minecraft-gateway
-      sectionName: mc-bedrock-tcp
-  rules:
-    - backendRefs:
-      - name: minecraft-minecraft-server
-        port: {{ .Values.service.bedrockPort }}
----
-apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: UDPRoute
 metadata:
-  name: mc-bedrock-udp-route
+  name: mc-bedrock-route
   labels:
     {{- include "minecraft-server.labels" . | nindent 4 }}
 spec:
   parentRefs:
     - name: minecraft-gateway
-      sectionName: mc-bedrock-udp
+      sectionName: mc-bedrock
   rules:
     - backendRefs:
       - name: minecraft-minecraft-server

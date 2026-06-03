@@ -11,10 +11,7 @@ spec:
     - name: mc-java
       protocol: TCP
       port: {{ .Values.service.javaPort }}
-    - name: mc-bedrock-tcp
-      protocol: TCP
-      port: {{ .Values.service.bedrockPort }}
-    - name: mc-bedrock-udp
+    - name: mc-bedrock
       protocol: UDP
       port: {{ .Values.service.bedrockPort }}
 {{- end }}
