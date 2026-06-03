@@ -13,6 +13,8 @@ endpoints: []
 #   className: cilium # Default gateway class; optional
 #   hostnames:
 #     - "example.com"
+#   addresses:
+#     - IPAddress: "192.168.1.254"
 #   ports:
 #     - port: 80
 #       protocol: HTTP      # Supported: HTTP, HTTPS, TCP, UDP, TLS

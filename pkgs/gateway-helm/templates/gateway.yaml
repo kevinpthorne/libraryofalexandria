@@ -8,6 +8,13 @@ metadata:
   namespace: {{ $endpoint.namespace | default $.Release.Namespace }}
 spec:
   gatewayClassName: {{ $endpoint.className | default "cilium" }}
+  {{- if $endpoint.addresses }}
+  addresses:
+  {{- range $type, $value := $endpoint.addresses }}
+    - type: {{ $type }}
+      value: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
   listeners:
   {{- range $endpoint.ports }}
   - name: {{ .protocol | lower }}-{{ .port }}
