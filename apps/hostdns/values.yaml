@@ -30,7 +30,6 @@ external-dns:
     - gateway-tlsroute
     - gateway-tcproute
     - gateway-udproute
-    - gateway
 
   # filter to non-federation services/gateways
   extraArgs:

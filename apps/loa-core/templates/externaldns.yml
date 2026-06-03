@@ -39,7 +39,8 @@ spec:
         # Tell ExternalDNS to watch the Gateway API
         sources:
           - gateway-tlsroute
-          - gateway
+          - gateway-tcproute
+          - gateway-udproute
 
         extraArgs:
           - --annotation-filter=external-dns.loa.internal/expose=public
