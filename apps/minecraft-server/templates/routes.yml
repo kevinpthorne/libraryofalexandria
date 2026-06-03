@@ -8,7 +8,7 @@ metadata:
 spec:
   parentRefs:
     - name: minecraft-gateway
-      sectionName: mc-java
+      sectionName: tcp-25565
   rules:
     - backendRefs:
       - name: minecraft-minecraft-server
@@ -23,7 +23,7 @@ metadata:
 spec:
   parentRefs:
     - name: minecraft-gateway
-      sectionName: mc-bedrock
+      sectionName: udp-19132
   rules:
     - backendRefs:
       - name: minecraft-minecraft-server
