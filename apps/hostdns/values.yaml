@@ -4,13 +4,37 @@ cluster: {}
 namespace: hostdns
 
 staticIP: ~
+pvc:
+  storageClass: longhorn
+  size: 100Mi
 
 external-dns:
   provider:
-    name: powerdns
-    powerdns:
-      apiUrl: "http://powerdns.hostdns.svc.cluster.local:8081"
-      apiKey: "YourSuperSecretKey"
+    name: pdns
+    
+    # Because PowerDNS supports TXT records, 'sync' allows ExternalDNS to automatically 
+    # delete records when you delete the corresponding K8s resources.
+    policy: sync 
+
+    # Use TXT registry for state tracking
+    registry: txt
+    # Give your cluster a unique ID so it only manages its own TXT records
+    txtOwnerId: {{ .Values.cluster.name }}
+
+    env:
+      - name: EXTERNAL_DNS_PDNS_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: powerdns-secret
+            key: EXTERNAL_DNS_PDNS_API_KEY
+
+    extraArgs:
+      # The address and port of your PowerDNS webserver/API. 
+      # Update this to match your actual PowerDNS server IP or hostname.
+      - --pdns-server="https://powerdns.hostdns.svc.cluster.local:8081"
+
+    domainFilters:
+      - .internal
 
   podSecurityContext:
     runAsNonRoot: true
