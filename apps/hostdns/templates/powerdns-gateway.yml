@@ -13,8 +13,6 @@ spec:
       values: |
         endpoints:
         - name: powerdns-app
-          hostnames:
-          - dns.{{ .Values.cluster.name }}.loa.internal  # kind of pointless
           {{- if .Values.staticIP }}
           addresses:
             - IPAddress: {{ .Values.staticIP }}
