@@ -55,6 +55,21 @@ gateway:
   enabled: true
   className: cilium
 
+gateway-helm:
+  endpoints:
+  - name: minecraft
+    hostnames:
+      - "minecraft.k.loa.internal"
+    ports:
+      - port: 25565
+        protocol: TCP
+        targetPort: 25565
+        targetService: minecraft-minecraft-server
+      - port: 19132
+        protocol: UDP
+        targetPort: 19132
+        targetService: minecraft-minecraft-server
+
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little

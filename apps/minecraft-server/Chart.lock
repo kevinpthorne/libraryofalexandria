@@ -1,0 +1,6 @@
+dependencies:
+- name: gateway-helm
+  repository: file://../../pkgs/gateway-helm
+  version: 0.1.0
+digest: sha256:985de98f5d20b4ad22d27515b43b1920f5a8bef712f1a526f555e4c035851f6c
+generated: "2026-06-03T23:02:40.375897-04:00"

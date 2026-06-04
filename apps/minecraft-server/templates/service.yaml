@@ -12,12 +12,8 @@ spec:
       protocol: TCP
       name: mc-java
     - port: {{ .Values.service.bedrockPort }}
-      targetPort: mc-bedrock-tcp
-      protocol: TCP
-      name: mc-bedrock-tcp
-    - port: {{ .Values.service.bedrockPort }}
-      targetPort: mc-bedrock-udp
+      targetPort: mc-bedrock
       protocol: UDP
-      name: mc-bedrock-udp
+      name: mc-bedrock
   selector:
     {{- include "minecraft-server.selectorLabels" . | nindent 4 }}
