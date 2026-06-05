@@ -50,6 +50,8 @@ spec:
             value: {{ .Values.timezone }}
           - name: k8s
             value: "True"
+          - name: MaxMemory
+            value: 2048
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
