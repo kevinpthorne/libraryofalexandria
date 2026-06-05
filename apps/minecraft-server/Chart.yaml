@@ -22,8 +22,3 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "26.1.2"
-
-dependencies:
-  - name: gateway-helm
-    version: 0.1.0
-    repository: file://../../pkgs/gateway-helm
