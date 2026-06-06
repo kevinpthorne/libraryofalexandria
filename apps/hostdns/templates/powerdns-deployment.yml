@@ -1,9 +1,10 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: powerdns
   namespace: {{ .Release.Namespace }}
 spec:
+  serviceName: "powerdns"
   replicas: 1
   selector:
     matchLabels:

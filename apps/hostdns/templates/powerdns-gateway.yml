@@ -20,10 +20,6 @@ spec:
           ports:
             - port: 53
               targetPort: 5353
-              protocol: TCP
-              targetService: powerdns
-            - port: 53
-              targetPort: 5353
               protocol: UDP
               targetService: powerdns
   destination:
