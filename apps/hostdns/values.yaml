@@ -26,7 +26,7 @@ external-dns:
       valueFrom:
         secretKeyRef:
           name: powerdns-secret
-          key: EXTERNAL_DNS_PDNS_API_KEY
+          key: api-key
 
   extraArgs:
     # The address and port of your PowerDNS webserver/API. 
