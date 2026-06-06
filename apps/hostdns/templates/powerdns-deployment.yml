@@ -81,6 +81,7 @@ spec:
         - "--webserver=yes"
         - "--webserver-address=0.0.0.0"
         - "--webserver-port=8081"
+        - "--webserver-allow-from={{ .Values.cluster.clusterCidr }}"
         - "--launch=gsqlite3"
         - "--gsqlite3-database=/var/lib/powerdns/pdns.sqlite3"
         - "--gsqlite3-dnssec=yes"

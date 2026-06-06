@@ -12,7 +12,7 @@ spec:
     targetRevision: HEAD
     helm:
       valuesObject:
-        cluster: {{ .Values.cluster }}
+        cluster: {{ .Values.cluster | toYaml }}
         external-dns:
           provider:
             txtOwnerId: "{{ .Values.cluster.name }}-pdns"
