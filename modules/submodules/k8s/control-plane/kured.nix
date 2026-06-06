@@ -54,6 +54,9 @@
               # The sentinel file your NixOS systemd script touches
               rebootSentinel = "/run/kured/reboot-required";
 
+              forceReboot = true;
+              drainGracePeriod = 60;
+
               # Ensure Kured only reboots 1 node at a time
               concurrency = 1;
 
