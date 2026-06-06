@@ -20,7 +20,7 @@ spec:
         fsGroup: 10000
       initContainers:
       - name: init-sqlite
-        image: alpine:latest
+        image: python:3-alpine
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -28,17 +28,24 @@ spec:
             drop: ["ALL"]
           seccompProfile:
             type: RuntimeDefault
-        command: ["/bin/sh", "-c"]
+        command: ["python", "-c"]
         args:
         - |
-          if [ ! -s /var/lib/powerdns/pdns.sqlite3 ]; then
-            cd /var/lib/powerdns
-            wget -qO sqlite.zip https://www.sqlite.org/2024/sqlite-tools-linux-x64-3450300.zip
-            unzip -q sqlite.zip
-            wget -qO schema.sql https://raw.githubusercontent.com/PowerDNS/pdns/rel/auth-5.0.x/modules/gsqlite3backend/schema.sqlite3.sql
-            ./sqlite-tools-linux-x64-3450300/sqlite3 pdns.sqlite3 < schema.sql
-            rm -rf sqlite.zip sqlite-tools-linux-x64-3450300 schema.sql
-          fi
+          import os
+          import urllib.request
+          import sqlite3
+
+          db_path = "/var/lib/powerdns/pdns.sqlite3"
+          schema_url = "https://raw.githubusercontent.com/PowerDNS/pdns/rel/auth-5.0.x/modules/gsqlite3backend/schema.sqlite3.sql"
+
+          if not os.path.exists(db_path) or os.path.getsize(db_path) == 0:
+              print("Downloading schema...")
+              schema = urllib.request.urlopen(schema_url).read().decode("utf-8")
+              print("Initializing database...")
+              conn = sqlite3.connect(db_path)
+              conn.executescript(schema)
+              conn.close()
+              print("Database initialized.")
         volumeMounts:
         - name: pdns-storage
           mountPath: /var/lib/powerdns
