@@ -5,7 +5,12 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: powerdns
+  {{- if .Values.staticIP }}
+  annotations:
+    lbipam.cilium.io/ips: {{ .Values.staticIP }}
+  {{- end }}
 spec:
+  type: LoadBalancer
   selector:
     app: powerdns
   ports:
