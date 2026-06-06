@@ -23,10 +23,27 @@
         name = "argo";
         chart = "argo/argo-cd";
         version = config.libraryofalexandria.control-plane.argocd.version;
-        # https://artifacthub.io/packages/helm/k8s-dashboard/argo-cd?modal=values
+        # https://artifacthub.io/packages/helm/argo-cd-oci/argo-cd
         values = lib2.deepMerge [
           {
             global.domain = "argocd.${config.libraryofalexandria.cluster.name}.loa.internal";
+            configs.params."reconcile\.timeout" = "300s";
+
+            # save CPU/RAM on checking complex tree
+            configs.cm."resource\.behaviors" = ''
+                - apiGroups:
+                  - "*.aws.upbound.io"
+                  - "*.keycloak.crossplane.io"
+                  - "*.netbird.crossplane.io"
+                  - "*.sql.crossplane.io"
+                  behavior: "IgnoreChildren"
+            '';
+            configs.cm."resource\.customizations" = ''
+                *.crossplane.io/*:
+                  health.statusAssessment: "Ignore"
+                *.upbound.io/*:
+                  health.statusAssessment: "Ignore"
+            '';
           }
           config.libraryofalexandria.control-plane.argocd.values
         ];

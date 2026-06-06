@@ -5,6 +5,9 @@
   pkgs,
   ...
 }:
+let
+  isMaster = config.libraryofalexandria.node.type == "master";
+in
 {
   imports = [ ../helm ];
 
@@ -29,12 +32,23 @@
         # https://longhorn.io/docs/1.10.0/advanced-resources/deploy/customizing-default-settings/#using-helm
         values = lib2.deepMerge [
           {
+            image.longhorn = {
+              # this 'promotes' longhorn to kube-system status
+              engineManager.priorityClass = "system-node-critical";
+              replicaManager.priorityClass = "system-node-critical";
+            };
             defaultSettings = {
               enablePSP = "true";
               defaultDataLocality = "best-effort";
+
               defaultReplicaCount = "2";
               replicaAutoBalance = "true";
+              # cap replica thrash/spikes
+              replicaReplicaCountCheckInterval = "30";
+              concurrentReplicaRebuildPerNodeLimit = "1";
+
               defaultDataPath = "/var/lib/longhorn"; # ensure to line this up with disk mounts
+              storageOverProvisioningPercentage = "150";
             };
           }
           config.libraryofalexandria.control-plane.longhorn.values
@@ -44,7 +58,15 @@
       }
     ];
 
-    boot.kernelModules = [ "iscsi_tcp" ]; # v1 longhorn data engine requirement
+    boot.kernelModules = [ 
+      "iscsi_tcp" # v1 longhorn data engine requirement
+    ] ++ (lib.optionals isMaster [
+      "bfq" # etcd needs fast fsync. Can't let longhorn stall fsync
+    ]);
+    services.udev.extraRules = lib.mkIf isMaster ''
+      # Enable the BFQ I/O scheduler for NVMe drives to protect etcd fsync latency
+      ACTION=="add|change", KERNEL=="nvme*", ATTR{queue/scheduler}="bfq"
+    '';
 
     environment.systemPackages = with pkgs; [
       openiscsi # v1 longhorn data engine requirement
