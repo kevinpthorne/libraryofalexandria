@@ -18,8 +18,7 @@ let
     { pkgs, lib, ... }:
     {
       imports = [
-        ./submodules/kevint.nix
-        # ./submodules/akri.nix
+        ./submodules
       ];
 
       config = {

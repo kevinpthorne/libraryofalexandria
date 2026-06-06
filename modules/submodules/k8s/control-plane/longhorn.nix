@@ -45,7 +45,6 @@ in
               replicaAutoBalance = "true";
               # cap replica thrash/spikes
               replicaReplicaCountCheckInterval = "30";
-              concurrentReplicaRebuildPerNodeLimit = "1";
 
               defaultDataPath = "/var/lib/longhorn"; # ensure to line this up with disk mounts
               storageOverProvisioningPercentage = "150";
