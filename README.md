@@ -60,6 +60,8 @@ Colmena is used to configure the base hosts.
 ```bash
 # Example to deploy to the test cluster using colmena
 nix run .#apps.aarch64-linux.colmena -- apply --on @cluster=test -v --show-trace
+# Run commands on all
+nix run .#apps.aarch64-linux.colmena -- exec --on @cluster=test -v --show-trace date
 ```
 
 ### Locking Helm Charts
