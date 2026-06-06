@@ -32,6 +32,7 @@ external-dns:
       # The address and port of your PowerDNS webserver/API. 
       # Update this to match your actual PowerDNS server IP or hostname.
       - --pdns-server="https://powerdns.hostdns.svc.cluster.local:8081"
+      - --pdns-api-key=$(EXTERNAL_DNS_PDNS_API_KEY)
 
     domainFilters:
       - .internal
@@ -54,6 +55,7 @@ external-dns:
     - gateway-tlsroute
     - gateway-tcproute
     - gateway-udproute
+    - service
 
   # filter to non-federation services/gateways
   annotationFilter: "external-dns.loa.internal/expose notin (federation)"
