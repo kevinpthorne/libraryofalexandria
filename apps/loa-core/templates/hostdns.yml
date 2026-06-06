@@ -13,6 +13,9 @@ spec:
     helm:
       valuesObject:
         cluster: {{ .Values.cluster }}
+        external-dns:
+          provider:
+            txtOwnerId: "{{ .Values.cluster.name }}-pdns"
         {{- $dns := (((.Values.cluster | default dict).virtualIps | default dict).reservations | default dict).dns }}
         {{- if $dns }}
         staticIP: {{ $dns }}

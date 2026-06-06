@@ -42,8 +42,7 @@ spec:
           - gateway-tcproute
           - gateway-udproute
 
-        extraArgs:
-          - --annotation-filter=external-dns.loa.internal/expose=public
+        annotationFilter: "external-dns.loa.internal/expose=public"
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: externaldns
