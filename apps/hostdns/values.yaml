@@ -56,4 +56,4 @@ external-dns:
     - gateway-udproute
 
   # filter to non-federation services/gateways
-  annotationFilter: "external-dns.loa.internal/expose!=federation"
+  annotationFilter: "external-dns.loa.internal/expose notin (federation)"

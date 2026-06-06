@@ -42,7 +42,7 @@ spec:
           - gateway-tcproute
           - gateway-udproute
 
-        annotationFilter: "external-dns.loa.internal/expose=public"
+        annotationFilter: "external-dns.loa.internal/expose in (public)"
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: externaldns
