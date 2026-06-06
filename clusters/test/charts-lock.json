@@ -11,31 +11,15 @@
     "url": "file:///nix/store/vakar5q5wxhy3j8i5jqr0wkhfmgijfdz-cilium-virtual-ips/cilium-virtual-ips-0.1.0.tgz",
     "images": {}
   },
-  "longhorn-namespace": {
-    "url": "file:///nix/store/ih28ds4v4vn0y6jzwqsy2azr7jyv7w94-namespace-helm/namespace-helm-0.1.0.tgz",
-    "images": {}
-  },
-  "longhorn": {
-    "url": "https://github.com/longhorn/charts/releases/download/longhorn-1.11.0/longhorn-1.11.0.tgz",
-    "hash": "sha256-fpBaiw3DJ0KRQ1Co5AYjT/WuZR1LjD+Zq6hKg2CKG/Y=",
+  "kured": {
+    "url": "https://github.com/kubereboot/charts/releases/download/kured-5.12.0/kured-5.12.0.tgz",
+    "hash": "sha256-UoBcu+BtTaTLNgYp999hoybsN8jfbrs49yzWrSugods=",
     "images": {
-      "docker.io/longhornio/longhorn-manager:v1.11.0": {
-        "imageName": "docker.io/longhornio/longhorn-manager",
-        "imageDigest": "sha256:acea91f195d5ac9500ab597b185b6fe5e90a02336bae70f4847155cdf417eea0",
-        "hash": "sha256-mBpheDYXanu0GUFncO5O6DNUurJhyWHr75UtUBvwLCQ=",
-        "finalImageTag": "v1.11.0"
-      },
-      "docker.io/longhornio/longhorn-share-manager:v1.11.0": {
-        "imageName": "docker.io/longhornio/longhorn-share-manager",
-        "imageDigest": "sha256:19e9be9e470adf15447bc16dd8c3bc25153d13667abda9a6c37d0aaadd1717b6",
-        "hash": "sha256-aU6BHO+QmaqGbZj8/rMm3Espemah3iJPv35rdq0eomg=",
-        "finalImageTag": "v1.11.0"
-      },
-      "docker.io/longhornio/longhorn-ui:v1.11.0": {
-        "imageName": "docker.io/longhornio/longhorn-ui",
-        "imageDigest": "sha256:e3a4761f49e6198c4de418e74a3c36f08326a14efcebf63cd13a840505843ef5",
-        "hash": "sha256-DeCKOx96B5Ah/Gl+yuMvoIbaB4Q7lMj62icaxbNzZmg=",
-        "finalImageTag": "v1.11.0"
+      "ghcr.io/kubereboot/kured:1.22.0": {
+        "imageName": "ghcr.io/kubereboot/kured",
+        "imageDigest": "sha256:e794456190614545de13d2864b0994f99432325a29df7f2c62f08850c2491836",
+        "hash": "sha256-bzLol2d+SII3samDV8/zGInAk9cuzgopAMjgy4yKw0M=",
+        "finalImageTag": "1.22.0"
       }
     }
   },
@@ -116,8 +100,36 @@
     }
   },
   "pki-bootstrap": {
-    "url": "file:///nix/store/0yjbnd9i8vslkacgd44wk1bnnclhdmbn-pki-bootstrap-helm/pki-bootstrap-helm-0.1.0.tgz",
+    "url": "file:///nix/store/cvarvhbzlz68g7qkqyym9rm4nxn39l6c-pki-bootstrap-helm/pki-bootstrap-helm-0.1.0.tgz",
     "images": {}
+  },
+  "longhorn-namespace": {
+    "url": "file:///nix/store/ih28ds4v4vn0y6jzwqsy2azr7jyv7w94-namespace-helm/namespace-helm-0.1.0.tgz",
+    "images": {}
+  },
+  "longhorn": {
+    "url": "https://github.com/longhorn/charts/releases/download/longhorn-1.11.0/longhorn-1.11.0.tgz",
+    "hash": "sha256-fpBaiw3DJ0KRQ1Co5AYjT/WuZR1LjD+Zq6hKg2CKG/Y=",
+    "images": {
+      "docker.io/longhornio/longhorn-manager:v1.11.0": {
+        "imageName": "docker.io/longhornio/longhorn-manager",
+        "imageDigest": "sha256:acea91f195d5ac9500ab597b185b6fe5e90a02336bae70f4847155cdf417eea0",
+        "hash": "sha256-mBpheDYXanu0GUFncO5O6DNUurJhyWHr75UtUBvwLCQ=",
+        "finalImageTag": "v1.11.0"
+      },
+      "docker.io/longhornio/longhorn-share-manager:v1.11.0": {
+        "imageName": "docker.io/longhornio/longhorn-share-manager",
+        "imageDigest": "sha256:19e9be9e470adf15447bc16dd8c3bc25153d13667abda9a6c37d0aaadd1717b6",
+        "hash": "sha256-aU6BHO+QmaqGbZj8/rMm3Espemah3iJPv35rdq0eomg=",
+        "finalImageTag": "v1.11.0"
+      },
+      "docker.io/longhornio/longhorn-ui:v1.11.0": {
+        "imageName": "docker.io/longhornio/longhorn-ui",
+        "imageDigest": "sha256:e3a4761f49e6198c4de418e74a3c36f08326a14efcebf63cd13a840505843ef5",
+        "hash": "sha256-DeCKOx96B5Ah/Gl+yuMvoIbaB4Q7lMj62icaxbNzZmg=",
+        "finalImageTag": "v1.11.0"
+      }
+    }
   },
   "external-secrets": {
     "url": "https://github.com/external-secrets/external-secrets/releases/download/helm-chart-1.2.0/external-secrets-1.2.0.tgz",
@@ -132,7 +144,7 @@
     }
   },
   "argo-tls": {
-    "url": "file:///nix/store/30h175fnzgbnzm6mmvpchg4k7lrblqi7-service-tls-helm/service-tls-helm-0.1.0.tgz",
+    "url": "file:///nix/store/6al3b42d74i2cwsmv6g6pdby8qr9y1ns-service-tls-helm/service-tls-helm-0.1.0.tgz",
     "images": {}
   },
   "argo": {
@@ -160,23 +172,23 @@
     }
   },
   "argocd-gateway": {
-    "url": "file:///nix/store/rjixjmha7x0ry4z0hqxzcz5dn5z519nn-gateway-helm/gateway-helm-0.1.0.tgz",
+    "url": "file:///nix/store/d12gv30h249dx94zvvai43dhrxx3skg9-gateway-helm/gateway-helm-0.1.0.tgz",
     "images": {}
   },
   "loa-core": {
-    "url": "file:///nix/store/zw1qhib9cd50g0jyz8jczqqynhf8fdgw-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
+    "url": "file:///nix/store/lyifbrzyiay86c00bi4fcx113b64sqbm-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   },
   "loa-federation": {
-    "url": "file:///nix/store/zw1qhib9cd50g0jyz8jczqqynhf8fdgw-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
+    "url": "file:///nix/store/lyifbrzyiay86c00bi4fcx113b64sqbm-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   },
   "loa-observability": {
-    "url": "file:///nix/store/zw1qhib9cd50g0jyz8jczqqynhf8fdgw-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
+    "url": "file:///nix/store/lyifbrzyiay86c00bi4fcx113b64sqbm-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   },
   "test-apps": {
-    "url": "file:///nix/store/zw1qhib9cd50g0jyz8jczqqynhf8fdgw-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
+    "url": "file:///nix/store/lyifbrzyiay86c00bi4fcx113b64sqbm-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   }
 }

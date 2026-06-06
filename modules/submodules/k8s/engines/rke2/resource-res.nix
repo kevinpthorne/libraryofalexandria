@@ -7,7 +7,7 @@
           ''
             # 2. Hard limits for static pods
             control-plane-resource-limits:
-              - kube-apiserver-memory=2048Mi
+              - kube-apiserver-memory=2560Mi
               - etcd-memory=1500Mi
               - kube-controller-manager-memory=512Mi
 
@@ -15,6 +15,11 @@
             etcd-arg:
               # Lower the DB quota (default is 2G). 1G is plenty for 5 nodes.
               - "quota-backend-bytes=1073741824"  # TODO scale per node count
+            kube-apiserver-arg:
+              # Throttle read requests (LIST/WATCH from ArgoCD/Longhorn)
+              - "max-requests-inflight=150"     # Default is 400
+              # Throttle write requests (POST/PUT)
+              - "max-mutating-requests-inflight=50" # Default is 200
 
             # 4. OS and Kubelet Protection
             kubelet-arg:

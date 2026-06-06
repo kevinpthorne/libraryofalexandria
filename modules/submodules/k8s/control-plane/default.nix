@@ -14,6 +14,7 @@
     ./longhorn.nix
     ./trust-manager.nix
     ./cert-manager.nix
+    ./kured.nix
   ];
 
   options.libraryofalexandria.control-plane = lib.mkOption {
@@ -70,6 +71,10 @@
     longhorn = {
       enable = lib.mkDefault true;
       version = lib.mkDefault "1.11.0";
+    };
+    kured = {
+      enable = lib.mkDefault true;
+      version = lib.mkDefault "5.12.0";
     };
   };
 }
