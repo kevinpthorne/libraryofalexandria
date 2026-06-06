@@ -39,9 +39,9 @@
                   behavior: "IgnoreChildren"
             '';
             configs.cm."resource\.customizations" = ''
-                *.crossplane.io/*:
+                "*.crossplane.io/*":
                   health.statusAssessment: "Ignore"
-                *.upbound.io/*:
+                "*.upbound.io/*":
                   health.statusAssessment: "Ignore"
             '';
           }
