@@ -14,10 +14,22 @@ spec:
       labels:
         app: cloudflare-ddns
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
       containers:
         - name: cloudflare-ddns
           image: timothyjmiller/cloudflare-ddns:2.1.2
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: CLOUDFLARE_API_TOKEN
               valueFrom:
