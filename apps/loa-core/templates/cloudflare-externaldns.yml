@@ -17,6 +17,7 @@ spec:
           apiKeySecret: cf-key
           apiKeySecretKey: api-key
         external-dns:
+          txtOwnerId: {{ .Values.cluster.name }}
           extraArgs:
             - "--default-targets={{ .Values.cluster.externalDomain }}"
             - "--force-default-targets"
@@ -26,7 +27,7 @@ spec:
                 secretKeyRef:
                   name: cf-key
                   key: api-key
-                  
+
           sources:
           - gateway-tlsroute
           - gateway-tcproute
