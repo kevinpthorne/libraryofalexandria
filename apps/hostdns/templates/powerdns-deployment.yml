@@ -77,6 +77,8 @@ spec:
           protocol: TCP
 
         args:
+        - "--local-address=0.0.0.0"
+        - "--local-port=5353"
         - "--api=yes"
         - "--api-key=$(PDNS_API_KEY)" # ExternalDNS uses this
         - "--webserver=yes"
