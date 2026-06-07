@@ -47,6 +47,13 @@ spec:
               conn.executescript(schema)
               conn.close()
               print("Database initialized.")
+          
+          print("Ensuring default zones exist...")
+          conn = sqlite3.connect(db_path)
+          conn.execute("INSERT OR IGNORE INTO domains (name, type) VALUES ('internal', 'NATIVE')")
+          conn.execute("INSERT OR IGNORE INTO domains (name, type) VALUES ('loa.internal', 'NATIVE')")
+          conn.commit()
+          conn.close()
         volumeMounts:
         - name: pdns-storage
           mountPath: /var/lib/powerdns
