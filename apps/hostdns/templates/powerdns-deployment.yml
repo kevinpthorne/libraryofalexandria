@@ -52,6 +52,14 @@ spec:
           conn = sqlite3.connect(db_path)
           conn.execute("INSERT OR IGNORE INTO domains (name, type) VALUES ('internal', 'NATIVE')")
           conn.execute("INSERT OR IGNORE INTO domains (name, type) VALUES ('loa.internal', 'NATIVE')")
+          
+          # PowerDNS strictly requires an SOA record for a zone to be valid and answer queries
+          for domain in ['internal', 'loa.internal']:
+              res = conn.execute("SELECT id FROM domains WHERE name = ?", (domain,)).fetchone()
+              if res:
+                  domain_id = res[0]
+                  soa_content = f"ns.hostdns.svc.cluster.local hostmaster.{domain} 1 10800 3600 604800 3600"
+                  conn.execute("INSERT OR IGNORE INTO records (domain_id, name, type, content, ttl, auth) VALUES (?, ?, 'SOA', ?, 3600, 1)", (domain_id, domain, soa_content))
           conn.commit()
           conn.close()
         volumeMounts:
