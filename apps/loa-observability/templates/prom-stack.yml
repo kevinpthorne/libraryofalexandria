@@ -5,6 +5,8 @@ kind: Application
 metadata:
   name: prometheus-stack
   namespace: {{ .Values.argoNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"  # this app creates the namespace
 spec:
   project: default
   source:
@@ -30,6 +32,8 @@ spec:
                 driver: csi.cert-manager.io
                 readOnly: true
                 volumeAttributes:
+                  csi.cert-manager.io/issuer-group: "cert-manager.io"
+                  csi.cert-manager.io/issuer-kind: ClusterIssuer
                   csi.cert-manager.io/issuer-name: "app-pki-bootstrap-issuer"
                   csi.cert-manager.io/dns-names: "prometheus-node-exporter.observability.svc,prometheus-node-exporter.observability.svc.cluster.local"
             - name: node-exporter-config
