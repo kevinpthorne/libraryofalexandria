@@ -6,13 +6,10 @@ seaweedfs:
   size: 250G
   spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodMeta.ServiceAccountName }}"
 
-externaldns:
-  enabled: false
-  apiKeySecret: ~
-  apiKeySecretKey: ~
-
 hostdns:
   enabled: true
 
 externaldns:
   enabled: true
+  apiKeySecret: cf-key
+  apiKeySecretKey: api-key
