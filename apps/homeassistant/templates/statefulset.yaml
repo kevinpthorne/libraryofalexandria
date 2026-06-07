@@ -1,14 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ .Chart.Name }}
   labels:
     app.kubernetes.io/name: {{ .Chart.Name }}
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
-  replicas: {{ .Values.replicaCount }}
-  strategy:
-    type: Recreate
+  serviceName: {{ .Chart.Name }}
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ .Chart.Name }}
@@ -37,7 +36,9 @@ spec:
             - |
               if [ ! -f /config/configuration.yaml ]; then
                 cp /bootstrap/configuration.yaml /config/configuration.yaml
-                echo "Bootstrap configuration.yaml copied."
+                touch /config/automations.yaml /config/scripts.yaml /config/scenes.yaml
+                mkdir -p /config/themes
+                echo "Bootstrap configuration and include files created."
               else
                 echo "configuration.yaml already exists. Skipping bootstrap."
               fi
