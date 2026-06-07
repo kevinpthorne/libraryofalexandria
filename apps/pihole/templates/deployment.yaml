@@ -18,6 +18,11 @@ spec:
         app.kubernetes.io/name: {{ include "pihole.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
       containers:
         - name: pihole
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -30,8 +35,15 @@ spec:
                 secretKeyRef:
                   name: {{ include "pihole.fullname" . }}-auth
                   key: password
-            - name: DNSMASQ_USER
-              value: "root"
+            - name: WEB_PORT
+              value: "8080"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - name: dns-udp
               containerPort: {{ .Values.service.targetDnsPort }}
@@ -40,7 +52,7 @@ spec:
               containerPort: {{ .Values.service.targetDnsPort }}
               protocol: TCP
             - name: web-https
-              containerPort: 443
+              containerPort: 8443
               protocol: TCP
           volumeMounts:
             - name: etc-pihole
@@ -62,6 +74,14 @@ spec:
             - name: tls-cert
               mountPath: /etc/pihole-tls
               readOnly: true
+            - name: run
+              mountPath: /run
+            - name: run
+              mountPath: /var/run
+            - name: var-log
+              mountPath: /var/log
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: etc-pihole
           emptyDir: {}
@@ -74,3 +94,9 @@ spec:
           secret:
             secretName: {{ include "pihole.fullname" . }}-tls
             optional: true
+        - name: run
+          emptyDir: {}
+        - name: var-log
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

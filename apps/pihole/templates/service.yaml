@@ -14,7 +14,7 @@ spec:
   type: ClusterIP
   ports:
     - port: {{ .Values.service.webPort }}
-      targetPort: 443
+      targetPort: 8443
       protocol: TCP
       name: https
   selector:

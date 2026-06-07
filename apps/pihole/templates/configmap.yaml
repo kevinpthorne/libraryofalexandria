@@ -20,7 +20,7 @@ data:
     {{- end }}
   external.conf: |
     server.modules += ( "mod_openssl" )
-    $SERVER["socket"] == ":443" {
+    $SERVER["socket"] == ":8443" {
       ssl.engine  = "enable"
       ssl.pemfile = "/etc/pihole-tls/tls.crt"
       ssl.privkey = "/etc/pihole-tls/tls.key"
