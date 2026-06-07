@@ -50,6 +50,8 @@ service:
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
   javaPort: 25565  # match probes
   bedrockPort: 19132
+  domains: []
+  public: false
 
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious

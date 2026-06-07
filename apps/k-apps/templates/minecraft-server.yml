@@ -10,7 +10,12 @@ spec:
     path: apps/minecraft-server
     targetRevision: HEAD
     helm:
-      valuesObject: {}
+      valuesObject:
+        service:
+          domains:
+            - mc.k.loa.internal
+            - mc.k.kpt.link
+          public: true
   destination:
     server: https://kubernetes.default.svc
     namespace: minecraft
