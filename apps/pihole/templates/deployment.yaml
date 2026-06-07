@@ -20,23 +20,28 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 999
-        runAsGroup: 999
-        fsGroup: 999
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: pihole
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          workingDir: /tmp
           env:
             - name: TZ
               value: {{ .Values.pihole.tz }}
-            - name: WEBPASSWORD
+            - name: FTLCONF_webserver_api_password
               valueFrom:
                 secretKeyRef:
                   name: {{ include "pihole.fullname" . }}-auth
                   key: password
             - name: WEB_PORT
               value: "8080"
+            - name: FTLCONF_MACVENDORDB
+              value: "/etc/pihole/macvendor.db"
+            - name: TMPDIR
+              value: "/tmp"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -82,6 +87,8 @@ spec:
               mountPath: /var/log
             - name: tmp
               mountPath: /tmp
+            - name: spool-cron
+              mountPath: /var/spool/cron
       volumes:
         - name: etc-pihole
           emptyDir: {}
@@ -99,4 +106,6 @@ spec:
         - name: var-log
           emptyDir: {}
         - name: tmp
+          emptyDir: {}
+        - name: spool-cron
           emptyDir: {}
