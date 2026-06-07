@@ -1,0 +1,27 @@
+global:
+  ddnsDomain: ""
+  apiKeySecret: "cf-key"
+  apiKeySecretKey: "api-key"
+
+external-dns:
+  provider:
+    name: cloudflare
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+    fsGroup: 65534
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: RuntimeDefault
+
+  sources:
+    - gateway-tlsroute
+    - gateway-tcproute
+    - gateway-udproute
+    - service
+

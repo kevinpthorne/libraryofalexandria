@@ -9,7 +9,5 @@ seaweedfs:
 hostdns:
   enabled: true
 
-externaldns:
+cloudflareExternaldns:
   enabled: true
-  apiKeySecret: cf-key
-  apiKeySecretKey: api-key
