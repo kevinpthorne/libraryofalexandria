@@ -6,7 +6,7 @@ metadata:
     {{- include "minecraft-server.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.service.domains }}
-    external-dns.alpha.kubernetes.io/hostname: "{{ join \",\" .Values.ingress.domains | quote }}"
+    external-dns.alpha.kubernetes.io/hostname: "{{ join ',' .Values.ingress.domains | quote }}"
     {{- if .Values.service.public }}
     external-dns.loa.internal/expose: "public"
     {{- end }}
