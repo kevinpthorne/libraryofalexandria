@@ -28,7 +28,7 @@ spec:
                     clusterName:
                       type: string
                     sans:
-                      type: string
+                      type: array
                       description: A list of Subject Alternative Names (SANs).
                       items:
                         type: string
