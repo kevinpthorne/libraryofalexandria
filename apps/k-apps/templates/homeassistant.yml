@@ -10,7 +10,12 @@ spec:
     path: apps/homeassistant
     targetRevision: HEAD
     helm:
-      valuesObject: {}
+      valuesObject:
+        resources:
+          limits:
+            akri.sh/homeassistant-connection-zb1: 1
+          requests:
+            akri.sh/homeassistant-connection-zb1: 1
   destination:
     server: https://kubernetes.default.svc
     namespace: homeassistant
