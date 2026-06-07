@@ -11,5 +11,5 @@ spec:
     name: udev
     discoveryDetails: |+
       udevRules:
-        - 'SUBSYSTEM=="tty", DRIVER=="cp210x"'
+        - 'SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60"'
   capacity: 1 # Only 1 pod can claim this physical USB stick at a time
