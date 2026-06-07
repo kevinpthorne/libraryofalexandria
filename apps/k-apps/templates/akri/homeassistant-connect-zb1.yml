@@ -1,0 +1,15 @@
+apiVersion: akri.sh/v0
+kind: Configuration
+metadata:
+  name: homeassistant-connection-zb1
+  namespace: akri
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "1" # akri comes in wave 0
+spec:
+  discoveryHandler:
+    name: udev
+    discoveryDetails: |+
+      udevRules:
+        - 'SUBSYSTEM=="tty", DRIVER=="cp210x"'
+  capacity: 1 # Only 1 pod can claim this physical USB stick at a time
