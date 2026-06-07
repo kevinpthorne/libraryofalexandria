@@ -14,6 +14,16 @@ spec:
       values: |
         loki:
           auth_enabled: false
+          
+          # 1. INSTRUCT LOKI TO SERVE TRAFFIC OVER TLS
+          server:
+            http_tls_config:
+              cert_file: /etc/loki/tls/tls.crt
+              key_file: /etc/loki/tls/tls.key
+            grpc_tls_config:
+              cert_file: /etc/loki/tls/tls.crt
+              key_file: /etc/loki/tls/tls.key
+
           commonConfig:
             replication_factor: 1
 
@@ -50,19 +60,28 @@ spec:
             - name: ca-bundle-volume
               configMap:
                 name: trusted-ca-bundle
+            - name: loki-tls-volume
+              csi:
+                driver: csi.cert-manager.io
+                readOnly: true
+                volumeAttributes:
+                  csi.cert-manager.io/issuer-name: "app-pki-bootstrap-issuer"
+                  csi.cert-manager.io/issuer-kind: "ClusterIssuer"
+                  csi.cert-manager.io/issuer-group: "cert-manager.io"
+                  csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local,${POD_NAME}.${POD_NAMESPACE}.svc.cluster.{{ .Values.cluster.name }},${POD_NAME}.{{ .Values.cluster.name }}.loa.internal"
                 
-          # 3. MOUNT THE VOLUME INTO THE POD
           extraVolumeMounts:
             - name: ca-bundle-volume
               mountPath: /etc/loki/certs
               readOnly: true
+            - name: loki-tls-volume
+              mountPath: /etc/loki/tls
+              readOnly: true
               
           extraEnv:
-            # 4. INSTRUCT LOKI'S S3 CLIENT TO TRUST THE MOUNTED BUNDLE
             - name: SSL_CERT_FILE
               value: "/etc/loki/certs/ca-bundle.crt"
               
-            # (Keep your AWS credentials from earlier)
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:

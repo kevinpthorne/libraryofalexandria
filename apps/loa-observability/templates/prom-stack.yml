@@ -13,23 +13,87 @@ spec:
     targetRevision: 58.x.x
     helm:
       values: |
-        # Tolerate RKE2 Control Plane taints so Node Exporter can scrape server nodes
+        # ---------------------------------------------------------
+        # PROMETHEUS NODE EXPORTER
+        # ---------------------------------------------------------
         prometheus-node-exporter:
           tolerations:
             - effect: NoSchedule
               operator: Exists
             - effect: NoExecute
               operator: Exists
-              
+          extraArgs:
+            - --web.config.file=/etc/node-exporter-config/web-config.yaml
+          extraVolumes:
+            - name: node-exporter-tls
+              csi:
+                driver: csi.cert-manager.io
+                readOnly: true
+                volumeAttributes:
+                  csi.cert-manager.io/issuer-name: "app-pki-bootstrap-issuer"
+                  csi.cert-manager.io/dns-names: "prometheus-node-exporter.observability.svc,prometheus-node-exporter.observability.svc.cluster.local"
+            - name: node-exporter-config
+              configMap:
+                name: node-exporter-web-config
+          extraVolumeMounts:
+            - name: node-exporter-tls
+              mountPath: /etc/node-exporter-tls
+              readOnly: true
+            - name: node-exporter-config
+              mountPath: /etc/node-exporter-config
+              readOnly: true
+          prometheus:
+            monitor:
+              scheme: https
+              tlsConfig:
+                # IPs won't match the CSI cert DNS, skipping verify is standard for DaemonSets
+                insecureSkipVerify: true 
+
+        # ---------------------------------------------------------
+        # GRAFANA
+        # ---------------------------------------------------------
         grafana:
           enabled: true
+          grafana.ini:
+            server:
+              protocol: https
+              cert_file: /etc/grafana-tls/tls.crt
+              cert_key: /etc/grafana-tls/tls.key
+          env:
+            SSL_CERT_FILE: /etc/ssl/certs/custom-ca/ca-bundle.crt
+          extraVolumes:
+            - name: grafana-tls
+              csi:
+                driver: csi.cert-manager.io
+                readOnly: true
+                volumeAttributes:
+                  csi.cert-manager.io/issuer-name: "app-pki-bootstrap-issuer"
+                  csi.cert-manager.io/dns-names: "grafana.observability.svc,grafana.observability.svc.cluster.local"
+            - name: ca-bundle
+              configMap:
+                name: trusted-ca-bundle
+          extraVolumeMounts:
+            - name: grafana-tls
+              mountPath: /etc/grafana-tls
+              readOnly: true
+            - name: ca-bundle
+              mountPath: /etc/ssl/certs/custom-ca
+              readOnly: true
+          # Instruct Prometheus to scrape Grafana via HTTPS
+          serviceMonitor:
+            scheme: https
+            tlsConfig:
+              caFile: /etc/ssl/certs/custom-ca/ca-bundle.crt
+              serverName: grafana.observability.svc
           # Pre-wire Loki into Grafana
           additionalDataSources:
             - name: Loki
               type: loki
-              url: http://loki.observability.svc.cluster.local:3100
+              url: https://loki.observability.svc.cluster.local:3100
               access: proxy
               isDefault: false
+              jsonData:
+                tlsAuthWithCACert: true
           # Strict Security Context for Grafana
           containerSecurityContext:
             allowPrivilegeEscalation: false
@@ -39,8 +103,45 @@ spec:
             seccompProfile:
               type: RuntimeDefault
 
+        # ---------------------------------------------------------
+        # PROMETHEUS
+        # ---------------------------------------------------------
         prometheus:
+          # Instruct Prometheus to scrape itself via HTTPS
+          serviceMonitor:
+            scheme: https
+            tlsConfig:
+              caFile: /etc/ssl/certs/custom-ca/ca-bundle.crt
+              serverName: prometheus-operated.observability.svc
           prometheusSpec:
+            # Tell Prometheus to serve HTTPS on its UI/API
+            web:
+              tlsConfig:
+                certFile: /etc/prometheus-tls/tls.crt
+                keyFile: /etc/prometheus-tls/tls.key
+            volumes:
+              - name: prometheus-tls
+                csi:
+                  driver: csi.cert-manager.io
+                  readOnly: true
+                  volumeAttributes:
+                    csi.cert-manager.io/issuer-name: "app-pki-bootstrap-issuer"
+                    csi.cert-manager.io/dns-names: "prometheus-operated.observability.svc,prometheus-operated.observability.svc.cluster.local"
+              - name: ca-bundle
+                configMap:
+                  name: trusted-ca-bundle
+            volumeMounts:
+              - name: prometheus-tls
+                mountPath: /etc/prometheus-tls
+                readOnly: true
+              - name: ca-bundle
+                mountPath: /etc/ssl/certs/custom-ca
+                readOnly: true
+            containers:
+              - name: prometheus
+                env:
+                  - name: SSL_CERT_FILE
+                    value: /etc/ssl/certs/custom-ca/ca-bundle.crt
             # Strict Security Context for Prometheus
             securityContext:
               runAsNonRoot: true
@@ -63,7 +164,6 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-    # Instruct ArgoCD to label the namespace to allow the privileged collectors
     managedNamespaceMetadata:
       labels:
         pod-security.kubernetes.io/enforce: privileged

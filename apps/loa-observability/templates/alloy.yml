@@ -59,7 +59,7 @@ spec:
 
               loki.write "local" {
                 endpoint {
-                  url = "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+                  url = "https://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
                 }
               }
   destination:

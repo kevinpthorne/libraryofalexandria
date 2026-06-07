@@ -1,0 +1,8 @@
+apiVersion: pki.loa.kevinpthorne.com/v1alpha1
+kind: ServiceCertificate
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  parameters:
+    clusterName: {{ .Values.cluster.name }}

@@ -102,19 +102,17 @@ spec:
   providerConfigRef:
     name: seaweedfs-provider-config
 ---
-# 4. Grant the IAM User permission to use the Loki buckets
+# 4a. Create the Managed Policy
 apiVersion: iam.aws.upbound.io/v1beta1
-kind: UserPolicy
+kind: Policy
 metadata:
-  name: loki-app-user-policy
+  name: loki-s3-access-policy
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
 spec:
   forProvider:
     name: loki-s3-access-policy
-    # Dynamically reference the user Crossplane created
-    userNameRef:
-      name: loki-app-user
+    description: "Allows Loki user to access its S3 buckets"
     # Standard AWS IAM JSON policy document
     policy: |
       {
@@ -139,5 +137,24 @@ spec:
           }
         ]
       }
+  providerConfigRef:
+    name: seaweedfs-provider
+
+---
+# 4b. Attach the Policy to the IAM User
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: UserPolicyAttachment
+metadata:
+  name: loki-app-user-policy-attach
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  forProvider:
+    # Dynamically reference the user Crossplane created
+    userRef:
+      name: loki-app-user
+    # Dynamically reference the policy Crossplane created above
+    policyArnRef:
+      name: loki-s3-access-policy
   providerConfigRef:
     name: seaweedfs-provider
