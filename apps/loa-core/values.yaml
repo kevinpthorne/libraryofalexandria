@@ -13,3 +13,6 @@ externaldns:
 
 hostdns:
   enabled: true
+
+externaldns:
+  enabled: true

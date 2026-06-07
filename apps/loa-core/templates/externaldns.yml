@@ -41,6 +41,7 @@ spec:
           - gateway-tlsroute
           - gateway-tcproute
           - gateway-udproute
+          - service
 
         annotationFilter: "external-dns.loa.internal/expose in (public)"
   destination:
