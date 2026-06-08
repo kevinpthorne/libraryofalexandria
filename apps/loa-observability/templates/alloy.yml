@@ -12,15 +12,28 @@ spec:
     targetRevision: 0.x.x
     helm:
       values: |
+        # Tolerate RKE2 Control Plane taints so Alloy runs on every node
+        controller:
+          tolerations:
+            - effect: NoSchedule
+              operator: Exists
+            - effect: NoExecute
+              operator: Exists
+          volumes:
+            extra:
+              - name: trusted-ca-bundle
+                configMap:
+                  name: trusted-ca-bundle
+
         alloy:
-          # Tolerate RKE2 Control Plane taints so Alloy runs on every node
-          controller:
-            tolerations:
-              - effect: NoSchedule
-                operator: Exists
-              - effect: NoExecute
-                operator: Exists
-                
+          # Mount the custom CA bundle
+          mounts:
+            extra:
+              - name: trusted-ca-bundle
+                mountPath: /etc/ssl/certs/trusted-ca-bundle.crt
+                subPath: ca-bundle.crt
+                readOnly: true
+
           # Enforce RuntimeDefault seccomp profile
           securityContext:
             seccompProfile:

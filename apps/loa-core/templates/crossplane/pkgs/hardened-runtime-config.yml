@@ -24,6 +24,8 @@ spec:
                 # Forces the Go HTTP client to trust this specific file
                 - name: SSL_CERT_FILE
                   value: /etc/x509/ca-bundle.crt
+                - name: AWS_CA_BUNDLE
+                  value: /etc/x509/ca-bundle.crt
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true 

@@ -38,7 +38,7 @@ metadata:
 spec:
   forProvider: {}
   providerConfigRef:
-    name: seaweedfs-provider
+    name: seaweedfs-provider-config
 
 ---
 # 3. Generate the Access Key for that User
@@ -53,7 +53,7 @@ spec:
     userNameRef:
       name: loki-app-user
   providerConfigRef:
-    name: seaweedfs-provider
+    name: seaweedfs-provider-config
   # Crossplane will save the dynamically generated SeaweedFS Key & Secret here
   writeConnectionSecretToRef:
     namespace: observability
@@ -138,7 +138,7 @@ spec:
         ]
       }
   providerConfigRef:
-    name: seaweedfs-provider
+    name: seaweedfs-provider-config
 
 ---
 # 4b. Attach the Policy to the IAM User
@@ -157,4 +157,4 @@ spec:
     policyArnRef:
       name: loki-s3-access-policy
   providerConfigRef:
-    name: seaweedfs-provider
+    name: seaweedfs-provider-config
