@@ -18,5 +18,14 @@ immich:
   namespace: immich
 
 netbird:
-  namespace: netbird
-  controllerNamespace: netbird-controller
+  agent:
+    namespace: netbird
+  controller:
+    namespace: netbird-controller
+    subdomain: nb
+    dashboardSubdomain: admin.nb
+
+externaldns:
+  namespace: federation-externaldns
+  apiKeySecret: cf-key
+  apiKeySecretKey: api-key

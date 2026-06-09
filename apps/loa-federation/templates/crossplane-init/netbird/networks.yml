@@ -28,7 +28,7 @@ spec:
   providerConfigRef:
     name: netbird-provider-config
 {{- range .Values.cluster.federateTo }}
-{{- $federatedCluster := index $.Values.cluster.federation . }}
+{{- $federatedCluster := index $.Values.cluster.federation.peers . }}
 ---
 apiVersion: vpn.netbird.crossplane.io/v1alpha1
 kind: NbNetwork
