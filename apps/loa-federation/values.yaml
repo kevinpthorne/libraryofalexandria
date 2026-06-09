@@ -17,14 +17,6 @@ keydb:
 immich:
   namespace: immich
 
-netbird:
-  agent:
-    namespace: netbird
-  controller:
-    namespace: netbird-controller
-    subdomain: nb
-    dashboardSubdomain: admin.nb
-
 externaldns:
   namespace: federation-externaldns
   apiKeySecret: cf-key

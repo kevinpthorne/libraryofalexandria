@@ -1,8 +1,0 @@
-apiVersion: pkg.crossplane.io/v1
-kind: Provider
-metadata:
-  name: provider-netbird
-spec:
-  package: ghcr.io/netbirdio/netbird-crossplane-provider:v0.4.2
-  runtimeConfigRef:
-    name: hardened-runtime-config
