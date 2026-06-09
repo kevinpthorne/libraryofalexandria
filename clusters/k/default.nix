@@ -114,6 +114,7 @@ in
       ];
       reservations = {
         dns = "192.168.121.249";
+        adguard = "192.168.121.248";
       };
       interfaces = [ "end0" ];
     };

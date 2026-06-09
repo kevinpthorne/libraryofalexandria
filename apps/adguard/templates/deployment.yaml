@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "adguard.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "adguard.name" . }}
+    helm.sh/chart: {{ include "adguard.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "adguard.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "adguard.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: init-config
+          image: "httpd:alpine"
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Generate bcrypt hash of the injected plaintext password
+              export HASH=$(htpasswd -B -n -b admin "$WEBPASSWORD" | cut -d ":" -f 2)
+              # Inject hash into AdGuardHome.yaml and write to the emptyDir
+              sed "s|__PASSWORD_HASH__|$HASH|g" /config-map/AdGuardHome.yaml > /opt/adguardhome/conf/AdGuardHome.yaml
+          env:
+            - name: WEBPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "adguard.fullname" . }}-auth
+                  key: password
+          volumeMounts:
+            - name: config
+              mountPath: /config-map
+            - name: opt-adguardhome-conf
+              mountPath: /opt/adguardhome/conf
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+      containers:
+        - name: adguard
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: TZ
+              value: {{ .Values.adguard.tz }}
+          ports:
+            - name: dns-udp
+              containerPort: {{ .Values.service.targetDnsPort }}
+              protocol: UDP
+            - name: dns-tcp
+              containerPort: {{ .Values.service.targetDnsPort }}
+              protocol: TCP
+            - name: web-https
+              containerPort: 8443
+              protocol: TCP
+          volumeMounts:
+            - name: opt-adguardhome-conf
+              mountPath: /opt/adguardhome/conf
+            - name: opt-adguardhome-work
+              mountPath: /opt/adguardhome/work
+            - name: tls-cert
+              mountPath: /etc/adguard-tls
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "adguard.fullname" . }}
+        - name: opt-adguardhome-conf
+          emptyDir: {}
+        - name: opt-adguardhome-work
+          emptyDir: {}
+        - name: tls-cert
+          secret:
+            secretName: {{ include "adguard.fullname" . }}-tls
+            optional: true

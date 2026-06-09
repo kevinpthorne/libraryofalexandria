@@ -1,0 +1,92 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: adguard
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: apps/adguard
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        adguard:
+          tz: "EDT"
+          {{- $adguard := (((.Values.cluster | default dict).virtualIps | default dict).reservations | default dict).adguard }}
+          {{- if $adguard }}
+          staticIP: {{ $adguard }}
+          {{- end }}
+          domain: adguard.k.loa.internal
+        {{- $dns := (((.Values.cluster | default dict).virtualIps | default dict).reservations | default dict).dns }}
+        upstreamDns:
+          {{- if $dns }}
+          - "{{ $dns }}"  # local powerdns (hostdns)
+          {{- end }}
+          - 1.1.1.3  # cloudflare anti-malware/anti-adult
+          - 208.67.222.123  # opendns family shield 1
+          - 208.67.220.123  # opendns family shield 2
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: adguard
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: adguard-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: adguard
+            hostnames:
+              - "adguard.k.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 8443
+                targetService: adguard
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: adguard
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: adguard-tls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "adguard"
+        cert:
+          sans:
+            - "adguard.k.loa.internal"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: adguard
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
