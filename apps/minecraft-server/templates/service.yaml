@@ -15,7 +15,6 @@ metadata:
     {{- end }}
 spec:
   type: {{ .Values.service.type }}
-  externalTrafficPolicy: Local
   ports:
     - port: {{ .Values.service.javaPort }}
       targetPort: mc-java
