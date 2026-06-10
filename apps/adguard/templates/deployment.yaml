@@ -93,6 +93,9 @@ spec:
             - name: web-https
               containerPort: 8443
               protocol: TCP
+            - name: dns-tls
+              containerPort: 8853
+              protocol: TCP
           volumeMounts:
             - name: opt-adguardhome-conf
               mountPath: /opt/adguardhome/conf
