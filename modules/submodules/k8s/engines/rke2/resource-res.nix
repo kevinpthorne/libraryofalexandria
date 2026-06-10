@@ -7,7 +7,7 @@
           ''
             # 2. Hard limits for static pods
             control-plane-resource-limits:
-              - kube-apiserver-memory=2560Mi
+              - kube-apiserver-memory=3072Mi
               - etcd-memory=1500Mi
               - kube-controller-manager-memory=512Mi
 

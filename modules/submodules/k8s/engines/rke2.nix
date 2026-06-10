@@ -314,7 +314,7 @@ in
               default_backend rke2_api_backend
 
             backend rke2_api_backend
-              option ssl-hello-chk
+              option tcp-check
               
               # server <hostname> <ip>:<port> check
               ${haProxyBackendServers}
@@ -364,10 +364,10 @@ in
           namespace = "kube-system";
         })
         {
-          name = "cilium-bgp-peering-policies";
-          chart = "${pkgs.cilium-bgp-peering-policies}/cilium-bgp-peering-policies-0.1.0.tgz";
+          name = "cilium-bgp-config";
+          chart = "${pkgs.cilium-bgp-config}/cilium-bgp-config-0.1.0.tgz";
           values = {
-            policies = [
+            configs = [
               {
                 name = "edgevpn-peering";
                 localASN = 65000;
@@ -375,7 +375,7 @@ in
                 nodeSelector = {};
                 neighbors = [
                   {
-                    peerAddress = "${thisCluster.federationBorderRouterIp}/32";
+                    peerAddress = thisCluster.federationBorderRouterIp;
                     peerASN = thisCluster.localAS;
                   }
                 ];

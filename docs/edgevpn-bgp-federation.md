@@ -37,7 +37,7 @@ Each cluster's local Pod and Service CIDRs are defined in the `localCIDRs` array
 
 To get the remote routes from the EdgeVPN gateway down to the actual Kubernetes nodes, the FRR sidecar establishes an internal peering session with the local Cilium BGP Control Plane.
 
-Cilium is configured to use a static ASN across all clusters (e.g., `65000`). This is configured via a `CiliumBGPPeeringPolicy`.
+Cilium is configured to use a static ASN across all clusters (e.g., `65000`). This is configured via a `CiliumBGPClusterConfig` (the new BGPv2 API for modern Cilium 1.16+).
 - FRR is configured with `ciliumPeerAS: 65000`. 
 - Cilium connects to the EdgeVPN gateway (via its Service ClusterIP or Node IP).
 - FRR advertises all the remote routes it learned from the VPN (`10.2.x.x -> 10.255.255.2`) down to Cilium.

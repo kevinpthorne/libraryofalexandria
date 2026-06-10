@@ -106,7 +106,7 @@ in
 
         backend k8s_api_backend
           balance roundrobin
-          option ssl-hello-chk
+          option tcp-check
           
           # server <hostname> <ip>:<port> check
           ${haProxyBackendServers}

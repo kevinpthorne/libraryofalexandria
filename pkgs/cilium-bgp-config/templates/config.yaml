@@ -1,0 +1,44 @@
+{{- range .Values.configs }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumBGPClusterConfig
+metadata:
+  name: {{ .name }}
+spec:
+  nodeSelector:
+    labelSelector:
+      matchLabels:
+        kubernetes.io/os: "linux"
+        {{- range $key, $val := .nodeSelector }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
+  bgpInstances:
+  - name: "instance-{{ .localASN }}"
+    localASN: {{ .localASN }}
+    peers:
+    {{- range $index, $neighbor := .neighbors }}
+    - name: "peer-{{ $index }}"
+      peerAddress: {{ $neighbor.peerAddress | quote }}
+      peerASN: {{ $neighbor.peerASN }}
+      peerConfigRef:
+        name: "{{ $.name }}-peer-config"
+    {{- end }}
+
+---
+apiVersion: cilium.io/v2
+kind: CiliumBGPPeerConfig
+metadata:
+  name: "{{ .name }}-peer-config"
+spec:
+  timers:
+    holdTimeSeconds: 90
+    keepAliveTimeSeconds: 30
+  ebgpMultihop: 10
+  families:
+    - afi: ipv4
+      safi: unicast
+{{- if .exportPodCIDR }}
+# If exportPodCIDR was true, we'd add an advertisement here. 
+# But since we originate routes from FRR sidecar, we leave it out or configure accordingly.
+{{- end }}
+{{- end }}
