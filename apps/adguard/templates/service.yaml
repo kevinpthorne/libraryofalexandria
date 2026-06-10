@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
   {{- if .Values.adguard.staticIP }}
   annotations:
-    io.cilium/bgp-virtual-ips: {{ .Values.adguard.staticIP }}
+    lbipam.cilium.io/ips: {{ .Values.adguard.staticIP }}
   {{- end }}
 spec:
   type: {{ .Values.service.type }}
