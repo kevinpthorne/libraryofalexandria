@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
-    path: apps/edgevpn
+    path: apps/edgevpn-bgp
     targetRevision: HEAD
     helm:
       releaseName: federation-edgevpn
