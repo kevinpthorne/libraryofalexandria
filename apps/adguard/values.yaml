@@ -13,6 +13,7 @@ service:
 adguard:
   tz: "America/New_York"
   domain: "adguard.k.loa.internal"
+  staticIP: ""
 
 upstreamDns:
   - 1.1.1.3
