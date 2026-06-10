@@ -51,10 +51,29 @@ spec:
               drop: ["ALL"]
             seccompProfile:
               type: RuntimeDefault
+        - name: strip-capabilities
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /opt/adguardhome/AdGuardHome /opt/adguardhome/work/AdGuardHome
+              chmod +x /opt/adguardhome/work/AdGuardHome
+          volumeMounts:
+            - name: opt-adguardhome-work
+              mountPath: /opt/adguardhome/work
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
       containers:
         - name: adguard
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/opt/adguardhome/work/AdGuardHome"]
           env:
             - name: TZ
               value: {{ .Values.adguard.tz }}
