@@ -7,7 +7,7 @@ image:
 
 service:
   type: LoadBalancer
-  webHttpsPort: 8443
+  webHttpsPort: 443
   targetDnsPort: 5353
 
 adguard:
