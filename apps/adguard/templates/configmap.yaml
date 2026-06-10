@@ -20,7 +20,7 @@ data:
       statistics_interval: 1
       querylog_enabled: true
       querylog_file_enabled: true
-      querylog_interval: 2160
+      querylog_interval: 90
       querylog_size_memory: 1000
       anonymize_client_ip: false
       protection_enabled: true
