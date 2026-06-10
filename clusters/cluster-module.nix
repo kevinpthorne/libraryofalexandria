@@ -19,7 +19,7 @@
       };
       id = lib.mkOption {
         type = lib.types.ints.between 1 127;
-        description = "Used for both cluster CIDR, service CIDR and clustermesh ID";
+        description = "Used for both cluster CIDR, service CIDR and clustermesh ID. 0 reserved for federation subnets";
       };
 
       k8sEngine = lib.mkOption {
@@ -95,12 +95,13 @@
               };
               reservations = lib.mkOption {
                 type = lib.types.attrs;
-                default = {};
+                default = { };
               };
             };
           };
         };
       federation = lib.mkOption {
+        # ommited from inner peers member
         type = lib.types.submodule {
           options = {
             name = lib.mkOption {
@@ -110,7 +111,8 @@
             };
 
             peers = lib.mkOption {
-              type = with lib.types; attrsOf attrs;  # normally, we'd do a submoduleWith, but this very key (peers) makes this cyclical. Below breaks the cycle.
+              type = with lib.types; attrsOf attrs; # normally, we'd do a submoduleWith, but this very key (peers) makes this cyclical. Below breaks the cycle.
+              # generated
             };
           };
         };
@@ -130,6 +132,52 @@
       };
       externalDomain = lib.mkOption {
         type = lib.types.str;
+      };
+      edgeVpnAddress = lib.mkOption {
+        type = lib.types.str;
+        default = "${config.libraryofalexandria.cluster.federationBorderRouterIp}/24";
+      };
+      federationBorderRouterIp = lib.mkOption {
+        type = lib.types.str;
+        # picked 255 since it is reserved -- there is no cluster ID that will give you 10.255.x.y
+        default = "10.255.255.${toString (config.libraryofalexandria.cluster.id + 127)}";
+      };
+      federationBootstrap = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            bootstrapPeerIdentity = lib.mkOption {
+              type = with lib.types; nullOr str;
+              default = null;  # null means not a bootstrap peer
+            };
+            isBootstrapPeer = lib.mkOption {
+              type = lib.types.bool;
+              default = (config.libraryofalexandria.cluster.federationBootstrap.bootstrapPeerIdentity == null);
+            };
+            bootstrapPeerProtoPorts = lib.mkOption {
+              type = with lib.types; listOf str;
+              default = [
+                "tcp/4001"
+                "udp/4001"
+              ];
+            };
+
+            peers = lib.mkOption {
+              # array of multiaddrs
+              type = with lib.types; listOf str;
+              # generated
+            };
+          };
+        };
+      };
+
+      localAS = lib.mkOption {
+        type = lib.types.int;
+        default = 65000 + config.libraryofalexandria.cluster.id;
+      };
+      vpnPeers = lib.mkOption {
+        # array of peer borderRouterIps
+        type = with lib.types; listOf str;
+        # generated
       };
     };
     # rendered options, never given outside this module
@@ -192,8 +240,13 @@
       };
       systemSpecialArgs =
         nodeId: with config.libraryofalexandria; {
-          inherit inputs lib2 cluster nodeId;
-          nixos-raspberrypi = inputs.nixos-raspberrypi;  # per nvmd readmes, this is required
+          inherit
+            inputs
+            lib2
+            cluster
+            nodeId
+            ;
+          nixos-raspberrypi = inputs.nixos-raspberrypi; # per nvmd readmes, this is required
         };
 
       # For building (flake nixosConfigurations), we'll stack everything as nixosSystems
@@ -313,9 +366,7 @@
                 ./${clusterName}
               ];
               specialArgs = {
-                inherit inputs;
-                inherit lib2;
-                inherit localPkgs;
+                inherit inputs lib2 localPkgs;
               };
             };
             clusterConfig = lib2.getClusterConfig lib clusterModule.config.libraryofalexandria.cluster;
@@ -327,6 +378,20 @@
           }
         ) config.libraryofalexandria.cluster.federateTo
       );
+      # bootstrap peers
+      libraryofalexandria.cluster.federationBootstrap.peers = let
+        # for every peer, get their isBootstrapPeer; if so, flatmap their bootstrap proto+ports, should be a list of entries like
+        # /dns4/${externalDomain}/tcp/4001/p2p/${bootstrapPeerIdentity}
+        bootstrapPeerClusters = lib.attrsets.filterAttrs (clusterName: cluster: cluster.federationBootstrap.bootstrapPeerIdentity != null) config.libraryofalexandria.cluster.federation.peers;
+      in
+        lib.flatten (lib.mapAttrsToList (clusterName: cluster:
+          builtins.map (protoPort:
+            "/dns4/${cluster.externalDomain}/${protoPort}/p2p/${cluster.federationBootstrap.bootstrapPeerIdentity}"
+          ) cluster.federationBootstrap.bootstrapPeerProtoPorts
+        ) bootstrapPeerClusters);
+      # vpn peers
+      # for every peer, get their borderRouterIp
+      libraryofalexandria.cluster.vpnPeers = lib.mapAttrsToList (name: cluster: cluster.federationBorderRouterIp) config.libraryofalexandria.cluster.federation.peers;
 
       # masters = collectAll (id: wrapNixosSystem id) masterSystems;
       masters = collectSystems masterSystems;
@@ -378,7 +443,7 @@
                   inherit lib;
                   inherit inputs;
                   inherit lib2;
-                  nixos-raspberrypi = inputs.nixos-raspberrypi;  # per nvmd readmes, this is required
+                  nixos-raspberrypi = inputs.nixos-raspberrypi; # per nvmd readmes, this is required
                 };
               };
             }

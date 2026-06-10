@@ -158,6 +158,7 @@ in
                     l2announcements.enabled = thisCluster.virtualIps.enable;
                     externalIPs.enabled = thisCluster.virtualIps.enable;
                     gatewayAPI.enabled = true;
+                    bgpControlPlane.enabled = true;
                     localRedirectPolicies.enabled = true;
                     kubeProxyReplacement = true;
                     k8sServiceHost =
@@ -362,6 +363,27 @@ in
           };
           namespace = "kube-system";
         })
+        {
+          name = "cilium-bgp-peering-policies";
+          chart = "${pkgs.cilium-bgp-peering-policies}/cilium-bgp-peering-policies-0.1.0.tgz";
+          values = {
+            policies = [
+              {
+                name = "edgevpn-peering";
+                localASN = 65000;
+                exportPodCIDR = false;
+                nodeSelector = {};
+                neighbors = [
+                  {
+                    peerAddress = "${thisCluster.federationBorderRouterIp}/32";
+                    peerASN = thisCluster.localAS;
+                  }
+                ];
+              }
+            ];
+          };
+          namespace = "kube-system";
+        }
       ];
     };
 }

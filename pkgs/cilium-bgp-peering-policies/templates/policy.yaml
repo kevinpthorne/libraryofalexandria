@@ -1,0 +1,22 @@
+{{- range .Values.policies }}
+---
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumBGPPeeringPolicy
+metadata:
+  name: {{ .name }}
+spec:
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/os: "linux"
+      {{- range $key, $val := .nodeSelector }}
+      {{ $key }}: {{ $val | quote }}
+      {{- end }}
+  virtualRouters:
+  - localASN: {{ .localASN }}
+    exportPodCIDR: {{ .exportPodCIDR }}
+    neighbors:
+    {{- range .neighbors }}
+    - peerAddress: {{ .peerAddress | quote }}
+      peerASN: {{ .peerASN }}
+    {{- end }}
+{{- end }}

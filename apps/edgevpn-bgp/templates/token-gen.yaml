@@ -1,0 +1,39 @@
+# 1. Define the Password Generator
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: edgevpn-gen
+  namespace: {{ .Release.Namespace }}
+spec:
+  length: 256
+  digits: 5
+  symbols: 5
+  noUpper: false
+  allowRepeat: true
+
+---
+# 2. Define the ExternalSecret to create the K8s Secret
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: edgevpn
+  namespace: {{ .Release.Namespace }}
+spec:
+  # Set to 0 so the password isn't continuously regenerated, 
+  # which would cause unexpected application state changes.
+  refreshInterval: "0" 
+  target:
+    name: edgevpn
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        # Helm escaping is required here so ESO handles the templating, not Helm.
+        # The generator defaults to outputting the value under the key ".password".
+        token: '{{ "{{ .password }}" }}'
+  dataFrom:
+    - sourceRef:
+        generatorRef:
+          apiVersion: generators.external-secrets.io/v1alpha1
+          kind: Password
+          name: edgevpn-gen

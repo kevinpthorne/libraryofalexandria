@@ -1,0 +1,43 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/mudler/edgevpn
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+frr:
+  image:
+    repository: quay.io/frrouting/frr
+    pullPolicy: IfNotPresent
+    tag: "9.1.0"
+
+edgevpn:
+  tokenSecretName: edgevpn
+  tokenSecretKey: token
+  address: "10.255.255.1/24"  # Override per cluster
+  p2pPort: 4001 # The internal container port for libp2p traffic
+  isBootstrapPeer: false # Set to true to expose the p2pPort via a LoadBalancer Service
+  # bootstrapPeers is an array of multiaddrs
+  bootstrapPeers: []
+  logLevel: "debug"
+
+bgp:
+  localAS: 65001 # Override with 65000 + clusterID
+  ciliumPeerAS: 65000 # The AS of your local Cilium nodes
+  routerId: "10.255.255.1" # Typically the EdgeVPN address without subnet mask
+  
+  # localCIDRs are the local cluster's subnets (e.g. Pod and Service CIDRs) 
+  # to advertise to the remote EdgeVPN peers.
+  localCIDRs: [] 
+  
+  # vpnPeers are the IPs of the other clusters' EdgeVPN gateways on the VPN subnet (e.g. 10.255.255.2)
+  vpnPeers: []
+
+persistence:
+  enabled: true
+  storageClass: ""
+  size: 100Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

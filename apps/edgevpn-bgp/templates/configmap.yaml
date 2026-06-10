@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: edgevpn-frr-config
+data:
+  daemons: |
+    bgpd=yes
+    ospfd=no
+    ospf6d=no
+    ripd=no
+    ripngd=no
+    isisd=no
+    pimd=no
+    ldpd=no
+    nhrpd=no
+    eigrpd=no
+    babeld=no
+    sharpd=no
+    pbrd=no
+    bfdd=no
+    fabricd=no
+    vrrpd=no
+    vtysh_enable=yes
+    zebra_options="  -A 127.0.0.1 -s 90000000"
+    bgpd_options="   -A 127.0.0.1"
+
+  frr.conf: |
+    frr version 9.1
+    frr defaults traditional
+    hostname edgevpn-router
+    log syslog informational
+    !
+    router bgp {{ .Values.bgp.localAS }}
+     bgp router-id {{ .Values.bgp.routerId }}
+     no bgp ebgp-requires-policy
+     
+     ! Peer with local Cilium nodes
+     neighbor CILIUM peer-group
+     neighbor CILIUM remote-as {{ .Values.bgp.ciliumPeerAS }}
+     ! If Cilium is in the same AS, FRR acts as a route reflector for it
+     {{- if eq (int .Values.bgp.localAS) (int .Values.bgp.ciliumPeerAS) }}
+     neighbor CILIUM route-reflector-client
+     {{- end }}
+     
+     ! Peer with remote EdgeVPN gateways over the VPN interface using eBGP
+     neighbor EDGEVPN peer-group
+     neighbor EDGEVPN remote-as external
+     
+     {{- range .Values.bgp.vpnPeers }}
+     neighbor {{ . }} peer-group EDGEVPN
+     {{- end }}
+     
+     ! Advertise the local cluster CIDRs to the VPN peers
+     address-family ipv4 unicast
+      {{- range .Values.bgp.localCIDRs }}
+      network {{ . }}
+      {{- end }}
+     exit-address-family
+    !
+    line vty
+    !

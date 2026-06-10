@@ -34,7 +34,6 @@
                 - apiGroups:
                   - "*.aws.upbound.io"
                   - "*.keycloak.crossplane.io"
-                  - "*.netbird.crossplane.io"
                   - "*.sql.crossplane.io"
                   behavior: "IgnoreChildren"
             '';

@@ -1,0 +1,9 @@
+policies:
+  - name: edgevpn-peering
+    localASN: 65000
+    exportPodCIDR: false
+    # nodeSelector allows pinning this policy to specific nodes, empty matches all linux nodes
+    nodeSelector: {}
+    neighbors:
+      - peerAddress: "10.43.0.99/32" # The ClusterIP or LoadBalancer IP of EdgeVPN
+        peerASN: 65001

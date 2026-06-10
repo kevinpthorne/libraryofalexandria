@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: federation-edgevpn
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: apps/edgevpn
+    targetRevision: HEAD
+    helm:
+      releaseName: federation-edgevpn
+      valuesObject:
+        edgevpn:
+          address: {{ .Values.cluster.edgeVpnAddress }}
+          isBootstrapPeer: {{ .Values.cluster.federationBootstrap.isBootstrapPeer }}
+          bootstrapPeers:
+            {{- if .Values.cluster.federationBootstrap.peers }}
+            {{- range .Values.cluster.federationBootstrap.peers }}
+            - {{ . | quote }}
+            {{- end }}
+            {{- else }}
+            []
+            {{- end }}
+        bgp:
+          localAS: {{ .Values.cluster.localAS }}
+          routerId: {{ .Values.cluster.federationBorderRouterIp }}
+          localCIDRs:
+            - {{ .Values.cluster.serviceCidr }}
+            - {{ .Values.cluster.clusterCidr }}
+          vpnPeers:
+          {{- if .Values.cluster.vpnPeers }}
+          {{- range .Values.cluster.vpnPeers }}
+          - {{ . | quote }}
+          {{- end }}
+          {{- else }}
+          []
+          {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

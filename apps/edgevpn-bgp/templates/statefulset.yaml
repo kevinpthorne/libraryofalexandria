@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: edgevpn
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: edgevpn
+  serviceName: "edgevpn"
+  template:
+    metadata:
+      labels:
+        app: edgevpn
+    spec:
+      containers:
+        - name: edgevpn
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+          env:
+            - name: EDGEVPNTOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.edgevpn.tokenSecretName }}
+                  key: {{ .Values.edgevpn.tokenSecretKey }}
+            - name: IFACE
+              value: "edgevpn0"
+          command: ["/usr/bin/edgevpn"]
+          args:
+            - "--address"
+            - "{{ .Values.edgevpn.address }}"
+            - "--log-level"
+            - "{{ .Values.edgevpn.logLevel }}"
+            {{- range .Values.edgevpn.bootstrapPeers }}
+            - "-b"
+            - "{{ . }}"
+            {{- end }}
+          ports:
+            - name: p2p-tcp
+              containerPort: {{ .Values.edgevpn.p2pPort }}
+              protocol: TCP
+            - name: p2p-udp
+              containerPort: {{ .Values.edgevpn.p2pPort }}
+              protocol: UDP
+          volumeMounts:
+            - name: data
+              mountPath: /etc/edgevpn
+
+        - name: frr
+          image: "{{ .Values.frr.image.repository }}:{{ .Values.frr.image.tag }}"
+          imagePullPolicy: {{ .Values.frr.image.pullPolicy }}
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN", "NET_RAW", "SYS_ADMIN"]
+          volumeMounts:
+            - name: frr-config
+              mountPath: /etc/frr
+      volumes:
+        - name: frr-config
+          configMap:
+            name: edgevpn-frr-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- if .Values.persistence.storageClass }}
+        storageClassName: "{{ .Values.persistence.storageClass }}"
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}

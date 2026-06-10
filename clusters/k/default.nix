@@ -102,6 +102,7 @@ in
     #   }
     # ];
     federateTo = [ "test" ];
+    federationBootstrap.bootstrapPeerIdentity = null;
 
     virtualIps = {
       enable = true;
