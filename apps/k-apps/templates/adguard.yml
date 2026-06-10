@@ -17,7 +17,7 @@ spec:
         {{- $dns := (((.Values.cluster | default dict).virtualIps | default dict).reservations | default dict).dns }}
         upstreamDns:
           {{- if $dns }}
-          - "[/.internal/]{{ $dns }}"  # AdGuard Home conditional forwarding syntax
+          - "[/loa.internal/]{{ $dns }}"  # AdGuard Home conditional forwarding syntax
           {{- end }}
           - 1.1.1.3  # cloudflare anti-malware/anti-adult
           - 208.67.222.123  # opendns family shield 1
