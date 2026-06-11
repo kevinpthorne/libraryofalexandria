@@ -34,10 +34,15 @@ spec:
             - "{{ .Values.edgevpn.address }}"
             - "--log-level"
             - "{{ .Values.edgevpn.logLevel }}"
-            - "--dht={{ .Values.edgevpn.dht }}"
+            {{- if .Values.edgevpn.bootstrapPeers }}
             {{- range .Values.edgevpn.bootstrapPeers }}
             - "-b"
             - "{{ . }}"
+            {{- end }}
+            {{- else }}
+            # Inject a dummy peer so EdgeVPN doesn't fallback to the public IPFS DHT
+            - "-b"
+            - "/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWGSiL7KAuG9mgLLPtSFvU688HsXH8zkhDy43HszbmVKip"
             {{- end }}
           ports:
             - name: p2p-tcp

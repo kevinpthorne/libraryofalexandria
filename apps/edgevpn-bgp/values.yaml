@@ -18,7 +18,6 @@ edgevpn:
   p2pPort: 4001 # The internal container port for libp2p traffic
   isBootstrapPeer: false # Set to true to expose the p2pPort via a LoadBalancer Service
   generateToken: false # Set to true in ONE cluster to generate the network token via ExternalSecrets
-  dht: false # Set to false to prevent EdgeVPN from using the public IPFS DHT for discovery
   # bootstrapPeers is an array of multiaddrs
   bootstrapPeers: []
   logLevel: "debug"
