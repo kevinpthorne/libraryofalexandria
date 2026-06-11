@@ -1,10 +1,9 @@
 {{- if .Values.edgevpn.generateToken }}
-{{- range $key := list "dht" "crypto" "room" "rendezvous" "mdns" }}
 ---
 apiVersion: generators.external-secrets.io/v1alpha1
 kind: Password
 metadata:
-  name: edgevpn-gen-{{ $key }}
+  name: edgevpn-gen
   namespace: {{ $.Release.Namespace }}
 spec:
   length: 43
@@ -12,7 +11,12 @@ spec:
   symbols: 0
   noUpper: false
   allowRepeat: true
-{{- end }}
+  secretKeys:
+  - dht
+  - crypto
+  - room
+  - rendezvous
+  - mnds
 
 ---
 apiVersion: external-secrets.io/v1
@@ -30,13 +34,10 @@ spec:
       data:
         # Base64 encode the final YAML structure so it's a valid EdgeVPN token
         {{ .Values.edgevpn.tokenSecretKey }}: '{{ "{{ printf \"otp:\\n  dht:\\n    interval: 360\\n    key: %s\\n    length: 43\\n  crypto:\\n    interval: 360\\n    key: %s\\n    length: 43\\nroom: %s\\nrendezvous: %s\\nmdns: %s\\nmax_message_size: 20971520\\n\" .dht .crypto .room .rendezvous .mdns | b64enc }}" }}'
-  data:
-    {{- range $key := list "dht" "crypto" "room" "rendezvous" "mdns" }}
-    - secretKey: {{ $key }}
-      sourceRef:
+  dataFrom:
+    - sourceRef:
         generatorRef:
-          name: edgevpn-gen-{{ $key }}
+          name: edgevpn-gen
           kind: Password
           apiVersion: generators.external-secrets.io/v1alpha1
-    {{- end }}
 {{- end }}
