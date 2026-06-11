@@ -1,0 +1,96 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: edgevpn-egress-lockdown
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: edgevpn
+  egress:
+    # 1. Allow DNS queries to kube-dns for resolving peer FQDNs
+    - toEndpoints:
+        - matchLabels:
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+          rules:
+            dns:
+              - matchPattern: "*"
+
+    # 2. Allow BGP traffic to host nodes (Cilium nodes)
+    - toEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "179"
+              protocol: TCP
+
+    # 3. Allow egress to the peer border routers (vpnPeers) for BGP over the VPN tunnel
+    {{- if .Values.bgp.vpnPeers }}
+    - toCIDR:
+      {{- range .Values.bgp.vpnPeers }}
+        - "{{ . }}/32"
+      {{- end }}
+      toPorts:
+        - ports:
+            - port: "179"
+              protocol: TCP
+    {{- end }}
+
+    # 4. Allow egress to the bootstrap peers (P2P encapsulation on port 4001)
+    {{- $fqdns := list }}
+    {{- $cidrs := list }}
+    {{- range .Values.edgevpn.bootstrapPeers }}
+      {{- $parts := splitList "/" . }}
+      {{- if ge (len $parts) 3 }}
+        {{- $proto := index $parts 1 }}
+        {{- $host := index $parts 2 }}
+        {{- if or (eq $proto "dns4") (eq $proto "dns6") (eq $proto "dns") }}
+          {{- if not (has $host $fqdns) }}
+            {{- $fqdns = append $fqdns $host }}
+          {{- end }}
+        {{- else if or (eq $proto "ip4") (eq $proto "ip6") }}
+          {{- $cidr := printf "%s/32" $host }}
+          {{- if not (has $cidr $cidrs) }}
+            {{- $cidrs = append $cidrs $cidr }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+
+    {{- if $fqdns }}
+    # Egress to DNS-based bootstrap peers
+    - toFQDNs:
+      {{- range $fqdns }}
+        - matchName: "{{ . }}"
+      {{- end }}
+      toPorts:
+        - ports:
+            - port: "{{ $.Values.edgevpn.p2pPort }}"
+              protocol: TCP
+            - port: "{{ $.Values.edgevpn.p2pPort }}"
+              protocol: UDP
+    {{- end }}
+
+    {{- if $cidrs }}
+    # Egress to IP-based bootstrap peers
+    - toCIDR:
+      {{- range $cidrs }}
+        - "{{ . }}"
+      {{- end }}
+      toPorts:
+        - ports:
+            - port: "{{ $.Values.edgevpn.p2pPort }}"
+              protocol: TCP
+            - port: "{{ $.Values.edgevpn.p2pPort }}"
+              protocol: UDP
+    {{- end }}
+
+{{- end }}
