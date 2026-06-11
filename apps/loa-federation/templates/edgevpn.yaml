@@ -13,6 +13,7 @@ spec:
       releaseName: federation-edgevpn
       valuesObject:
         edgevpn:
+          generateToken: true # Generate the token via ExternalSecrets in THIS cluster! Remove after bootstrapping
           address: {{ .Values.cluster.edgeVpnAddress }}
           isBootstrapPeer: {{ .Values.cluster.federationBootstrap.isBootstrapPeer }}
           bootstrapPeers:

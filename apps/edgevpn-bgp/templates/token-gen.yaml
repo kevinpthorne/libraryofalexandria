@@ -1,39 +1,42 @@
-# 1. Define the Password Generator
+{{- if .Values.edgevpn.generateToken }}
+{{- range $key := list "dht" "crypto" "room" "rendezvous" "mdns" }}
+---
 apiVersion: generators.external-secrets.io/v1alpha1
 kind: Password
 metadata:
-  name: edgevpn-gen
-  namespace: {{ .Release.Namespace }}
+  name: edgevpn-gen-{{ $key }}
+  namespace: {{ $.Release.Namespace }}
 spec:
-  length: 256
+  length: 43
   digits: 5
-  symbols: 5
+  symbols: 0
   noUpper: false
   allowRepeat: true
+{{- end }}
 
 ---
-# 2. Define the ExternalSecret to create the K8s Secret
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: edgevpn
+  name: {{ .Values.edgevpn.tokenSecretName }}
   namespace: {{ .Release.Namespace }}
 spec:
-  # Set to 0 so the password isn't continuously regenerated, 
-  # which would cause unexpected application state changes.
-  refreshInterval: "0" 
+  refreshInterval: "0"
   target:
-    name: edgevpn
+    name: {{ .Values.edgevpn.tokenSecretName }}
     creationPolicy: Owner
     template:
       engineVersion: v2
       data:
-        # Helm escaping is required here so ESO handles the templating, not Helm.
-        # The generator defaults to outputting the value under the key ".password".
-        token: '{{ "{{ .password }}" }}'
-  dataFrom:
-    - sourceRef:
+        # Base64 encode the final YAML structure so it's a valid EdgeVPN token
+        {{ .Values.edgevpn.tokenSecretKey }}: '{{ "{{ printf \"otp:\\n  dht:\\n    interval: 360\\n    key: %s\\n    length: 43\\n  crypto:\\n    interval: 360\\n    key: %s\\n    length: 43\\nroom: %s\\nrendezvous: %s\\nmdns: %s\\nmax_message_size: 20971520\\n\" .dht .crypto .room .rendezvous .mdns | b64enc }}" }}'
+  data:
+    {{- range $key := list "dht" "crypto" "room" "rendezvous" "mdns" }}
+    - secretKey: {{ $key }}
+      sourceRef:
         generatorRef:
-          apiVersion: generators.external-secrets.io/v1alpha1
+          name: edgevpn-gen-{{ $key }}
           kind: Password
-          name: edgevpn-gen
+          apiVersion: generators.external-secrets.io/v1alpha1
+    {{- end }}
+{{- end }}
