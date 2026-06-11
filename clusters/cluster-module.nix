@@ -151,7 +151,7 @@
             };
             isBootstrapPeer = lib.mkOption {
               type = lib.types.bool;
-              default = (config.libraryofalexandria.cluster.federationBootstrap.bootstrapPeerIdentity == null);
+              default = (config.libraryofalexandria.cluster.federationBootstrap.bootstrapPeerIdentity != null);
             };
             bootstrapPeerProtoPorts = lib.mkOption {
               type = with lib.types; listOf str;
@@ -380,9 +380,12 @@
       );
       # bootstrap peers
       libraryofalexandria.cluster.federationBootstrap.peers = let
+        thisCluster = config.libraryofalexandria.cluster;
         # for every peer, get their isBootstrapPeer; if so, flatmap their bootstrap proto+ports, should be a list of entries like
         # /dns4/${externalDomain}/tcp/4001/p2p/${bootstrapPeerIdentity}
-        bootstrapPeerClusters = lib.attrsets.filterAttrs (clusterName: cluster: cluster.federationBootstrap.bootstrapPeerIdentity != null) config.libraryofalexandria.cluster.federation.peers;
+        bootstrapPeerClusters = lib.attrsets.filterAttrs (clusterName: cluster: cluster.federationBootstrap.bootstrapPeerIdentity != null) (
+          config.libraryofalexandria.cluster.federation.peers // { ${thisCluster.name} = thisCluster; }
+        );
       in
         lib.flatten (lib.mapAttrsToList (clusterName: cluster:
           builtins.map (protoPort:
@@ -476,6 +479,10 @@
           "build-all-${config.libraryofalexandria.cluster.name}" = allSystemsBuilder pkgs; # TODO this technically names the package twice - why not once?
           "chart-index-${config.libraryofalexandria.cluster.name}" =
             (builtins.head masterSystems).config.system.build.chartIndex;
+          "display-cluster-${config.libraryofalexandria.cluster.name}" = pkgs.cluster-module-display.override {
+            clusterName = config.libraryofalexandria.cluster.name;
+            cluster = lib2.getClusterConfig lib config.libraryofalexandria.cluster;
+          };
           # "go-archs-${config.libraryofalexandria.cluster.name}" = pkgs.go-arch-index.override {
           #     inherit pkgs;
           #     inherit lib;

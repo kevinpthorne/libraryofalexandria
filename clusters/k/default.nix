@@ -102,7 +102,7 @@ in
     #   }
     # ];
     federateTo = [ "test" ];
-    federationBootstrap.bootstrapPeerIdentity = null;
+    federationBootstrap.bootstrapPeerIdentity = "uEiDskfF0c4uQseF797Mp47GF3QH_eD0JiobavG9qszK4WA";
 
     virtualIps = {
       enable = true;
