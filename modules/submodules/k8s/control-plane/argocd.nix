@@ -29,6 +29,11 @@
             global.domain = "argocd.${config.libraryofalexandria.cluster.name}.loa.internal";
             configs.params."reconcile\.timeout" = "300s";
 
+            controller = {
+              statusProcessors = 10;
+              operationProcessors = 5;
+            };
+
             # save CPU/RAM on checking complex tree
             configs.cm."resource\.behaviors" = ''
                 - apiGroups:
