@@ -34,6 +34,7 @@ spec:
             - "{{ .Values.edgevpn.address }}"
             - "--log-level"
             - "{{ .Values.edgevpn.logLevel }}"
+            - "--dht={{ .Values.edgevpn.dht }}"
             {{- range .Values.edgevpn.bootstrapPeers }}
             - "-b"
             - "{{ . }}"
