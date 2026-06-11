@@ -16,7 +16,7 @@ spec:
   - crypto
   - room
   - rendezvous
-  - mnds
+  - mdns
 
 ---
 apiVersion: external-secrets.io/v1
