@@ -48,6 +48,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /etc/edgevpn
+            - name: tun
+              mountPath: /dev/net/tun
 
         - name: frr
           image: "{{ .Values.frr.image.repository }}:{{ .Values.frr.image.tag }}"
@@ -62,6 +64,9 @@ spec:
         - name: frr-config
           configMap:
             name: edgevpn-frr-config
+        - name: tun
+          hostPath:
+            path: /dev/net/tun
   volumeClaimTemplates:
     - metadata:
         name: data
