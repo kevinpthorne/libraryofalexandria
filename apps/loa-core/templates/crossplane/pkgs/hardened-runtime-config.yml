@@ -20,7 +20,16 @@ spec:
               type: RuntimeDefault
           containers:
             - name: package-runtime
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 384Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
               env:
+                - name: GOMEMLIMIT
+                  value: 256MiB
                 # Forces the Go HTTP client to trust this specific file
                 - name: SSL_CERT_FILE
                   value: /etc/x509/ca-bundle.crt

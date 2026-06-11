@@ -18,6 +18,13 @@ spec:
               type: RuntimeDefault
           containers:
             - name: package-runtime
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 384Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true 
@@ -34,6 +41,8 @@ spec:
                   name: crossplane-client-cert
                   readOnly: true
               env:
+                - name: GOMEMLIMIT
+                  value: 256MiB
                 - name: PGSSLMODE
                   value: "verify-full"
                 - name: PGSSLROOTCERT
