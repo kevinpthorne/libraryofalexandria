@@ -32,6 +32,16 @@ spec:
           secrets:
             - name: node-exporter-tls
               mountPath: /etc/node-exporter-tls
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9100
+              scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9100
+              scheme: HTTPS
           prometheus:
             monitor:
               scheme: https
@@ -49,6 +59,16 @@ spec:
               protocol: https
               cert_file: /etc/grafana-tls/tls.crt
               cert_key: /etc/grafana-tls/tls.key
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+              scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+              scheme: HTTPS
           env:
             SSL_CERT_FILE: /etc/ssl/certs/custom-ca/ca-bundle.crt
           extraVolumes:
@@ -136,6 +156,16 @@ spec:
                 env:
                   - name: SSL_CERT_FILE
                     value: /etc/ssl/certs/custom-ca/ca-bundle.crt
+                livenessProbe:
+                  httpGet:
+                    path: /-/healthy
+                    port: web
+                    scheme: HTTPS
+                readinessProbe:
+                  httpGet:
+                    path: /-/ready
+                    port: web
+                    scheme: HTTPS
             # Strict Security Context for Prometheus
             securityContext:
               runAsNonRoot: true
