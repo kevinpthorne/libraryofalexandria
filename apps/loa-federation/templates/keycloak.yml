@@ -14,7 +14,7 @@ spec:
       values: |
         replicaCount: 1
         
-        # 2. Database (Disable internal, we use Crossplane/pgEdge)
+        # 2. Database (Disable internal, we use pgEdge)
         postgres:
           enabled: false
 
@@ -68,7 +68,7 @@ spec:
 
         # 4. Volumes (CSI & Secrets)
         extraVolumes:
-          # DB Client Certs (via Crossplane/Manual Secret)
+          # DB Client Certs (via KRO/PrivateSchema)
           - name: db-client-certs
             secret:
               secretName: pgedge-keycloak-client-cert

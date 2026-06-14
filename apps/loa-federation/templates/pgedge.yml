@@ -48,11 +48,6 @@ spec:
                     comment: Admin role
                     login: true
                     superuser: true
-                  - name: crossplane
-                    ensure: present
-                    comment: Admin role for crossplane
-                    login: true
-                    superuser: true
                 # SPOCK MULTI-MASTER CONFIG (Required)
                 postgresql:
                   {{ if gt (int .Values.pgedge.instances) 1 }}

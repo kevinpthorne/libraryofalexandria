@@ -1,0 +1,51 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: keycloakclients
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  schema:
+    apiVersion: authn.loa.kevinpthorne.com/v1alpha1
+    kind: KeycloakClient
+    spec:
+      realm: "string | default=loa"
+      clientId: string
+      secret: "string | optional=true"
+      serviceAccountsEnabled: "boolean | default=false"
+      redirectUris: "[]string | default=[]"
+  resources:
+    - id: sync-job
+      template:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: keycloak-client-sync-${schema.metadata.name}
+          namespace: keycloak
+        spec:
+          ttlSecondsAfterFinished: 600
+          template:
+            spec:
+              restartPolicy: OnFailure
+              containers:
+              - name: sync
+                image: adorsys/keycloak-config-cli:latest
+                command:
+                  - "sh"
+                  - "-c"
+                  - |
+                    echo '{"realm": "${schema.spec.realm}", "clients": [{"clientId": "${schema.spec.clientId}", "secret": "${schema.spec.?secret}", "serviceAccountsEnabled": ${schema.spec.serviceAccountsEnabled}, "redirectUris": ${schema.spec.redirectUris}}]}' > /tmp/client.json
+                    /opt/jboss/keycloak-config-cli.jar --import.files=/tmp/client.json
+                env:
+                - name: KEYCLOAK_URL
+                  value: "https://keycloak.keycloak.svc.cluster.local:8443"
+                - name: KEYCLOAK_USER
+                  value: "admin"
+                - name: KEYCLOAK_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak
+                      key: admin-password
+                # keycloak-config-cli usually checks SSL cert validity. Since it is internal and uses a cert-manager TLS cert:
+                - name: KEYCLOAK_AVAILABILITYPROBE_TIMEOUT
+                  value: "120s"

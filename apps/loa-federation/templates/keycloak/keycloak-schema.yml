@@ -1,0 +1,12 @@
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: PrivateSchema
+metadata:
+  name: keycloak-schema
+  namespace: keycloak
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  databaseName: app
+  schemaName: keycloak
+  userName: keycloak
+  appNamespace: keycloak

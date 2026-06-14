@@ -1,0 +1,79 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: privateschemas
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  schema:
+    apiVersion: db.loa.kevinpthorne.com/v1alpha1
+    kind: PrivateSchema
+    spec:
+      databaseName: "string | default=app"
+      schemaName: string
+      userName: string
+      appNamespace: string
+  resources:
+    # 1. Certificate for client mutual TLS authentication
+    - id: client-cert
+      template:
+        apiVersion: cert-manager.io/v1
+        kind: Certificate
+        metadata:
+          name: pgedge-${schema.spec.userName}-client-cert
+          namespace: "${schema.spec.appNamespace}"
+        spec:
+          secretName: pgedge-${schema.spec.userName}-client-cert
+          usages:
+            - client auth
+          commonName: "${schema.spec.userName}"
+          issuerRef:
+            name: pgedge-{{ .Values.pgedge.appName }}-client-ca-issuer
+            kind: ClusterIssuer
+            group: cert-manager.io
+          privateKey:
+            rotationPolicy: Never
+
+    # 2. Database Bootstrap Job running in the pgedge namespace
+    - id: create-schema-job
+      template:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: pgedge-schema-job-${schema.spec.schemaName}
+          namespace: {{ .Values.pgedge.namespace }}
+        spec:
+          ttlSecondsAfterFinished: 3600
+          template:
+            spec:
+              restartPolicy: OnFailure
+              containers:
+              - name: psql
+                image: postgres:15-alpine
+                command:
+                  - "sh"
+                  - "-c"
+                  - |
+                    psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw -U admin -d ${schema.spec.databaseName} -c "
+                    CREATE ROLE ${schema.spec.userName} WITH LOGIN;
+                    CREATE SCHEMA IF NOT EXISTS ${schema.spec.schemaName} AUTHORIZATION ${schema.spec.userName};
+                    GRANT ALL ON SCHEMA ${schema.spec.schemaName} TO ${schema.spec.userName};
+                    GRANT ALL ON DATABASE ${schema.spec.databaseName} TO ${schema.spec.userName};
+                    CREATE EXTENSION IF NOT EXISTS spock;
+                    "
+                volumeMounts:
+                - name: certs
+                  mountPath: /certs
+                env:
+                - name: PGSSLCERT
+                  value: /certs/tls.crt
+                - name: PGSSLKEY
+                  value: /certs/tls.key
+                - name: PGSSLROOTCERT
+                  value: /certs/ca.crt
+                - name: PGSSLMODE
+                  value: verify-full
+              volumes:
+              - name: certs
+                secret:
+                  secretName: admin-client-cert
