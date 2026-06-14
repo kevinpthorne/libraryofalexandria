@@ -10,7 +10,7 @@ spec:
   source:
     chart: seaweedfs-operator
     repoURL: https://seaweedfs.github.io/seaweedfs-operator/
-    targetRevision: 0.1.15
+    targetRevision: 0.1.28
   destination:
     server: https://kubernetes.default.svc
     namespace: seaweedfs-system
