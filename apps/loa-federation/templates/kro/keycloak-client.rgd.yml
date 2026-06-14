@@ -12,11 +12,11 @@ spec:
     spec:
       realm: "string | default=loa"
       clientId: string
-      secret: "string | optional=true"
+      secret: "string"
       serviceAccountsEnabled: "boolean | default=false"
       redirectUris: "[]string | default=[]"
   resources:
-    - id: sync-job
+    - id: syncJob
       template:
         apiVersion: batch/v1
         kind: Job

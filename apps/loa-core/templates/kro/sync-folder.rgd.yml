@@ -14,7 +14,7 @@ spec:
       sourceCluster: "string | default=local"
       targetCluster: string
   resources:
-    - id: filer-sync-deployment
+    - id: filerSyncDeployment
       template:
         apiVersion: apps/v1
         kind: Deployment

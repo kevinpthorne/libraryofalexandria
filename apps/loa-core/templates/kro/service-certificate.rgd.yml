@@ -10,7 +10,7 @@ spec:
     kind: ServiceCertificate
     group: pki.loa.kevinpthorne.com
     spec:
-      clusterName: "string | optional=true"
+      clusterName: "string"
       sans: "[]string | default=[]"
       ca:
         kind: "string | default=ClusterIssuer"

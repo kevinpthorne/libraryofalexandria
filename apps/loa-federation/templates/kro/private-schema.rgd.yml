@@ -16,7 +16,7 @@ spec:
       appNamespace: string
   resources:
     # 1. Certificate for client mutual TLS authentication
-    - id: client-cert
+    - id: clientCert
       template:
         apiVersion: cert-manager.io/v1
         kind: Certificate
@@ -36,7 +36,7 @@ spec:
             rotationPolicy: Never
 
     # 2. Database Bootstrap Job running in the pgedge namespace
-    - id: create-schema-job
+    - id: createSchemaJob
       template:
         apiVersion: batch/v1
         kind: Job
