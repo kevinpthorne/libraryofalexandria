@@ -57,6 +57,9 @@ spec:
           service:
             port: 443
             targetPort: 3000
+          sidecar:
+            datasources:
+              url: https://prometheus-operated.observability.svc.cluster.local:9090
           grafana.ini:
             server:
               protocol: https
