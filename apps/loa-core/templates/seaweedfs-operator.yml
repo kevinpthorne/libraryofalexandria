@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: seaweedfs-operator
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    chart: seaweedfs-operator
+    repoURL: https://seaweedfs.github.io/seaweedfs-operator/
+    targetRevision: 0.1.15
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: seaweedfs-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"

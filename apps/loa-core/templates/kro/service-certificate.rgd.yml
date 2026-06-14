@@ -1,0 +1,38 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: servicecertificates
+spec:
+  schema:
+    apiVersion: pki.loa.kevinpthorne.com/v1alpha1
+    kind: ServiceCertificate
+    spec:
+      clusterName: string | optional=true
+      sans: "[]string" | default=[]
+      ca:
+        kind: string | default="ClusterIssuer"
+        name: string | default="app-pki-bootstrap-issuer"
+  resources:
+    - id: certificate
+      template:
+        apiVersion: cert-manager.io/v1
+        kind: Certificate
+        metadata:
+          name: ${schema.metadata.name}
+          namespace: ${schema.metadata.namespace}
+        spec:
+          secretName: "service-cert-${schema.metadata.name}"
+          usages:
+            - server auth
+            - client auth
+          dnsNames: ${[
+            schema.metadata.name,
+            schema.metadata.name + "." + schema.metadata.namespace + ".svc",
+            schema.metadata.name + "." + schema.metadata.namespace + ".svc.cluster.local"
+          ] + (schema.spec.?clusterName != null && schema.spec.clusterName != "" ? [
+            schema.metadata.name + "." + schema.metadata.namespace + ".svc.cluster." + schema.spec.clusterName,
+            schema.metadata.name + "." + schema.spec.clusterName + ".loa.internal"
+          ] : []) + schema.spec.sans}
+          issuerRef:
+            kind: ${schema.spec.ca.kind}
+            name: ${schema.spec.ca.name}

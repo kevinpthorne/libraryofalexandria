@@ -1,0 +1,26 @@
+apiVersion: seaweed.seaweedfs.com/v1
+kind: Seaweed
+metadata:
+  name: seaweed-cluster
+  namespace: seaweedfs-system
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  image: chrislusf/seaweedfs:4.0.401
+  volume:
+    replicas: 1
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: {{ .Values.seaweedfs.storageClass | quote }}
+        resources:
+          requests:
+            storage: {{ .Values.seaweedfs.size | quote }}
+  filer:
+    replicas: 1
+    persistence:
+      enabled: true
+  master:
+    replicas: 1
+  s3:
+    enabled: true

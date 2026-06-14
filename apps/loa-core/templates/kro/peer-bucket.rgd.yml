@@ -1,0 +1,41 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: peerbuckets
+spec:
+  schema:
+    apiVersion: blob.loa.kevinpthorne.com/v1alpha1
+    kind: PeerBucket
+    spec:
+      bucketName: string
+      sourceCluster: string | default="local"
+      targetCluster: string
+  resources:
+    - id: filer-sync-deployment
+      template:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: "seaweedfs-sync-${schema.spec.bucketName}"
+          namespace: seaweedfs-system
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: seaweedfs-filer-sync
+          template:
+            metadata:
+              labels:
+                app: seaweedfs-filer-sync
+            spec:
+              containers:
+              - name: filer-sync
+                image: chrislusf/seaweedfs:4.0.401
+                command:
+                  - "weed"
+                  - "filer.sync"
+                args:
+                  - "-a=seaweedfs-filer.seaweedfs.svc.cluster.${schema.spec.sourceCluster}:8888"
+                  - "-b=seaweedfs-filer.seaweedfs.svc.cluster.${schema.spec.targetCluster}:8888"
+                  - "-a.path=/buckets/${schema.spec.bucketName}"
+                  - "-b.path=/buckets/${schema.spec.bucketName}"
