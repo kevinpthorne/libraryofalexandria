@@ -1,0 +1,393 @@
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: element-nginx-config
+  namespace: matrix
+data:
+  default.conf: |
+    server {
+        listen       8080 ssl;
+        listen  [::]:8080 ssl;
+        server_name  localhost;
+
+        root   /usr/share/nginx/html;
+        index  index.html;
+
+        ssl_certificate /etc/nginx/certs/tls.crt;
+        ssl_certificate_key /etc/nginx/certs/tls.key;
+
+        # Set no-cache for the index.html only so that browsers always check for a new copy of Element Web.
+        location = /index.html {
+            add_header Cache-Control "no-cache";
+        }
+
+        # redirect server error pages to the static page /50x.html
+        error_page   500 502 503 504  /50x.html;
+    }
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: matrix-synapse
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://ananace.gitlab.io/charts
+    chart: matrix-synapse
+    targetRevision: 3.12.28
+    helm:
+      valuesObject:
+        serverName: "matrix.{{ $cluster.name | default "k" }}.loa.internal"
+        publicServerName: "matrix.{{ $cluster.name | default "k" }}.loa.internal"
+        signingkey:
+          job:
+            enabled: true
+            podSecurityContext:
+              runAsNonRoot: true
+              runAsUser: 666
+              runAsGroup: 666
+              fsGroup: 666
+              seccompProfile:
+                type: RuntimeDefault
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsNonRoot: true
+              runAsUser: 666
+              runAsGroup: 666
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: true
+        synapse:
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 666
+            runAsGroup: 666
+            fsGroup: 666
+            seccompProfile:
+              type: RuntimeDefault
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 666
+            runAsGroup: 666
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+          extraVolumes:
+            - name: tls
+              secret:
+                secretName: matrix-tls
+            {{- if $hasFederation }}
+            - name: db-client-certs
+              secret:
+                secretName: pgedge-matrix-client-cert
+                defaultMode: 256
+            - name: cas
+              configMap:
+                name: trusted-ca-bundle
+            {{- end }}
+          extraVolumeMounts:
+            - name: tls
+              mountPath: /certs/tls
+              readOnly: true
+            {{- if $hasFederation }}
+            - name: db-client-certs
+              mountPath: /certs/db-client
+              readOnly: true
+            - name: cas
+              mountPath: /certs/cas
+              readOnly: true
+            {{- end }}
+        persistence:
+          storageClass: "longhorn"
+          size: "10Gi"
+        ingress:
+          enabled: false
+        gateway:
+          enabled: false
+        extraConfig:
+          tls_certificate_path: "/certs/tls/tls.crt"
+          tls_private_key_path: "/certs/tls/tls.key"
+          listeners:
+            - port: 8008
+              tls: true
+              type: http
+              resources:
+                - names: [client, federation]
+          {{- if $hasFederation }}
+          oidc_providers:
+            - idp_id: keycloak
+              idp_name: "Keycloak"
+              discover: true
+              issuer: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/app"
+              client_id: "matrix"
+              client_secret: "matrix-client-secret"
+              scopes: ["openid", "profile"]
+              user_mapping_provider:
+                config:
+                  localpart_template: "{% if user.preferred_username %}{{ "{{ user.preferred_username }}" }}{% else %}{{ "{{ user.sub }}" }}{% endif %}"
+                  display_name_template: "{{ "{{ user.name }}" }}"
+          {{- end }}
+        {{- if $hasFederation }}
+        redis:
+          enabled: false
+        externalRedis:
+          host: "keydb-restricted.keydb.svc.cluster.local"
+          port: 6379
+        postgresql:
+          enabled: false
+        externalPostgresql:
+          host: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "pgedge" }}{{ else }}pgedge{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc"
+          port: 5432
+          username: "matrix"
+          database: "app"
+        synapse:
+          extraEnv:
+            - name: PGSSLCERT
+              value: "/certs/db-client/tls.crt"
+            - name: PGSSLKEY
+              value: "/certs/db-client/tls.key"
+            - name: PGSSLROOTCERT
+              value: "/certs/cas/ca-bundle.crt"
+            - name: PGSSLMODE
+              value: verify-full
+        {{- else }}
+        redis:
+          enabled: true
+          master:
+            podSecurityContext:
+              enabled: true
+              fsGroup: 1001
+              seccompProfile:
+                type: RuntimeDefault
+            containerSecurityContext:
+              enabled: true
+              allowPrivilegeEscalation: false
+              runAsUser: 1001
+              runAsGroup: 1001
+              runAsNonRoot: true
+              capabilities:
+                drop:
+                  - ALL
+        postgresql:
+          enabled: true
+          persistence:
+            storageClass: "longhorn"
+          primary:
+            podSecurityContext:
+              enabled: true
+              fsGroup: 1001
+              seccompProfile:
+                type: RuntimeDefault
+            containerSecurityContext:
+              enabled: true
+              allowPrivilegeEscalation: false
+              runAsNonRoot: true
+              runAsUser: 1001
+              runAsGroup: 1001
+              capabilities:
+                drop:
+                  - ALL
+        {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: matrix
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: element-web
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://ananace.gitlab.io/charts
+    chart: element-web
+    targetRevision: 1.4.37
+    helm:
+      valuesObject:
+        defaultServer:
+          url: "https://matrix.{{ $cluster.name | default "k" }}.loa.internal"
+          name: "{{ $cluster.name | default "k" | upper }} Matrix"
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 101
+          runAsGroup: 101
+          fsGroup: 101
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 101
+          runAsGroup: 101
+          capabilities:
+            drop:
+              - ALL
+        service:
+          port: 443
+        ingress:
+          enabled: false
+        extraVolumes:
+          - name: custom-nginx-config
+            configMap:
+              name: element-nginx-config
+          - name: tls
+            secret:
+              secretName: element-tls
+        extraVolumeMounts:
+          - name: custom-nginx-config
+            mountPath: /etc/nginx/conf.d/default.conf
+            subPath: default.conf
+          - name: tls
+            mountPath: /etc/nginx/certs
+            readOnly: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: matrix
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: matrix-tls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "matrix-synapse"
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        cert:
+          secretName: "matrix-tls"
+          sans:
+            - "matrix.{{ $cluster.name | default "k" }}.loa.internal"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: matrix
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: element-tls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "element-web"
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        cert:
+          secretName: "element-tls"
+          sans:
+            - "chat.{{ $cluster.name | default "k" }}.loa.internal"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: matrix
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: matrix-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: matrix-synapse
+            hostnames:
+              - "matrix.{{ $cluster.name | default "k" }}.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 8008
+                targetService: matrix-synapse
+                tls:
+                  mode: Passthrough
+          - name: element-web
+            hostnames:
+              - "chat.{{ $cluster.name | default "k" }}.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 443
+                targetService: element-web
+                tls:
+                  mode: Passthrough
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: matrix
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+{{- if $hasFederation }}
+---
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: PrivateSchema
+metadata:
+  name: matrix
+  namespace: matrix
+spec:
+  databaseName: app
+  schemaName: matrix
+  userName: matrix
+  appNamespace: matrix
+---
+apiVersion: authn.loa.kevinpthorne.com/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: matrix
+  namespace: matrix
+spec:
+  clientId: matrix
+  secret: "matrix-client-secret"
+  redirectUris:
+    - "https://matrix.{{ $cluster.name | default "k" }}.loa.internal/_synapse/client/oidc/callback"
+{{- end }}

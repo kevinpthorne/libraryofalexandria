@@ -1,0 +1,278 @@
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitea
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://dl.gitea.com/charts/
+    chart: gitea
+    targetRevision: 11.0.0
+    helm:
+      valuesObject:
+        global:
+          storageClass: "longhorn"
+        gitea:
+          config:
+            server:
+              ROOT_URL: "https://gitea.{{ $cluster.name | default "k" }}.loa.internal/"
+              SSH_DOMAIN: "gitea.{{ $cluster.name | default "k" }}.loa.internal"
+            storage:
+              STORAGE_TYPE: minio
+            storage.minio:
+              MINIO_ENDPOINT: seaweedfs-s3.seaweedfs-system.svc.cluster.local:8333
+              MINIO_BUCKET: gitea
+              MINIO_USE_SSL: true
+            {{- if $hasFederation }}
+            database:
+              DB_TYPE: postgres
+              HOST: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "pgedge" }}{{ else }}pgedge{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc:5432"
+              NAME: app
+              USER: gitea
+              SCHEMA: gitea
+              SSL_MODE: verify-full
+            {{- end }}
+        podSecurityContext:
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        containerSecurityContext:
+          enabled: true
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+              - ALL
+        extraEnv:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: gitea-s3-creds
+                key: access_key
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: gitea-s3-creds
+                key: secret_key
+          - name: SSL_CERT_FILE
+            value: "/certs/cas/ca-bundle.crt"
+          {{- if $hasFederation }}
+          - name: PGSSLCERT
+            value: "/certs/db-client/tls.crt"
+          - name: PGSSLKEY
+            value: "/certs/db-client/tls.key"
+          - name: PGSSLROOTCERT
+            value: "/certs/cas/ca-bundle.crt"
+          - name: PGSSLMODE
+            value: verify-full
+          {{- end }}
+        extraVolumes:
+          - name: cas
+            configMap:
+              name: trusted-ca-bundle
+          {{- if $hasFederation }}
+          - name: db-client-certs
+            secret:
+              secretName: pgedge-gitea-client-cert
+              defaultMode: 256 # 0400 in octal is 256 in decimal (user-read-only)
+          {{- end }}
+        extraVolumeMounts:
+          - name: cas
+            mountPath: /certs/cas
+            readOnly: true
+          {{- if $hasFederation }}
+          - name: db-client-certs
+            mountPath: /certs/db-client
+            readOnly: true
+          {{- end }}
+        {{- if $hasFederation }}
+        postgresql:
+          enabled: false
+        {{- else }}
+        postgresql:
+          enabled: true
+          persistence:
+            storageClass: "longhorn"
+          primary:
+            podSecurityContext:
+              enabled: true
+              fsGroup: 1001
+              seccompProfile:
+                type: RuntimeDefault
+            containerSecurityContext:
+              enabled: true
+              allowPrivilegeEscalation: false
+              runAsNonRoot: true
+              runAsUser: 1001
+              capabilities:
+                drop:
+                  - ALL
+        {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitea
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitea-tls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "gitea-http"
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        cert:
+          secretName: "gitea-tls"
+          sans:
+            - "gitea.{{ $cluster.name | default "k" }}.loa.internal"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitea
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gitea-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: gitea
+            hostnames:
+              - "gitea.{{ $cluster.name | default "k" }}.loa.internal"
+            ports:
+              - port: 443
+                protocol: HTTPS
+                targetPort: 3000
+                targetService: gitea-http
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitea
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Credentials
+metadata:
+  name: gitea-s3-creds
+  namespace: gitea
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  identityRef:
+    name: gitea
+  secretRef:
+    name: gitea-s3-creds
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: Bucket
+metadata:
+  name: gitea
+  namespace: gitea
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  clusterRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  name: gitea
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Policy
+metadata:
+  name: gitea-policy
+  namespace: gitea
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  statements:
+    - effect: Allow
+      actions: [s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket]
+      resources: [
+        "gitea/*", "gitea"
+      ]
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3PolicyBinding
+metadata:
+  name: gitea-policy-binding
+  namespace: gitea
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  policyRef:
+    name: gitea-policy
+  subjects:
+    - kind: S3Identity
+      name: gitea
+
+{{- if $hasFederation }}
+---
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: PrivateSchema
+metadata:
+  name: gitea
+  namespace: gitea
+spec:
+  databaseName: app
+  schemaName: gitea
+  userName: gitea
+  appNamespace: gitea
+---
+apiVersion: authn.loa.kevinpthorne.com/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: gitea
+  namespace: gitea
+spec:
+  clientId: gitea
+  secret: "gitea-client-secret"
+  redirectUris:
+    - "https://gitea.{{ $cluster.name | default "k" }}.loa.internal/user/oauth2/keycloak/callback"
+{{- end }}
