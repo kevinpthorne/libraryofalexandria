@@ -48,9 +48,24 @@ spec:
           template:
             spec:
               restartPolicy: OnFailure
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                fsGroup: 1000
+                seccompProfile:
+                  type: RuntimeDefault
               containers:
               - name: psql
                 image: postgres:15-alpine
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  readOnlyRootFilesystem: true
                 command:
                   - "sh"
                   - "-c"
