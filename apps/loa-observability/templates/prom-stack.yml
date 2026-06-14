@@ -63,6 +63,8 @@ spec:
           grafana.ini:
             server:
               protocol: https
+              domain: grafana.{{ .Values.cluster.name }}.loa.internal
+              root_url: https://grafana.{{ .Values.cluster.name }}.loa.internal/
               cert_file: /etc/grafana-tls/tls.crt
               cert_key: /etc/grafana-tls/tls.key
           livenessProbe:
