@@ -1,4 +1,5 @@
 # 3. THE TELEMETRY COLLECTOR
+{{- if .Values.alloy.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -44,7 +45,7 @@ spec:
               discovery.kubernetes "pods" {
                 role = "pod"
               }
-
+              {{- if .Values.loki.enabled }}
               discovery.relabel "pod_logs" {
                 targets = discovery.kubernetes.pods.targets
                 
@@ -75,6 +76,7 @@ spec:
                   url = "https://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
                 }
               }
+              {{- end }}
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: observability
@@ -82,3 +84,4 @@ spec:
     automated:
       prune: true
       selfHeal: true
+{{- end}}

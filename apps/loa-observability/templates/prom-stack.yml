@@ -54,6 +54,9 @@ spec:
         # ---------------------------------------------------------
         grafana:
           enabled: true
+          service:
+            port: 443
+            targetPort: 3000
           grafana.ini:
             server:
               protocol: https
@@ -80,7 +83,7 @@ spec:
                   csi.cert-manager.io/issuer-group: "cert-manager.io"
                   csi.cert-manager.io/issuer-kind: ClusterIssuer
                   csi.cert-manager.io/issuer-name: "app-pki-bootstrap-issuer"
-                  csi.cert-manager.io/dns-names: "grafana.observability.svc,grafana.observability.svc.cluster.local"
+                  csi.cert-manager.io/dns-names: "grafana.observability.svc,grafana.observability.svc.cluster.local,grafana.{{ .Values.cluster.name }}.loa.internal"
             - name: ca-bundle
               configMap:
                 name: trusted-ca-bundle
