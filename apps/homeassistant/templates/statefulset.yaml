@@ -68,6 +68,37 @@ spec:
             - name: config
               mountPath: {{ .Values.persistence.mountPath }}
             {{- end }}
+        {{- if .Values.otbr.enabled }}
+        - name: otbr
+          image: "{{ .Values.otbr.image.repository }}:{{ .Values.otbr.image.tag }}"
+          imagePullPolicy: {{ .Values.otbr.image.pullPolicy }}
+          securityContext:
+            privileged: true
+          env:
+            - name: DEVICE
+              value: {{ .Values.otbr.devicePath | quote }}
+            - name: BAUDRATE
+              value: {{ .Values.otbr.baudRate | quote }}
+            - name: FLOW_CONTROL
+              value: {{ .Values.otbr.flowControl | quote }}
+            - name: BACKBONE_IF
+              value: {{ .Values.otbr.hostInterface | quote }}
+          {{- if or .Values.otbr.deviceHostPath .Values.otbr.persistence.enabled }}
+          volumeMounts:
+            {{- if .Values.otbr.deviceHostPath }}
+            - name: usb-device
+              mountPath: {{ .Values.otbr.devicePath }}
+            {{- end }}
+            {{- if .Values.otbr.persistence.enabled }}
+            - name: thread-state
+              mountPath: /var/lib/thread
+            {{- end }}
+          {{- end }}
+          {{- if .Values.otbr.resources }}
+          resources:
+            {{- toYaml .Values.otbr.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
       volumes:
         - name: tls-certs
           secret:
@@ -79,4 +110,17 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: {{ .Chart.Name }}-pvc
+        {{- end }}
+        {{- if .Values.otbr.enabled }}
+        {{- if .Values.otbr.deviceHostPath }}
+        - name: usb-device
+          hostPath:
+            path: {{ .Values.otbr.deviceHostPath }}
+        {{- end }}
+        {{- if .Values.otbr.persistence.enabled }}
+        - name: thread-state
+          hostPath:
+            path: {{ .Values.otbr.persistence.hostPath | default "/var/lib/otbr-thread" }}
+            type: DirectoryOrCreate
+        {{- end }}
         {{- end }}
