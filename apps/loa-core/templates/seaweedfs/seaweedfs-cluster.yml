@@ -6,6 +6,11 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
+  tls:
+    enabled: true
+    issuerRef:
+      name: app-pki-bootstrap-issuer
+      kind: ClusterIssuer
   image: chrislusf/seaweedfs:4.0.401
   volume:
     replicas: 1
