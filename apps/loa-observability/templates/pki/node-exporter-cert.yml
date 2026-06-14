@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: node-exporter-tls
+  namespace: observability
+spec:
+  secretName: node-exporter-tls
+  issuerRef:
+    name: app-pki-bootstrap-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+  dnsNames:
+    - prometheus-node-exporter.observability.svc
+    - prometheus-node-exporter.observability.svc.cluster.local
