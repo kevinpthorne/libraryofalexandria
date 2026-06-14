@@ -31,13 +31,13 @@ spec:
             - {{ .Values.cluster.serviceCidr }}
             - {{ .Values.cluster.clusterCidr }}
           vpnPeers:
-          {{- if .Values.cluster.vpnPeers }}
-          {{- range .Values.cluster.vpnPeers }}
-          - {{ . | quote }}
-          {{- end }}
-          {{- else }}
-          []
-          {{- end }}
+            {{- if .Values.cluster.vpnPeers }}
+            {{- range .Values.cluster.vpnPeers }}
+            - {{ . | quote }}
+            {{- end }}
+            {{- else }}
+            []
+            {{- end }}
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
