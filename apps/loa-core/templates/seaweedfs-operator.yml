@@ -11,6 +11,21 @@ spec:
     chart: seaweedfs-operator
     repoURL: https://seaweedfs.github.io/seaweedfs-operator/
     targetRevision: 0.1.28
+    helm:
+      values: |
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          fsGroup: 65532
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
   destination:
     server: https://kubernetes.default.svc
     namespace: seaweedfs-system
