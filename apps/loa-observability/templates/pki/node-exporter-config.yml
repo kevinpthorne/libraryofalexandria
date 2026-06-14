@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: node-exporter-web-config
+  namespace: observability
 data:
   web-config.yaml: |
     tls_server_config:

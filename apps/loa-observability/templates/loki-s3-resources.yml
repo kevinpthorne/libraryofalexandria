@@ -1,0 +1,91 @@
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Credentials
+metadata:
+  name: loki-s3-creds
+  namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  identityRef:
+    name: loki
+  secretRef:
+    name: loki-s3-creds
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: Bucket
+metadata:
+  name: loki-data
+  namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  name: loki-data
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: Bucket
+metadata:
+  name: loki-ruler
+  namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  name: loki-ruler
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: Bucket
+metadata:
+  name: loki-admin
+  namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  name: loki-admin
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Policy
+metadata:
+  name: loki-policy
+  namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  statements:
+    - effect: Allow
+      actions: [s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket]
+      resources: [
+        "loki-data/*", "loki-data",
+        "loki-ruler/*", "loki-ruler",
+        "loki-admin/*", "loki-admin"
+      ]
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3PolicyBinding
+metadata:
+  name: loki-policy-binding
+  namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  policyRef:
+    name: loki-policy
+  subjects:
+    - kind: S3Identity
+      name: loki
