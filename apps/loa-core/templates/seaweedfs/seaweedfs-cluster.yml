@@ -11,7 +11,7 @@ spec:
     issuerRef:
       name: app-pki-bootstrap-issuer
       kind: ClusterIssuer
-  image: chrislusf/seaweedfs:4.0.401
+  image: chrislusf/seaweedfs:4.01
   volume:
     replicas: 1
     storageClassName: {{ .Values.seaweedfs.storageClass | quote }}
