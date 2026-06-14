@@ -9,8 +9,8 @@ spec:
   project: default
   source:
     chart: kro
-    repoURL: oci://ghcr.io/kro-run/kro/kro
-    targetRevision: 0.1.0
+    repoURL: oci://registry.k8s.io/kro/charts/kro
+    targetRevision: 0.9.2
   destination:
     server: https://kubernetes.default.svc
     namespace: kro-system
