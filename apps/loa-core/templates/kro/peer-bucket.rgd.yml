@@ -2,6 +2,8 @@ apiVersion: kro.run/v1alpha1
 kind: ResourceGraphDefinition
 metadata:
   name: peerbuckets
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   schema:
     apiVersion: blob.loa.kevinpthorne.com/v1alpha1
