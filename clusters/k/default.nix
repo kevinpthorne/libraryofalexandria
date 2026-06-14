@@ -40,7 +40,7 @@ let
         };
 
         networking = {
-          enableIPv6 = false;
+          enableIPv6 = true;
 
           nameservers = [ "192.168.121.1" ];
           defaultGateway = "192.168.121.1";

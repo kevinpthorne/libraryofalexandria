@@ -36,7 +36,7 @@ otbr:
   deviceHostPath: "" # e.g. "/dev/serial/by-id/usb-Silicon_Labs_CP2102N_YOUR_DEVICE_ID-if00-port0" to mount via hostPath
   baudRate: "460800"
   flowControl: "1"
-  hostInterface: "eth0"
+  hostInterface: "end0"
   persistence:
     enabled: true
     hostPath: "/var/lib/otbr-thread"

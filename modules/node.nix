@@ -87,7 +87,7 @@ in
         #     allowedTCPPorts = [ 8888 config.libraryofalexandria.node.masterPort ];
         # };
         # TODO maybe set ip statically?
-        enableIPv6 = false; # rke2 etcd prefers ipv6 over v4 but v4 is easier for humans
+        enableIPv6 = true; # Enabled to support OTBR IPv6 routing; prioritized IPv4 via gai.conf below
       };
       system.nixos.label = config.libraryofalexandria.node.hostname;
 
@@ -103,6 +103,13 @@ in
 
       # show IP on login screen
       environment.etc."issue.d/ip.issue".text = "\\4\n";
+
+      # Prioritize IPv4 over IPv6 for system resolution (RFC 6724)
+      environment.etc."gai.conf".text = ''
+        precedence  ::1/128       50
+        precedence  ::/0          40
+        precedence  ::ffff:0:0/96 100
+      '';
       networking.dhcpcd.runHook = "${pkgs.util-linux}/bin/agetty --reload";
 
       nix.settings = {

@@ -91,7 +91,7 @@ spec:
             {{- end }}
             {{- if .Values.otbr.persistence.enabled }}
             - name: thread-state
-              mountPath: /var/lib/thread
+              mountPath: /data
             {{- end }}
           {{- end }}
           {{- if .Values.otbr.resources }}
