@@ -31,14 +31,53 @@ spec:
               labels:
                 app: seaweedfs-filer-sync
             spec:
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                fsGroup: 1000
+                seccompProfile:
+                  type: RuntimeDefault
               containers:
               - name: filer-sync
-                image: chrislusf/seaweedfs:4.01
+                image: chrislusf/seaweedfs:4.33
                 command:
                   - "weed"
+                  - "-logtostderr=true"
+                  - "-config_dir=/etc/sw-security"
                   - "filer.sync"
                 args:
-                  - "-a=seaweedfs-filer.seaweedfs.svc.cluster.${schema.spec.sourceCluster}:8888"
-                  - "-b=seaweedfs-filer.seaweedfs.svc.cluster.${schema.spec.targetCluster}:8888"
+                  - "-a=seaweed-cluster-filer.seaweedfs-system.svc.cluster.${schema.spec.sourceCluster}:8888"
+                  - "-b=seaweed-cluster-filer.seaweedfs-system.svc.cluster.${schema.spec.targetCluster}:8888"
                   - "-a.path=${schema.spec.path}"
                   - "-b.path=${schema.spec.path}"
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                env:
+                  - name: SSL_CERT_FILE
+                    value: "/certs/cas/ca-bundle.crt"
+                volumeMounts:
+                  - name: sw-security
+                    mountPath: /etc/sw-security
+                    readOnly: true
+                  - name: sw-tls
+                    mountPath: /etc/sw-tls
+                    readOnly: true
+                  - name: trusted-ca
+                    mountPath: /certs/cas
+                    readOnly: true
+              volumes:
+                - name: sw-security
+                  configMap:
+                    name: seaweed-cluster-security-config
+                - name: sw-tls
+                  secret:
+                    secretName: seaweed-cluster-server-tls
+                - name: trusted-ca
+                  configMap:
+                    name: trusted-ca-bundle

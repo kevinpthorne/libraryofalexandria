@@ -11,12 +11,23 @@ spec:
     issuerRef:
       name: app-pki-bootstrap-issuer
       kind: ClusterIssuer
-  image: chrislusf/seaweedfs:4.01
+  image: chrislusf/seaweedfs:4.33
   volume:
     replicas: 1
     storageClassName: {{ .Values.seaweedfs.storageClass | quote }}
     requests:
       storage: {{ .Values.seaweedfs.size | quote }}
+    volumes:
+      - name: trusted-ca
+        configMap:
+          name: trusted-ca-bundle
+    volumeMounts:
+      - name: trusted-ca
+        mountPath: /certs/cas
+        readOnly: true
+    env:
+      - name: SSL_CERT_FILE
+        value: "/certs/cas/ca-bundle.crt"
     podSecurityContext:
       runAsNonRoot: true
       runAsUser: 1000
@@ -40,6 +51,17 @@ spec:
       resources:
         requests:
           storage: "10Gi"
+    volumes:
+      - name: trusted-ca
+        configMap:
+          name: trusted-ca-bundle
+    volumeMounts:
+      - name: trusted-ca
+        mountPath: /certs/cas
+        readOnly: true
+    env:
+      - name: SSL_CERT_FILE
+        value: "/certs/cas/ca-bundle.crt"
     podSecurityContext:
       runAsNonRoot: true
       runAsUser: 1000
@@ -56,6 +78,17 @@ spec:
       runAsUser: 1000
   master:
     replicas: 1
+    volumes:
+      - name: trusted-ca
+        configMap:
+          name: trusted-ca-bundle
+    volumeMounts:
+      - name: trusted-ca
+        mountPath: /certs/cas
+        readOnly: true
+    env:
+      - name: SSL_CERT_FILE
+        value: "/certs/cas/ca-bundle.crt"
     podSecurityContext:
       runAsNonRoot: true
       runAsUser: 1000
@@ -76,6 +109,17 @@ spec:
     extraArgs:
       - "-cert.file=/etc/sw-tls/tls.crt"
       - "-key.file=/etc/sw-tls/tls.key"
+    volumes:
+      - name: trusted-ca
+        configMap:
+          name: trusted-ca-bundle
+    volumeMounts:
+      - name: trusted-ca
+        mountPath: /certs/cas
+        readOnly: true
+    env:
+      - name: SSL_CERT_FILE
+        value: "/certs/cas/ca-bundle.crt"
     podSecurityContext:
       runAsNonRoot: true
       runAsUser: 1000
