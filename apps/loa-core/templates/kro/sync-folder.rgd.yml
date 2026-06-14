@@ -8,7 +8,7 @@ spec:
     kind: SyncFolder
     spec:
       path: string
-      sourceCluster: string | default="local"
+      sourceCluster: "string | default=local"
       targetCluster: string
   resources:
     - id: filer-sync-deployment

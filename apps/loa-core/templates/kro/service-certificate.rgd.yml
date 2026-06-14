@@ -7,11 +7,11 @@ spec:
     apiVersion: pki.loa.kevinpthorne.com/v1alpha1
     kind: ServiceCertificate
     spec:
-      clusterName: string | optional=true
-      sans: "[]string" | default=[]
+      clusterName: "string | optional=true"
+      sans: "[]string | default=[]"
       ca:
-        kind: string | default="ClusterIssuer"
-        name: string | default="app-pki-bootstrap-issuer"
+        kind: "string | default=ClusterIssuer"
+        name: "string | default=app-pki-bootstrap-issuer"
   resources:
     - id: certificate
       template:
@@ -25,14 +25,15 @@ spec:
           usages:
             - server auth
             - client auth
-          dnsNames: ${[
-            schema.metadata.name,
-            schema.metadata.name + "." + schema.metadata.namespace + ".svc",
-            schema.metadata.name + "." + schema.metadata.namespace + ".svc.cluster.local"
-          ] + (schema.spec.?clusterName != null && schema.spec.clusterName != "" ? [
-            schema.metadata.name + "." + schema.metadata.namespace + ".svc.cluster." + schema.spec.clusterName,
-            schema.metadata.name + "." + schema.spec.clusterName + ".loa.internal"
-          ] : []) + schema.spec.sans}
+          dnsNames: >-
+            ${[
+              schema.metadata.name,
+              schema.metadata.name + "." + schema.metadata.namespace + ".svc",
+              schema.metadata.name + "." + schema.metadata.namespace + ".svc.cluster.local"
+            ] + (schema.spec.?clusterName != null && schema.spec.clusterName != "" ? [
+              schema.metadata.name + "." + schema.metadata.namespace + ".svc.cluster." + schema.spec.clusterName,
+              schema.metadata.name + "." + schema.spec.clusterName + ".loa.internal"
+            ] : []) + schema.spec.sans}
           issuerRef:
-            kind: ${schema.spec.ca.kind}
-            name: ${schema.spec.ca.name}
+            kind: "${schema.spec.ca.kind}"
+            name: "${schema.spec.ca.name}"
