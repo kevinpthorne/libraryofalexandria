@@ -70,7 +70,7 @@
     };
     longhorn = {
       enable = lib.mkDefault true;
-      version = lib.mkDefault "1.11.0";
+      version = lib.mkDefault "1.11.2";
     };
     kured = {
       enable = lib.mkDefault true;
