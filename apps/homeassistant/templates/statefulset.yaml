@@ -99,6 +99,25 @@ spec:
             {{- toYaml .Values.otbr.resources | nindent 12 }}
           {{- end }}
         {{- end }}
+        {{- if .Values.matter.enabled }}
+        - name: matter-server
+          image: "{{ .Values.matter.image.repository }}:{{ .Values.matter.image.tag }}"
+          imagePullPolicy: {{ .Values.matter.image.pullPolicy }}
+          ports:
+            - name: api
+              containerPort: 5580
+              protocol: TCP
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: config
+              mountPath: /data
+              subPath: matter-server
+            {{- end }}
+          {{- if .Values.matter.resources }}
+          resources:
+            {{- toYaml .Values.matter.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
       volumes:
         - name: tls-certs
           secret:

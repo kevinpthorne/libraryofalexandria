@@ -42,3 +42,11 @@ otbr:
     hostPath: "/var/lib/otbr-thread"
   resources: {}
 
+matter:
+  enabled: false
+  image:
+    repository: ghcr.io/home-assistant/matter-server
+    tag: stable
+    pullPolicy: IfNotPresent
+  resources: {}
+

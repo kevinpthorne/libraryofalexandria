@@ -18,6 +18,8 @@ spec:
               akri.sh/homeassistant-connection-zb1: 1
             requests:
               akri.sh/homeassistant-connection-zb1: 1
+        matter:
+          enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: homeassistant
