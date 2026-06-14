@@ -79,6 +79,23 @@ spec:
               scheme: HTTPS
           env:
             SSL_CERT_FILE: /etc/ssl/certs/custom-ca/ca-bundle.crt
+          envValueFrom:
+            DISCORD_WEBHOOK_URL:
+              secretKeyRef:
+                name: discord-webhook
+                key: url
+          alerting:
+            contactpoints.yaml:
+              secret:
+                apiVersion: 1
+                contactPoints:
+                  - orgId: 1
+                    name: Discord
+                    receivers:
+                      - uid: discord_1
+                        type: discord
+                        settings:
+                          url: $__env{DISCORD_WEBHOOK_URL}
           extraVolumes:
             - name: grafana-tls
               csi:
