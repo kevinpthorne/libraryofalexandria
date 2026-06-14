@@ -6,8 +6,9 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   schema:
-    apiVersion: authn.loa.kevinpthorne.com/v1alpha1
+    apiVersion: v1alpha1
     kind: KeycloakClient
+    group: authn.loa.kevinpthorne.com
     spec:
       realm: "string | default=loa"
       clientId: string

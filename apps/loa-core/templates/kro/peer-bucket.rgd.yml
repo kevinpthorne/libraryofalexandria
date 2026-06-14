@@ -6,8 +6,9 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   schema:
-    apiVersion: blob.loa.kevinpthorne.com/v1alpha1
+    apiVersion: v1alpha1
     kind: PeerBucket
+    group: blob.loa.kevinpthorne.com
     spec:
       bucketName: string
       sourceCluster: "string | default=local"

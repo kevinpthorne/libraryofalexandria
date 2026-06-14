@@ -6,8 +6,9 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   schema:
-    apiVersion: db.loa.kevinpthorne.com/v1alpha1
+    apiVersion: v1alpha1
     kind: PrivateSchema
+    group: db.loa.kevinpthorne.com
     spec:
       databaseName: "string | default=app"
       schemaName: string

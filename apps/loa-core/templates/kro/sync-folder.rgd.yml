@@ -6,8 +6,9 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   schema:
-    apiVersion: fs.loa.kevinpthorne.com/v1alpha1
+    apiVersion: v1alpha1
     kind: SyncFolder
+    group: fs.loa.kevinpthorne.com
     spec:
       path: string
       sourceCluster: "string | default=local"

@@ -6,8 +6,9 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   schema:
-    apiVersion: pki.loa.kevinpthorne.com/v1alpha1
+    apiVersion: v1alpha1
     kind: ServiceCertificate
+    group: pki.loa.kevinpthorne.com
     spec:
       clusterName: "string | optional=true"
       sans: "[]string | default=[]"
