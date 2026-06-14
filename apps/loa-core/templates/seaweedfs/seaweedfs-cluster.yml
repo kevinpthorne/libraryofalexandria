@@ -73,6 +73,9 @@ spec:
   s3:
     enabled: true
     replicas: 1
+    extraArgs:
+      - "-s3.cert.file=/etc/sw-tls/tls.crt"
+      - "-s3.key.file=/etc/sw-tls/tls.key"
     podSecurityContext:
       runAsNonRoot: true
       runAsUser: 1000
