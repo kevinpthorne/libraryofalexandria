@@ -106,9 +106,6 @@ spec:
   s3:
     enabled: true
     replicas: 1
-    extraArgs:
-      - "-cert.file=/etc/sw-tls/tls.crt"
-      - "-key.file=/etc/sw-tls/tls.key"
     volumes:
       - name: trusted-ca
         configMap:
