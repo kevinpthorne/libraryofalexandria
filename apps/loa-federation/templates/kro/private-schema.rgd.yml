@@ -71,7 +71,13 @@ spec:
                   - "-c"
                   - |
                     psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw -U admin -d ${schema.spec.databaseName} -c "
-                    CREATE ROLE ${schema.spec.userName} WITH LOGIN;
+                    DO \$\$
+                    BEGIN
+                      IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = '${schema.spec.userName}') THEN
+                        CREATE ROLE ${schema.spec.userName} WITH LOGIN;
+                      END IF;
+                    END
+                    \$\$;
                     CREATE SCHEMA IF NOT EXISTS ${schema.spec.schemaName} AUTHORIZATION ${schema.spec.userName};
                     GRANT ALL ON SCHEMA ${schema.spec.schemaName} TO ${schema.spec.userName};
                     GRANT ALL ON DATABASE ${schema.spec.databaseName} TO ${schema.spec.userName};
