@@ -6,7 +6,7 @@ The deployment relies on several key technologies:
 - **[Nix / NixOS](https://nixos.org/)**: Foundation for the deterministic OS configuration and reproducible packages.
 - **[Colmena](https://github.com/zhaofengli/colmena)**: Deployment tool for provisioning NixOS configurations across remote hosts.
 - **[Disko](https://github.com/nix-community/disko)**: Declarative disk partitioning and formatting for the cluster nodes.
-- **[Crossplane](https://crossplane.io/)**: Universal control plane for managing infrastructure and backing services directly from Kubernetes manifests.
+- **[KRO (Kube Resource Orchestrator)](https://kro.run/)**: Lightweight, declarative engine for managing complex resource graphs and custom APIs directly from Kubernetes.
 - **[ArgoCD](https://argoproj.github.io/cd/)**: Declarative GitOps continuous delivery tool for Kubernetes, acting as the primary application controller for the cluster.
 - **[Cert-Manager](https://cert-manager.io/) & [Trust-Manager](https://cert-manager.io/docs/trust/trust-manager/)**: Automated certificate issuing, management, and cluster-wide trust bundle distribution.
 - **[Longhorn](https://longhorn.io/)**: Distributed block storage system providing persistent volumes for stateful applications.
@@ -32,7 +32,6 @@ The deployment relies on several key technologies:
 Several root-level helper scripts simplify operational tasks:
 
 - `./update-charts.sh <cluster_name>`: Evaluates and locks Helm charts for a given cluster. It fetches remote Helm repositories, resolves container images, and stores integrity hashes using `nix-prefetch-docker` into a `charts-lock.json` file for reproducible air-gapped evaluation.
-- `./validate-compositions.sh`: Validates Crossplane Custom Resource Definitions (XRD) and Compositions, ensuring the templates correctly map to internal resources before deployment.
 - `./gen-keys.sh` / `./link-keys.sh`: Utilities for managing and linking secrets related to the cluster deployments.
 
 ## Usage

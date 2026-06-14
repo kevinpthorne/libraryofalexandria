@@ -1,13 +1,11 @@
 
 # pgEdge federated app onboarding
 
-Phase 1: The "Uniform" Foundation (Crossplane)
+Phase 1: The "Uniform" Foundation (KRO)
 
 Apply these resources to ALL nodes (A-rw, B-rw, A-r).
 
-    Crossplane: Create Schema (e.g., my_app).
-
-    Crossplane: Create Extension (spock).
+    KRO: Create PrivateSchema (which creates the schema and enables the spock extension).
 
     Job: Run spock.node_create on all nodes.
 
