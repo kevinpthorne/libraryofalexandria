@@ -45,8 +45,8 @@ otbr:
 matter:
   enabled: false
   image:
-    repository: ghcr.io/matter-js/matter-server
-    tag: 8.1.2
+    repository: ghcr.io/home-assistant-libs/python-matter-server
+    tag: "8"
     pullPolicy: IfNotPresent
   resources: {}
 
