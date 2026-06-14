@@ -11,7 +11,7 @@ in
           ''
             # 2. Hard limits for static pods
             control-plane-resource-limits:
-              - kube-apiserver-memory=2560Mi
+              - kube-apiserver-memory=2048Mi
               - etcd-memory=1500Mi
               - kube-controller-manager-memory=512Mi
 
@@ -20,7 +20,7 @@ in
               # Lower the DB quota (default is 2G). 1G is plenty for 5 nodes.
               - "quota-backend-bytes=1073741824"  # TODO scale per node count
             kube-apiserver-extra-env:
-              - "GOMEMLIMIT=2048MiB"
+              - "GOMEMLIMIT=1537MiB"
             kube-apiserver-arg:
               # Throttle read requests (LIST/WATCH from ArgoCD/Longhorn)
               - "max-requests-inflight=150"     # Default is 400
@@ -31,16 +31,16 @@ in
 
             # 4. OS and Kubelet Protection
             kubelet-arg:
-              - "kube-reserved=cpu=250m,memory=500Mi"
+              - "kube-reserved=cpu=250m,memory=300Mi"
               - "system-reserved=cpu=250m,memory=500Mi"
-              - "eviction-hard=memory.available<500Mi,nodefs.available<10%"
+              - "eviction-hard=memory.available<300Mi,nodefs.available<10%"
           ''
         else
           ''
             kubelet-arg:
-              - "kube-reserved=cpu=250m,memory=500Mi"
+              - "kube-reserved=cpu=250m,memory=300Mi"
               - "system-reserved=cpu=250m,memory=500Mi"
-              - "eviction-hard=memory.available<500Mi,nodefs.available<10%"
+              - "eviction-hard=memory.available<300Mi,nodefs.available<10%"
               - "pod-max-pids=1024"
           ''
       );
