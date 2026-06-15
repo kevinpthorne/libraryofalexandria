@@ -151,6 +151,16 @@ spec:
               caFile: /etc/ssl/certs/custom-ca/ca-bundle.crt
               serverName: prometheus-operated.observability.svc
           prometheusSpec:
+            retention: 14d
+            retentionSize: 18GB
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: longhorn
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 20Gi
             # Tell Prometheus to serve HTTPS on its UI/API
             web:
               tlsConfig:
