@@ -35,7 +35,23 @@ spec:
                   - "sh"
                   - "-c"
                   - |
-                    echo '{"realm": "${schema.spec.realm}", "clients": [{"clientId": "${schema.spec.clientId}", "secret": "${schema.spec.?secret}", "serviceAccountsEnabled": ${schema.spec.serviceAccountsEnabled}, "redirectUris": ${schema.spec.redirectUris}}]}' > /tmp/client.json
+                    cat << 'EOF' > /tmp/client.json
+                    ${json.marshal({
+                      "realm": schema.spec.realm,
+                      "clients": [
+                        schema.spec.?secret != null ? {
+                          "clientId": schema.spec.clientId,
+                          "secret": schema.spec.secret,
+                          "serviceAccountsEnabled": schema.spec.serviceAccountsEnabled,
+                          "redirectUris": schema.spec.redirectUris
+                        } : {
+                          "clientId": schema.spec.clientId,
+                          "serviceAccountsEnabled": schema.spec.serviceAccountsEnabled,
+                          "redirectUris": schema.spec.redirectUris
+                        }
+                      ]
+                    })}
+                    EOF
                     /opt/jboss/keycloak-config-cli.jar --import.files=/tmp/client.json
                 env:
                 - name: KEYCLOAK_URL
