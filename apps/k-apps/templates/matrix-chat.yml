@@ -147,6 +147,7 @@ spec:
           port: 5432
           username: "matrix"
           database: "app"
+          password: "dummy"
         synapse:
           extraEnv:
             - name: PGSSLCERT

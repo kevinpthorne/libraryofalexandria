@@ -34,6 +34,15 @@ spec:
               USER: gitea
               SCHEMA: gitea
               SSL_MODE: verify-full
+            session:
+              PROVIDER: redis
+              PROVIDER_CONFIG: "redis://keydb-restricted.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
+            cache:
+              ADAPTER: redis
+              HOST: "redis://keydb-restricted.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
+            queue:
+              TYPE: redis
+              CONN_STR: "redis://keydb-restricted.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
             {{- end }}
         podSecurityContext:
           fsGroup: 1000
@@ -93,6 +102,12 @@ spec:
           {{- end }}
         {{- if $hasFederation }}
         postgresql:
+          enabled: false
+        postgresql-ha:
+          enabled: false
+        redis:
+          enabled: false
+        redis-cluster:
           enabled: false
         {{- else }}
         postgresql:
