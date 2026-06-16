@@ -279,6 +279,31 @@ spec:
   subjects:
     - kind: S3Identity
       name: gitea
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: ResourceReferenceGrant
+metadata:
+  name: seaweed-gitea-grant
+  namespace: seaweedfs-system
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  from:
+    - group: seaweed.seaweedfs.com
+      kind: S3Credentials
+      namespace: gitea
+    - group: seaweed.seaweedfs.com
+      kind: Bucket
+      namespace: gitea
+    - group: seaweed.seaweedfs.com
+      kind: S3Policy
+      namespace: gitea
+    - group: seaweed.seaweedfs.com
+      kind: S3PolicyBinding
+      namespace: gitea
+  to:
+    - group: seaweed.seaweedfs.com
+      kind: Seaweed
 
 {{- if $hasFederation }}
 ---
