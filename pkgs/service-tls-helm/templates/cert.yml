@@ -11,6 +11,7 @@ spec:
     - {{ .Values.svcName }}.{{ .Release.Namespace }}.svc
     - {{ .Values.svcName }}.{{ .Release.Namespace }}.svc.cluster.local
     {{- if .Values.cluster.name }}
+    - {{ .Values.svcName }}.{{ .Release.Namespace }}.svc.cluster.{{ .Values.cluster.name }}
     - {{ .Values.svcName }}.{{ .Values.cluster.name }}.loa.internal
     {{- end }}
     {{- if .Values.cert.sans }}
