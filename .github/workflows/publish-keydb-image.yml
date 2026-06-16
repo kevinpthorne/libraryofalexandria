@@ -1,0 +1,158 @@
+name: Publish KeyDB Docker Image
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v4
+        with:
+          extra-conf: |
+            extra-platforms = aarch64-linux
+            accept-flake-config = true
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ----------------------------------------------------
+      # Build & Push amd64 (x86_64-linux)
+      # ----------------------------------------------------
+      - name: Build keydb-image (amd64)
+        run: |
+          nix build .#packages.x86_64-linux.keydb-image -o result-amd64
+
+      - name: Load and push amd64 image
+        run: |
+          docker load -i result-amd64
+          
+          # Convert owner to lowercase for GHCR compliance
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/${OWNER}/keydb"
+          
+          # Get Git Short SHA
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          # Tag with Short SHA
+          TAG_SHA="${IMAGE_NAME}:sha-${SHORT_SHA}-amd64"
+          docker tag keydb:latest "${TAG_SHA}"
+          docker push "${TAG_SHA}"
+          
+          # Tag with ref name
+          REF_NAME=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9._-]/./g')
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            TAG_REF="${IMAGE_NAME}:${REF_NAME}-amd64"
+            docker tag keydb:latest "${TAG_REF}"
+            docker push "${TAG_REF}"
+          elif [[ "${{ github.ref_name }}" == "master" ]]; then
+            TAG_LATEST="${IMAGE_NAME}:latest-amd64"
+            docker tag keydb:latest "${TAG_LATEST}"
+            docker push "${TAG_LATEST}"
+          else
+            TAG_BRANCH="${IMAGE_NAME}:${REF_NAME}-amd64"
+            docker tag keydb:latest "${TAG_BRANCH}"
+            docker push "${TAG_BRANCH}"
+          fi
+          
+          # Clean up local image to avoid conflict with ARM64 loading
+          docker rmi keydb:latest
+
+      # ----------------------------------------------------
+      # Build & Push arm64 (aarch64-linux)
+      # ----------------------------------------------------
+      - name: Build keydb-image (arm64)
+        run: |
+          nix build .#packages.aarch64-linux.keydb-image -o result-arm64
+
+      - name: Load and push arm64 image
+        run: |
+          docker load -i result-arm64
+          
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/${OWNER}/keydb"
+          
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          # Tag with Short SHA
+          TAG_SHA="${IMAGE_NAME}:sha-${SHORT_SHA}-arm64"
+          docker tag keydb:latest "${TAG_SHA}"
+          docker push "${TAG_SHA}"
+          
+          # Tag with ref name
+          REF_NAME=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9._-]/./g')
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            TAG_REF="${IMAGE_NAME}:${REF_NAME}-arm64"
+            docker tag keydb:latest "${TAG_REF}"
+            docker push "${TAG_REF}"
+          elif [[ "${{ github.ref_name }}" == "master" ]]; then
+            TAG_LATEST="${IMAGE_NAME}:latest-arm64"
+            docker tag keydb:latest "${TAG_LATEST}"
+            docker push "${TAG_LATEST}"
+          else
+            TAG_BRANCH="${IMAGE_NAME}:${REF_NAME}-arm64"
+            docker tag keydb:latest "${TAG_BRANCH}"
+            docker push "${TAG_BRANCH}"
+          fi
+          
+          # Clean up local image
+          docker rmi keydb:latest
+
+      # ----------------------------------------------------
+      # Create & Push Multi-Arch Manifests
+      # ----------------------------------------------------
+      - name: Create and push multi-arch manifest
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/${OWNER}/keydb"
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          # Enable Docker experimental CLI features (just in case)
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          
+          # 1. Short SHA manifest
+          docker manifest create "${IMAGE_NAME}:sha-${SHORT_SHA}" \
+            --amend "${IMAGE_NAME}:sha-${SHORT_SHA}-amd64" \
+            --amend "${IMAGE_NAME}:sha-${SHORT_SHA}-arm64"
+          docker manifest push "${IMAGE_NAME}:sha-${SHORT_SHA}"
+          
+          # 2. Ref name manifest (tag / branch / latest)
+          REF_NAME=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9._-]/./g')
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            docker manifest create "${IMAGE_NAME}:${REF_NAME}" \
+              --amend "${IMAGE_NAME}:${REF_NAME}-amd64" \
+              --amend "${IMAGE_NAME}:${REF_NAME}-arm64"
+            docker manifest push "${IMAGE_NAME}:${REF_NAME}"
+          elif [[ "${{ github.ref_name }}" == "master" ]]; then
+            docker manifest create "${IMAGE_NAME}:latest" \
+              --amend "${IMAGE_NAME}:latest-amd64" \
+              --amend "${IMAGE_NAME}:latest-arm64"
+            docker manifest push "${IMAGE_NAME}:latest"
+          else
+            docker manifest create "${IMAGE_NAME}:${REF_NAME}" \
+              --amend "${IMAGE_NAME}:${REF_NAME}-amd64" \
+              --amend "${IMAGE_NAME}:${REF_NAME}-arm64"
+            docker manifest push "${IMAGE_NAME}:${REF_NAME}"
+          fi
