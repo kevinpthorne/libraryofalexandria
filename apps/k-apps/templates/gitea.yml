@@ -20,6 +20,9 @@ spec:
             server:
               ROOT_URL: "https://gitea.{{ $cluster.name }}.loa.internal/"
               SSH_DOMAIN: "gitea.{{ $cluster.name }}.loa.internal"
+              PROTOCOL: https
+              CERT_FILE: /certs/gitea/tls.crt
+              KEY_FILE: /certs/gitea/tls.key
             storage:
               STORAGE_TYPE: minio
             storage.minio:
@@ -58,33 +61,37 @@ spec:
           capabilities:
             drop:
               - ALL
-        extraEnv:
-          - name: AWS_ACCESS_KEY_ID
-            valueFrom:
-              secretKeyRef:
-                name: gitea-s3-creds
-                key: access_key
-          - name: AWS_SECRET_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                name: gitea-s3-creds
-                key: secret_key
-          - name: SSL_CERT_FILE
-            value: "/certs/cas/ca-bundle.crt"
-          {{- if $hasFederation }}
-          - name: PGSSLCERT
-            value: "/certs/db-client/tls.crt"
-          - name: PGSSLKEY
-            value: "/certs/db-client/tls.key"
-          - name: PGSSLROOTCERT
-            value: "/certs/cas/ca-bundle.crt"
-          - name: PGSSLMODE
-            value: verify-full
-          {{- end }}
+        deployment:
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-s3-creds
+                  key: access_key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-s3-creds
+                  key: secret_key
+            - name: SSL_CERT_FILE
+              value: "/certs/cas/ca-bundle.crt"
+            {{- if $hasFederation }}
+            - name: PGSSLCERT
+              value: "/certs/db-client/tls.crt"
+            - name: PGSSLKEY
+              value: "/certs/db-client/tls.key"
+            - name: PGSSLROOTCERT
+              value: "/certs/cas/ca-bundle.crt"
+            - name: PGSSLMODE
+              value: verify-full
+            {{- end }}
         extraVolumes:
           - name: cas
             configMap:
               name: trusted-ca-bundle
+          - name: gitea-tls
+            secret:
+              secretName: gitea-tls
           {{- if $hasFederation }}
           - name: db-client-certs
             secret:
@@ -94,6 +101,9 @@ spec:
         extraVolumeMounts:
           - name: cas
             mountPath: /certs/cas
+            readOnly: true
+          - name: gitea-tls
+            mountPath: /certs/gitea
             readOnly: true
           {{- if $hasFederation }}
           - name: db-client-certs
@@ -187,11 +197,14 @@ spec:
       valuesObject:
         endpoints:
           - name: gitea
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
             hostnames:
               - "gitea.{{ $cluster.name | default "k" }}.loa.internal"
             ports:
               - port: 443
-                protocol: HTTPS
+                protocol: TLS
                 targetPort: 3000
                 targetService: gitea-http
   destination:
