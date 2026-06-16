@@ -147,6 +147,10 @@
       }
     }
   },
+  "local-gateway": {
+    "url": "file:///nix/store/wlpm9xlfzygryqa3ppqm41hl2v2vna7m-gateway-helm/gateway-helm-0.1.0.tgz",
+    "images": {}
+  },
   "argo-tls": {
     "url": "file:///nix/store/6al3b42d74i2cwsmv6g6pdby8qr9y1ns-service-tls-helm/service-tls-helm-0.1.0.tgz",
     "images": {}
@@ -176,7 +180,7 @@
     }
   },
   "argocd-gateway": {
-    "url": "file:///nix/store/d12gv30h249dx94zvvai43dhrxx3skg9-gateway-helm/gateway-helm-0.1.0.tgz",
+    "url": "file:///nix/store/wlpm9xlfzygryqa3ppqm41hl2v2vna7m-gateway-helm/gateway-helm-0.1.0.tgz",
     "images": {}
   },
   "k-apps": {
