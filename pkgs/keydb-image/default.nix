@@ -2,6 +2,9 @@
   dockerTools,
   keydb,
   cacert,
+  bash,
+  coreutils,
+  findutils,
   ...
 }:
 
@@ -12,6 +15,10 @@ dockerTools.buildLayeredImage {
   contents = [
     keydb
     cacert
+    bash
+    coreutils
+    findutils
+    dockerTools.binSh
   ];
 
   config = {
