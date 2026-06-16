@@ -29,7 +29,7 @@ spec:
             {{- if $hasFederation }}
             database:
               DB_TYPE: postgres
-              HOST: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "pgedge" }}{{ else }}pgedge{{ end }}-main-data-rw.pgedge.svc:5432"
+              HOST: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc:5432"
               NAME: app
               USER: gitea
               SCHEMA: gitea
