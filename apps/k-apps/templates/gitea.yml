@@ -13,6 +13,8 @@ spec:
     targetRevision: 11.0.0
     helm:
       valuesObject:
+        strategy:
+          type: Recreate
         global:
           storageClass: "longhorn"
         gitea:
@@ -217,6 +219,18 @@ spec:
 
 ---
 apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Identity
+metadata:
+  name: gitea
+  namespace: gitea
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+---
+apiVersion: seaweed.seaweedfs.com/v1
 kind: S3Credentials
 metadata:
   name: gitea-s3-creds
@@ -289,6 +303,9 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   from:
+    - group: seaweed.seaweedfs.com
+      kind: S3Identity
+      namespace: gitea
     - group: seaweed.seaweedfs.com
       kind: S3Credentials
       namespace: gitea

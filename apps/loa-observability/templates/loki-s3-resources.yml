@@ -1,5 +1,17 @@
 {{- if .Values.loki.enabled }}
 apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Identity
+metadata:
+  name: loki
+  namespace: observability
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+---
+apiVersion: seaweed.seaweedfs.com/v1
 kind: S3Credentials
 metadata:
   name: loki-s3-creds
@@ -100,6 +112,9 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   from:
+    - group: seaweed.seaweedfs.com
+      kind: S3Identity
+      namespace: observability
     - group: seaweed.seaweedfs.com
       kind: S3Credentials
       namespace: observability
