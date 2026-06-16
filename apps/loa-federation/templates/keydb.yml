@@ -13,7 +13,7 @@ spec:
       # We override the values to enforce a restricted security context
       values: |
         imageRepository: ghcr.io/kevinpthorne/keydb
-        imageTag: latest  # default pulls x86 image
+        imageTag: latest  # okay since this repo publishes it
         nodes: {{ .Values.keydb.instances }}
         securityContext:
           runAsNonRoot: true
