@@ -13,6 +13,9 @@ spec:
       valuesObject:
         endpoints:
           - name: grafana
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
             hostnames:
               - "grafana.{{ .Values.cluster.name }}.loa.internal"
             ports:

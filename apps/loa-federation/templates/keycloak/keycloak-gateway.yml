@@ -13,6 +13,9 @@ spec:
       values: |
         endpoints:
         - name: keycloak-app
+          createGateway: false
+          gatewayName: local-gateway
+          gatewayNamespace: kube-system
           hostnames:
           - ident.{{ .Values.cluster.name }}.loa.internal
           ports:

@@ -1,5 +1,6 @@
 {{- range .Values.endpoints }}
 {{- $endpoint := . }}
+{{- if ne $endpoint.createGateway false }}
 {{- $needsCert := false }}
 {{- range $endpoint.ports }}
   {{- $effMode := "Terminate" }}
@@ -28,5 +29,6 @@ spec:
     name: {{ $.Values.ca.name }}
     kind: {{ $.Values.ca.kind }}
 {{- end }}
-
 {{- end }}
+{{- end }}
+

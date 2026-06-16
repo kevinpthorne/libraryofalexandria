@@ -10,7 +10,8 @@ metadata:
   namespace: {{ $endpoint.namespace | default $.Release.Namespace }}
 spec:
   parentRefs:
-  - name: {{ $endpoint.name }}
+  - name: {{ $endpoint.gatewayName | default $endpoint.name }}
+    namespace: {{ $endpoint.gatewayNamespace | default ($endpoint.namespace | default $.Release.Namespace) }}
     sectionName: {{ .protocol | lower }}-{{ .port }}
   {{- if $endpoint.hostnames }}
   hostnames:

@@ -47,6 +47,9 @@
           endpoints = [
             {
               name = "argocd";
+              createGateway = false;
+              gatewayName = "local-gateway";
+              gatewayNamespace = "kube-system";
               hostnames = [
                 "argocd.${config.libraryofalexandria.cluster.name}.loa.internal"
               ];

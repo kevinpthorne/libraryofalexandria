@@ -67,6 +67,9 @@
           endpoints = [
             {
               name = "headlamp";
+              createGateway = false;
+              gatewayName = "local-gateway";
+              gatewayNamespace = "kube-system";
               hostnames = [
                 "cluster.${config.libraryofalexandria.cluster.name}.loa.internal"
               ];

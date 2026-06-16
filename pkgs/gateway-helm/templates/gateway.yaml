@@ -1,5 +1,6 @@
 {{- range .Values.endpoints }}
 {{- $endpoint := . }}
+{{- if ne $endpoint.createGateway false }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -22,6 +23,9 @@ spec:
   - name: {{ .protocol | lower }}-{{ .port }}
     port: {{ .port }}
     protocol: {{ .protocol }}
+    allowedRoutes:
+      namespaces:
+        from: All
     {{- if or (eq .protocol "HTTPS") (eq .protocol "TLS") }}
     tls:
       {{- $effMode := "Terminate" }}
@@ -39,3 +43,5 @@ spec:
     {{- end }}
   {{- end }}
 {{- end }}
+{{- end }}
+

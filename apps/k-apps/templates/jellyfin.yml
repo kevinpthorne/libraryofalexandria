@@ -35,6 +35,49 @@ spec:
             type: pvc
             storageClass: longhorn
             size: 250Gi
+        extraVolumes:
+          - name: jellyfin-tls
+            secret:
+              secretName: jellyfin-tls
+        extraVolumeMounts:
+          - name: jellyfin-tls
+            mountPath: /certs
+            readOnly: true
+        extraInitContainers:
+          - name: pem-to-pkcs12
+            image: alpine/openssl:3.5.4
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              runAsUser: 1000
+              runAsGroup: 1000
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                set -ex
+                mkdir -p /config/certs
+                openssl pkcs12 -export -out /config/certs/jellyfin.pfx -inkey /certs/tls.key -in /certs/tls.crt -passout pass:jellyfin
+                chown -R 1000:1000 /config/certs
+                chmod -R 770 /config/certs
+                
+                mkdir -p /config/config
+                if [ ! -f /config/config/network.xml ]; then
+                  printf '<?xml version="1.0" encoding="utf-8"?>\n<NetworkConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">\n  <RequireHttps>false</RequireHttps>\n  <CertificatePath>/config/certs/jellyfin.pfx</CertificatePath>\n  <CertificatePassword>jellyfin</CertificatePassword>\n</NetworkConfiguration>\n' > /config/config/network.xml
+                else
+                  if ! grep -q "<CertificatePath>" /config/config/network.xml; then
+                    sed -i 's|</NetworkConfiguration>|  <CertificatePath>/config/certs/jellyfin.pfx</CertificatePath>\n  <CertificatePassword>jellyfin</CertificatePassword>\n</NetworkConfiguration>|' /config/config/network.xml
+                  fi
+                fi
+                chown -R 1000:1000 /config/config
+                chmod -R 770 /config/config
+            volumeMounts:
+              - name: jellyfin-tls
+                mountPath: /certs
+                readOnly: true
+              - name: config
+                mountPath: /config
   destination:
     server: https://kubernetes.default.svc
     namespace: jellyfin
@@ -90,16 +133,16 @@ spec:
       valuesObject:
         endpoints:
           - name: jellyfin
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
             hostnames:
               - "jellyfin.k.loa.internal"
             ports:
               - port: 443
-                protocol: HTTPS
-                tls:
-                  mode: Terminate
-                  secretName: jellyfin-tls
-                targetPort: 8096
-                targetService: jellyfin
+                protocol: TLS
+                targetPort: 8920
+                targetService: jellyfin-tls
   destination:
     server: https://kubernetes.default.svc
     namespace: jellyfin
@@ -107,3 +150,18 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin-tls
+  namespace: jellyfin
+spec:
+  selector:
+    app.kubernetes.io/name: jellyfin
+  ports:
+    - name: https
+      port: 8920
+      targetPort: 8920
+      protocol: TCP

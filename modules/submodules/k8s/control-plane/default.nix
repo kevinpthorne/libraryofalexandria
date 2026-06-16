@@ -10,6 +10,7 @@
     # top installs last
     ./headlamp.nix
     ./argocd.nix
+    ./gateway.nix
     ./eso.nix
     ./longhorn.nix
     ./trust-manager.nix
@@ -50,6 +51,10 @@
     headlamp = {
       enable = lib.mkDefault false;
       version = lib.mkDefault "0.40.0";
+    };
+    local-gateway = {
+      enable = lib.mkDefault true;
+      version = lib.mkDefault "0.1.0";
     };
     argocd = {
       enable = lib.mkDefault true;
