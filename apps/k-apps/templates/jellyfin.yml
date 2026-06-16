@@ -63,11 +63,28 @@ spec:
                 chmod -R 770 /config/certs
                 
                 mkdir -p /config/config
-                if [ ! -f /config/config/network.xml ]; then
-                  printf '<?xml version="1.0" encoding="utf-8"?>\n<NetworkConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">\n  <RequireHttps>false</RequireHttps>\n  <CertificatePath>/config/certs/jellyfin.pfx</CertificatePath>\n  <CertificatePassword>jellyfin</CertificatePassword>\n</NetworkConfiguration>\n' > /config/config/network.xml
+                if [ ! -f /config/config/network.xml ] || [ ! -s /config/config/network.xml ]; then
+                  printf '<?xml version="1.0" encoding="utf-8"?>\n<NetworkConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">\n  <RequireHttps>false</RequireHttps>\n  <EnableHttps>true</EnableHttps>\n  <CertificatePath>/config/certs/jellyfin.pfx</CertificatePath>\n  <CertificatePassword>jellyfin</CertificatePassword>\n</NetworkConfiguration>\n' > /config/config/network.xml
                 else
-                  if ! grep -q "<CertificatePath>" /config/config/network.xml; then
-                    sed -i 's|</NetworkConfiguration>|  <CertificatePath>/config/certs/jellyfin.pfx</CertificatePath>\n  <CertificatePassword>jellyfin</CertificatePassword>\n</NetworkConfiguration>|' /config/config/network.xml
+                  if grep -q "<CertificatePath" /config/config/network.xml; then
+                    sed -i 's|<CertificatePath>.*</CertificatePath>|<CertificatePath>/config/certs/jellyfin.pfx</CertificatePath>|' /config/config/network.xml
+                    sed -i 's|<CertificatePath />|<CertificatePath>/config/certs/jellyfin.pfx</CertificatePath>|' /config/config/network.xml
+                  else
+                    sed -i 's|</NetworkConfiguration>|  <CertificatePath>/config/certs/jellyfin.pfx</CertificatePath>\n</NetworkConfiguration>|' /config/config/network.xml
+                  fi
+
+                  if grep -q "<CertificatePassword" /config/config/network.xml; then
+                    sed -i 's|<CertificatePassword>.*</CertificatePassword>|<CertificatePassword>jellyfin</CertificatePassword>|' /config/config/network.xml
+                    sed -i 's|<CertificatePassword />|<CertificatePassword>jellyfin</CertificatePassword>|' /config/config/network.xml
+                  else
+                    sed -i 's|</NetworkConfiguration>|  <CertificatePassword>jellyfin</CertificatePassword>\n</NetworkConfiguration>|' /config/config/network.xml
+                  fi
+
+                  if grep -q "<EnableHttps" /config/config/network.xml; then
+                    sed -i 's|<EnableHttps>.*</EnableHttps>|<EnableHttps>true</EnableHttps>|' /config/config/network.xml
+                    sed -i 's|<EnableHttps />|<EnableHttps>true</EnableHttps>|' /config/config/network.xml
+                  else
+                    sed -i 's|</NetworkConfiguration>|  <EnableHttps>true</EnableHttps>\n</NetworkConfiguration>|' /config/config/network.xml
                   fi
                 fi
                 chown -R 1000:1000 /config/config
