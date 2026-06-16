@@ -252,6 +252,8 @@ spec:
           - name: tls
             secret:
               secretName: element-tls
+          - name: empty-templates
+            emptyDir: {}
         extraVolumeMounts:
           - name: custom-nginx-config
             mountPath: /etc/nginx/conf.d/default.conf
@@ -259,6 +261,8 @@ spec:
           - name: tls
             mountPath: /etc/nginx/certs
             readOnly: true
+          - name: empty-templates
+            mountPath: /etc/nginx/templates
   destination:
     server: https://kubernetes.default.svc
     namespace: matrix
