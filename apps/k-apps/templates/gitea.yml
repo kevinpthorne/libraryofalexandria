@@ -69,12 +69,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: gitea-s3-creds
-                  key: access_key
+                  key: accessKey
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: gitea-s3-creds
-                  key: secret_key
+                  key: secretKey
             - name: SSL_CERT_FILE
               value: "/certs/cas/ca-bundle.crt"
             {{- if $hasFederation }}
