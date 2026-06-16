@@ -31,6 +31,13 @@ jobs:
             extra-platforms = aarch64-linux
             accept-flake-config = true
 
+      - name: Cache Nix Store
+        uses: nix-community/cache-nix-action@v5
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', 'flake.lock') }}
+          restore-prefixes-first-match: |
+            nix-${{ runner.os }}-
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
