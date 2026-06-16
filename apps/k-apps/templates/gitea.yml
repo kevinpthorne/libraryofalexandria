@@ -27,7 +27,6 @@ spec:
               KEY_FILE: /certs/gitea/tls.key
             storage:
               STORAGE_TYPE: minio
-            storage.minio:
               MINIO_ENDPOINT: seaweedfs-s3.seaweedfs-system.svc.cluster.local:8333
               MINIO_BUCKET: gitea
               MINIO_USE_SSL: true
