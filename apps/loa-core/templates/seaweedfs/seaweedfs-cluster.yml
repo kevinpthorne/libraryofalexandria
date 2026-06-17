@@ -109,6 +109,7 @@ spec:
     extraArgs:
       - "-cert.file=/certs/s3/tls.crt"
       - "-key.file=/certs/s3/tls.key"
+      - "-port.https=8334"
     volumes:
       - name: trusted-ca
         configMap:

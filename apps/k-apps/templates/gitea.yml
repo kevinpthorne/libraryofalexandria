@@ -27,7 +27,7 @@ spec:
               KEY_FILE: /certs/gitea/tls.key
             storage:
               STORAGE_TYPE: minio
-              MINIO_ENDPOINT: seaweed-cluster-s3.seaweedfs-system.svc.cluster.local:8333
+              MINIO_ENDPOINT: seaweed-cluster-s3-https.seaweedfs-system.svc.cluster.local:8333
               MINIO_BUCKET: gitea
               MINIO_USE_SSL: true
             {{- if $hasFederation }}

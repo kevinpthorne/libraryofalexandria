@@ -35,7 +35,7 @@ spec:
               ruler: loki-ruler
               admin: loki-admin
             s3:
-              endpoint: "seaweed-cluster-s3.seaweedfs-system.svc.cluster.local:8333"
+              endpoint: "seaweed-cluster-s3-https.seaweedfs-system.svc.cluster.local:8333"
               region: "us-east-1"
               s3ForcePathStyle: true
               insecure: false

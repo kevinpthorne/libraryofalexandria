@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweed-cluster-s3-https
+  namespace: seaweedfs-system
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  ports:
+    - name: https
+      port: 8333
+      targetPort: 8334
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: seaweedfs
+    app.kubernetes.io/component: s3
+    app.kubernetes.io/instance: seaweed-cluster
