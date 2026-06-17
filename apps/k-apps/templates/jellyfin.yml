@@ -35,11 +35,11 @@ spec:
             type: pvc
             storageClass: longhorn
             size: 250Gi
-        extraVolumes:
+        volumes:
           - name: jellyfin-tls
             secret:
               secretName: jellyfin-tls
-        extraVolumeMounts:
+        volumeMounts:
           - name: jellyfin-tls
             mountPath: /certs
             readOnly: true
