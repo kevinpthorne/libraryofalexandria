@@ -5,6 +5,7 @@
   bash,
   coreutils,
   findutils,
+  hostname,
   ...
 }:
 
@@ -18,6 +19,7 @@ dockerTools.buildLayeredImage {
     bash
     coreutils
     findutils
+    hostname
     dockerTools.binSh
   ];
 
