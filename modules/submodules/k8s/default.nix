@@ -33,9 +33,10 @@ in
         TimeoutStartSec = "10min";
       };
 
-      path = [ pkgs.kubectl ];
+      path = [ pkgs.kubectl pkgs.vim ];
       environment = {
         KUBECONFIG = config.environment.variables.KUBECONFIG;
+        K9S_EDITOR = "vim";
       };
 
       script = ''
