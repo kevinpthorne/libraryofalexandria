@@ -11,6 +11,8 @@ spec:
     targetRevision: 3.2.0
     helm:
       valuesObject:
+        deploymentStrategy:
+          type: Recreate
         podSecurityContext:
           runAsNonRoot: true
           runAsUser: 1000
