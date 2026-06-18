@@ -31,10 +31,10 @@ stdenv.mkDerivation rec {
   ];
 
   # Configure jemalloc to support page sizes up to 64KB (2^16) for ARM64/Raspberry Pi 5 compatibility
-  JEMALLOC_CONFIGURE_OPTS = "--with-lg-page=16";
-
   preBuild = ''
     patchShebangs deps/
+    substituteInPlace deps/Makefile \
+      --replace "--disable-cxx" "--disable-cxx --with-lg-page=16"
   '';
 
   dontConfigure = true;
