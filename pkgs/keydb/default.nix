@@ -28,6 +28,7 @@ stdenv.mkDerivation rec {
 
   makeFlags = [
     "PREFIX=$(out)"
+    "BUILD_TLS=yes"
   ];
 
   # Configure jemalloc to support page sizes up to 64KB (2^16) for ARM64/Raspberry Pi 5 compatibility
