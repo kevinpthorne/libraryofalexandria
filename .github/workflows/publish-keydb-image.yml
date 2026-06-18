@@ -33,7 +33,7 @@ jobs:
             accept-flake-config = true
 
       - name: Cache Nix Store
-        uses: nix-community/cache-nix-action@v5
+        uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', 'flake.lock') }}
           restore-prefixes-first-match: |
