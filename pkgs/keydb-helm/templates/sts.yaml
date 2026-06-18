@@ -77,6 +77,8 @@ spec:
           capabilities:
             drop:
             - ALL
+          seccompProfile:
+            type: RuntimeDefault
         livenessProbe:
           initialDelaySeconds: 20
           periodSeconds: 5
