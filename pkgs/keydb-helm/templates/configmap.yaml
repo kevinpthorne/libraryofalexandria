@@ -41,7 +41,7 @@ data:
     {{- end }}
 
     # Run keydb-server with active-active replication options
-    exec keydb-server /etc/keydb/redis.conf \
+    exec keydb-server \
         {{- if .Values.activeReplica }}
         --active-replica "yes" \
         {{- end }}
