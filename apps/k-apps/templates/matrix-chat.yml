@@ -140,7 +140,7 @@ spec:
         redis:
           enabled: false
         externalRedis:
-          host: "keydb-restricted.keydb.svc.cluster.local"
+          host: "keydb-restricted-keydb-helm.keydb.svc.cluster.local"
           port: 6379
         postgresql:
           enabled: false
