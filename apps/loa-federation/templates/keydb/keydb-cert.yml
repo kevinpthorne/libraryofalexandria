@@ -10,13 +10,15 @@ spec:
     - client auth
   dnsNames:
     - "localhost"
-    - "keydb-restricted"
-    - "keydb-restricted.{{ .Values.keydb.namespace }}"
-    - "keydb-restricted.{{ .Values.keydb.namespace }}.svc"
-    - "keydb-restricted-headless"
-    - "keydb-restricted-headless.{{ .Values.keydb.namespace }}"
-    - "keydb-restricted-headless.{{ .Values.keydb.namespace }}.svc"
-    - "*.keydb-restricted-headless.{{ .Values.keydb.namespace }}.svc"
+    - "keydb-restricted-keydb-helm"
+    - "keydb-restricted-keydb-helm.{{ .Values.keydb.namespace }}"
+    - "keydb-restricted-keydb-helm.{{ .Values.keydb.namespace }}.svc"
+    - "keydb-restricted-keydb-helm.{{ .Values.keydb.namespace }}.svc.cluster.local"
+    - "keydb-restricted-keydb-helm-headless"
+    - "keydb-restricted-keydb-helm-headless.{{ .Values.keydb.namespace }}"
+    - "keydb-restricted-keydb-helm-headless.{{ .Values.keydb.namespace }}.svc"
+    - "*.keydb-restricted-keydb-helm-headless.{{ .Values.keydb.namespace }}.svc"
+    - "*.keydb-restricted-keydb-helm-headless.{{ .Values.keydb.namespace }}.svc.cluster.local"
   ipAddresses:
     - "127.0.0.1"
   issuerRef:
