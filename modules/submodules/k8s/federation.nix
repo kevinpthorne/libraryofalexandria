@@ -8,18 +8,20 @@ let
   thisCluster = config.libraryofalexandria.cluster;
   isMaster = config.libraryofalexandria.node.type == "master";
 
-  # Paths to the generated keys/configs on the deployer's machine
-  caPath = "/var/keys/clusters/${thisCluster.name}/p2p-vpn-ca.pub";
-  sigPath = "/var/keys/clusters/${thisCluster.name}/p2p-vpn-node.sig";
-  whitelistPath = "/var/keys/clusters/${thisCluster.name}/p2p-vpn-whitelist.txt";
-  identityPath = "/var/keys/clusters/${thisCluster.name}/p2p-vpn-identity.key";
-  dataKeyPath = "/var/keys/clusters/${thisCluster.name}/p2p-vpn-data.key";
+  # Path to flake root
+  root = ./../../..;
+
+  # Paths inside the flake source tree (accessible within the Nix sandbox)
+  caPath = "${root}/clusters/${thisCluster.name}/keys/p2p-vpn-ca.pub";
+  sigPath = "${root}/clusters/${thisCluster.name}/keys/p2p-vpn-node.sig";
+  whitelistPath = "${root}/clusters/${thisCluster.name}/keys/p2p-vpn-whitelist.txt";
 
   # Read files at evaluation/compile time if they exist
   caContent = if builtins.pathExists caPath then builtins.readFile caPath else "";
   sigContent = if builtins.pathExists sigPath then builtins.readFile sigPath else "";
   whitelistContent = if builtins.pathExists whitelistPath then builtins.readFile whitelistPath else "";
 
+  # TODO Make systemd service to auto-install
   p2p-vpn-secret-install = pkgs.writeShellScriptBin "p2p-vpn-secret-install" ''
     set -euo pipefail
 
@@ -53,23 +55,21 @@ in
 {
   config = lib.mkIf (isMaster && config.libraryofalexandria.apps ? "loa-federation") {
     # 1. Setup deployment keys for the master node (Colmena upload)
-    deployment.keys = lib.mkIf isMaster (
-      (lib.optionalAttrs (builtins.pathExists identityPath) {
-        "p2p-vpn-identity.key" = {
-          keyFile = identityPath;
-          destDir = "/var/keys";
-          permissions = "0600";
-          uploadAt = "pre-activation";
-        };
-      }) // (lib.optionalAttrs (builtins.pathExists dataKeyPath) {
-        "p2p-vpn-data.key" = {
-          keyFile = dataKeyPath;
-          destDir = "/var/keys";
-          permissions = "0600";
-          uploadAt = "pre-activation";
-        };
-      })
-    );
+    # Defined unconditionally, matching token.key/agent-token.key behavior.
+    deployment.keys = {
+      "p2p-vpn-identity.key" = {
+        keyFile = "/var/keys/clusters/${thisCluster.name}/p2p-vpn-identity.key";
+        destDir = "/var/keys";
+        permissions = "0600";
+        uploadAt = "pre-activation";
+      };
+      "p2p-vpn-data.key" = {
+        keyFile = "/var/keys/clusters/${thisCluster.name}/p2p-vpn-data.key";
+        destDir = "/var/keys";
+        permissions = "0600";
+        uploadAt = "pre-activation";
+      };
+    };
 
     # 2. Install p2p-vpn-secret-install shell script package
     environment.systemPackages = [ p2p-vpn-secret-install ];
