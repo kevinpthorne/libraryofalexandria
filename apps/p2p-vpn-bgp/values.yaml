@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: quay.io/mudler/edgevpn
+  repository: ghcr.io/kevinpthorne/p2p-vpn
   pullPolicy: IfNotPresent
   tag: "latest"
 
@@ -11,27 +11,34 @@ frr:
     pullPolicy: IfNotPresent
     tag: "9.1.0"
 
-edgevpn:
-  tokenSecretName: edgevpn
-  tokenSecretKey: token
+p2pVpn:
+  dataKeySecretName: "p2p-vpn"
+  dataKeySecretKey: "token"
+  generateDataKey: false
   address: "10.255.255.1/24"  # Override per cluster
   p2pPort: 4001 # The internal container port for libp2p traffic
   isBootstrapPeer: false # Set to true to expose the p2pPort via a LoadBalancer Service
-  generateToken: false # Set to true in ONE cluster to generate the network token via ExternalSecrets
   # bootstrapPeers is an array of multiaddrs
   bootstrapPeers: []
   logLevel: "debug"
+  cluster: "loa-vpn"
+  identitySecretName: "p2p-vpn-identity"
+  identitySecretKey: "identity.key"
+  configMapName: "p2p-vpn-config"
+  caConfigMapKey: "ca.pub"
+  sigConfigMapKey: "node.sig"
+  whitelistConfigMapKey: "whitelist.txt"
 
 bgp:
   localAS: 65001 # Override with 65000 + clusterID
   ciliumPeerAS: 65000 # The AS of your local Cilium nodes
-  routerId: "10.255.255.1" # Typically the EdgeVPN address without subnet mask
+  routerId: "10.255.255.1" # Typically the p2p-vpn address without subnet mask
   
   # localCIDRs are the local cluster's subnets (e.g. Pod and Service CIDRs) 
-  # to advertise to the remote EdgeVPN peers.
+  # to advertise to the remote p2p-vpn peers.
   localCIDRs: [] 
   
-  # vpnPeers are the IPs of the other clusters' EdgeVPN gateways on the VPN subnet (e.g. 10.255.255.2)
+  # vpnPeers are the IPs of the other clusters' p2p-vpn gateways on the VPN subnet (e.g. 10.255.255.2)
   vpnPeers: []
 
 persistence:

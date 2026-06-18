@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: edgevpn-frr-config
+  name: p2p-vpn-frr-config
 data:
   daemons: |
     bgpd=yes
@@ -27,7 +27,7 @@ data:
   frr.conf: |
     frr version 9.1
     frr defaults traditional
-    hostname edgevpn-router
+    hostname p2p-vpn-router
     log syslog informational
     !
     router bgp {{ .Values.bgp.localAS }}
@@ -42,12 +42,12 @@ data:
      neighbor CILIUM route-reflector-client
      {{- end }}
      
-     ! Peer with remote EdgeVPN gateways over the VPN interface using eBGP
-     neighbor EDGEVPN peer-group
-     neighbor EDGEVPN remote-as external
+     ! Peer with remote P2P VPN gateways over the VPN interface using eBGP
+     neighbor P2P_VPN peer-group
+     neighbor P2P_VPN remote-as external
      
      {{- range .Values.bgp.vpnPeers }}
-     neighbor {{ . }} peer-group EDGEVPN
+     neighbor {{ . }} peer-group P2P_VPN
      {{- end }}
      
      ! Advertise the local cluster CIDRs to the VPN peers

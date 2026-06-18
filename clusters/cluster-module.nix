@@ -133,7 +133,7 @@
       externalDomain = lib.mkOption {
         type = lib.types.str;
       };
-      edgeVpnAddress = lib.mkOption {
+      p2pVpnAddress = lib.mkOption {
         type = lib.types.str;
         default = "${config.libraryofalexandria.cluster.federationBorderRouterIp}/24";
       };

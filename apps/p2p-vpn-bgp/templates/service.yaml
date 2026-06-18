@@ -1,21 +1,21 @@
-{{- if .Values.edgevpn.isBootstrapPeer }}
+{{- if .Values.p2pVpn.isBootstrapPeer }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: edgevpn-p2p
+  name: p2p-vpn-p2p
   labels:
-    app: edgevpn
+    app: p2p-vpn
 spec:
   type: LoadBalancer
   selector:
-    app: edgevpn
+    app: p2p-vpn
   ports:
     - name: p2p-tcp
-      port: {{ .Values.edgevpn.p2pPort }}
+      port: {{ .Values.p2pVpn.p2pPort }}
       targetPort: p2p-tcp
       protocol: TCP
     - name: p2p-udp
-      port: {{ .Values.edgevpn.p2pPort }}
+      port: {{ .Values.p2pVpn.p2pPort }}
       targetPort: p2p-udp
       protocol: UDP
 {{- end }}

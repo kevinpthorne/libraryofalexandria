@@ -2,12 +2,12 @@
 apiVersion: "cilium.io/v2"
 kind: CiliumNetworkPolicy
 metadata:
-  name: edgevpn-egress-lockdown
+  name: p2p-vpn-egress-lockdown
   namespace: {{ .Release.Namespace }}
 spec:
   endpointSelector:
     matchLabels:
-      app: edgevpn
+      app: p2p-vpn
   egress:
     # 1. Allow DNS queries to kube-dns for resolving peer FQDNs
     - toEndpoints:
@@ -47,7 +47,7 @@ spec:
     # 4. Allow egress to the bootstrap peers (P2P encapsulation on port 4001)
     {{- $fqdns := list }}
     {{- $cidrs := list }}
-    {{- range .Values.edgevpn.bootstrapPeers }}
+    {{- range .Values.p2pVpn.bootstrapPeers }}
       {{- $parts := splitList "/" . }}
       {{- if ge (len $parts) 3 }}
         {{- $proto := index $parts 1 }}
@@ -73,9 +73,9 @@ spec:
       {{- end }}
       toPorts:
         - ports:
-            - port: "{{ $.Values.edgevpn.p2pPort }}"
+            - port: "{{ $.Values.p2pVpn.p2pPort }}"
               protocol: TCP
-            - port: "{{ $.Values.edgevpn.p2pPort }}"
+            - port: "{{ $.Values.p2pVpn.p2pPort }}"
               protocol: UDP
     {{- end }}
 
@@ -87,9 +87,9 @@ spec:
       {{- end }}
       toPorts:
         - ports:
-            - port: "{{ $.Values.edgevpn.p2pPort }}"
+            - port: "{{ $.Values.p2pVpn.p2pPort }}"
               protocol: TCP
-            - port: "{{ $.Values.edgevpn.p2pPort }}"
+            - port: "{{ $.Values.p2pVpn.p2pPort }}"
               protocol: UDP
     {{- end }}
 

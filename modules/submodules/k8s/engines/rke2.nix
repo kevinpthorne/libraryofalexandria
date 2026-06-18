@@ -369,7 +369,7 @@ in
           values = {
             configs = [
               {
-                name = "edgevpn-peering";
+                name = "p2p-vpn-peering";
                 localASN = 65000;
                 exportPodCIDR = false;
                 nodeSelector = {};

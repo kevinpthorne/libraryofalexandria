@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMapName }}
+  namespace: {{ .Values.namespace }}
+data:
+  {{- if .Values.ca }}
+  ca.pub: |
+    {{- .Values.ca | nindent 4 }}
+  {{- end }}
+  {{- if .Values.sig }}
+  node.sig: |
+    {{- .Values.sig | nindent 4 }}
+  {{- end }}
+  {{- if .Values.whitelist }}
+  whitelist.txt: |
+    {{- .Values.whitelist | nindent 4 }}
+  {{- end }}

@@ -1,43 +1,38 @@
-{{- if .Values.edgevpn.generateToken }}
+{{- if .Values.p2pVpn.generateDataKey }}
 ---
 apiVersion: generators.external-secrets.io/v1alpha1
 kind: Password
 metadata:
-  name: edgevpn-gen
+  name: p2p-vpn-gen
   namespace: {{ $.Release.Namespace }}
 spec:
-  length: 43
-  digits: 5
+  length: 32
+  digits: 10
   symbols: 0
-  noUpper: false
+  noUpper: true
   allowRepeat: true
   secretKeys:
-  - dht
-  - crypto
-  - room
-  - rendezvous
-  - mdns
+    - datakey
 
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
-  name: {{ .Values.edgevpn.tokenSecretName }}
+  name: {{ .Values.p2pVpn.dataKeySecretName }}
   namespace: {{ .Release.Namespace }}
 spec:
   refreshInterval: "0"
   target:
-    name: {{ .Values.edgevpn.tokenSecretName }}
+    name: {{ .Values.p2pVpn.dataKeySecretName }}
     creationPolicy: Owner
     template:
       engineVersion: v2
       data:
-        # Base64 encode the final YAML structure so it's a valid EdgeVPN token
-        {{ .Values.edgevpn.tokenSecretKey }}: '{{ "{{ printf \"otp:\\n  dht:\\n    interval: 360\\n    key: %s\\n    length: 43\\n  crypto:\\n    interval: 360\\n    key: %s\\n    length: 43\\nroom: %s\\nrendezvous: %s\\nmdns: %s\\nmax_message_size: 20971520\\n\" .dht .crypto .room .rendezvous .mdns | b64enc }}" }}'
+        {{ .Values.p2pVpn.dataKeySecretKey | default "token" }}: '{{ "{{ .datakey | sha256sum }}" }}'
   dataFrom:
     - sourceRef:
         generatorRef:
-          name: edgevpn-gen
+          name: p2p-vpn-gen
           kind: Password
           apiVersion: generators.external-secrets.io/v1alpha1
 {{- end }}

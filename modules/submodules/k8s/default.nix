@@ -18,6 +18,7 @@ in
     ./zarf.nix
     ./control-plane
     ./apps
+    ./federation.nix
   ];
 
   config = lib.mkIf (isMaster) {

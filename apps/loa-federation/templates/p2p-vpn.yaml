@@ -1,20 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: federation-edgevpn
+  name: federation-p2p-vpn
   namespace: {{ .Values.argoNamespace }}
 spec:
   project: default
   source:
     repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
-    path: apps/edgevpn-bgp
+    path: apps/p2p-vpn-bgp
     targetRevision: HEAD
     helm:
-      releaseName: federation-edgevpn
+      releaseName: federation-p2p-vpn
       valuesObject:
-        edgevpn:
-          generateToken: true # Generate the token via ExternalSecrets in THIS cluster! Remove after bootstrapping
-          address: {{ .Values.cluster.edgeVpnAddress }}
+        p2pVpn:
+          generateDataKey: true # Generate the data key via ExternalSecrets in THIS cluster! Remove after bootstrapping
+          address: {{ .Values.cluster.p2pVpnAddress }}
           isBootstrapPeer: {{ .Values.cluster.federationBootstrap.isBootstrapPeer }}
           bootstrapPeers:
             {{- if .Values.cluster.federationBootstrap.peers }}

@@ -1,0 +1,5 @@
+configMapName: "p2p-vpn-config"
+namespace: "kube-system"
+ca: ""
+sig: ""
+whitelist: ""
