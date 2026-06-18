@@ -93,14 +93,7 @@ in
         ];
     };
 
-    # apps = lib.mkMerge [
-    #   {
-    #     loa-extras = {
-    #       repo = "https://github.com/kevinpthorne/libraryofalexandria.git";
-    #       subPath = "apps/loa-extras";
-    #     };
-    #   }
-    # ];
+    apps.loa-federation.valuesOverrides.keydb.tls.disableNonTls = false;
     federateTo = [ "test" ];
     federationBootstrap.bootstrapPeerIdentity = "uEiDskfF0c4uQseF797Mp47GF3QH_eD0JiobavG9qszK4WA";
 

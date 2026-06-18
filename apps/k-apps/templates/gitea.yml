@@ -40,13 +40,13 @@ spec:
               SSL_MODE: verify-full
             session:
               PROVIDER: redis
-              PROVIDER_CONFIG: "redis://keydb-restricted.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
+              PROVIDER_CONFIG: "rediss://keydb-restricted.keydb.svc.cluster.local:6380/0?pool_size=100&idle_timeout=180s"
             cache:
               ADAPTER: redis
-              HOST: "redis://keydb-restricted.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
+              HOST: "rediss://keydb-restricted.keydb.svc.cluster.local:6380/0?pool_size=100&idle_timeout=180s"
             queue:
               TYPE: redis
-              CONN_STR: "redis://keydb-restricted.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
+              CONN_STR: "rediss://keydb-restricted.keydb.svc.cluster.local:6380/0?pool_size=100&idle_timeout=180s"
             {{- end }}
         podSecurityContext:
           fsGroup: 1000

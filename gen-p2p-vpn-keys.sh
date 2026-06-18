@@ -5,16 +5,16 @@
 set -euo pipefail
 
 # 1. Locate the p2p-vpn binary
-P2P_VPN_BIN=""
-if [ -f "$(pwd)/p2p-vpn" ]; then
-  P2P_VPN_BIN="$(pwd)/p2p-vpn"
-elif [ -f "$(pwd)/../p2p-vpn/p2p-vpn-darwin" ]; then
-  P2P_VPN_BIN="$(pwd)/../p2p-vpn/p2p-vpn-darwin"
-elif [ -f "$(pwd)/../p2p-vpn/p2p-vpn" ]; then
-  P2P_VPN_BIN="$(pwd)/../p2p-vpn/p2p-vpn"
-elif command -v p2p-vpn &> /dev/null; then
-  P2P_VPN_BIN=$(command -v p2p-vpn)
-fi
+P2P_VPN_BIN="$(pwd)/../p2p-vpn/p2p-vpn.linux-arm64"
+# if [ -f "$(pwd)/p2p-vpn" ]; then
+#   P2P_VPN_BIN="$(pwd)/p2p-vpn"
+# elif [ -f "$(pwd)/../p2p-vpn/p2p-vpn-linux-arm64" ]; then
+#   P2P_VPN_BIN="$(pwd)/../p2p-vpn/p2p-vpn-linux-arm64"
+# elif [ -f "$(pwd)/../p2p-vpn/p2p-vpn" ]; then
+#   P2P_VPN_BIN="$(pwd)/../p2p-vpn/p2p-vpn"
+# elif command -v p2p-vpn &> /dev/null; then
+#   P2P_VPN_BIN=$(command -v p2p-vpn)
+# fi
 
 if [ -z "$P2P_VPN_BIN" ]; then
   # Try to build it dynamically from the neighbor workspace

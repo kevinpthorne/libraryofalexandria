@@ -6,29 +6,22 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://enapter.github.io/charts/
-    chart: keydb
-    targetRevision: 0.48.0
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/keydb-helm
+    targetRevision: HEAD
     helm:
-      # We override the values to enforce a restricted security context
-      values: |
-        imageRepository: ghcr.io/kevinpthorne/keydb
-        imageTag: latest  # okay since this repo publishes it
+      valuesObject:
+        image:
+          repository: ghcr.io/kevinpthorne/keydb
+          tag: latest
+          pullPolicy: Always
         nodes: {{ .Values.keydb.instances }}
-        securityContext:
-          runAsNonRoot: true
-          runAsUser: 1001
-          runAsGroup: 1001
-          fsGroup: 1001
-          seccompProfile:
-            type: RuntimeDefault
-        keydb:
-          securityContext: # container
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop:
-                - ALL
+        tls:
+          enabled: true
+          secretName: keydb-restricted-tls
+          {{- if and .Values.keydb (hasKey .Values.keydb "tls") }}
+          {{- toYaml .Values.keydb.tls | nindent 10 }}
+          {{- end }}
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: {{ .Values.keydb.namespace }}

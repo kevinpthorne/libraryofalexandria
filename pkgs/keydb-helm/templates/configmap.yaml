@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "keydb.fullname" . }}-utils
+  labels:
+    app.kubernetes.io/name: {{ include "keydb.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  server.sh: |
+    #!/bin/bash
+    set -euxo pipefail
+
+    host="$(hostname)"
+    replicas=()
+    
+    # Internal peers discovery
+    base_name="${host%-*}"
+    {{- if .Values.tls.enabled }}
+    port="{{ .Values.tls.port }}"
+    {{- else }}
+    port="{{ .Values.port }}"
+    {{- end }}
+    nodes="{{ .Values.nodes }}"
+    
+    for ((i=0; i<nodes; i++)); do
+      peer="${base_name}-${i}"
+      if [ "${host}" != "${peer}" ]; then
+        replicas+=("--replicaof ${peer}.{{ include "keydb.fullname" . }}-headless ${port}")
+      fi
+    done
+
+    # Add external peers for multi-cluster active-active replication
+    {{- range .Values.externalPeers }}
+    replicas+=("--replicaof {{ . | replace ":" " " }}")
+    {{- end }}
+
+    {{- if and .Values.tls.enabled .Values.tls.disableNonTls }}
+    non_tls_port="0"
+    {{- else }}
+    non_tls_port="{{ .Values.port }}"
+    {{- end }}
+
+    # Run keydb-server with active-active replication options
+    exec keydb-server /etc/keydb/redis.conf \
+        {{- if .Values.activeReplica }}
+        --active-replica "yes" \
+        {{- end }}
+        {{- if .Values.multiMaster }}
+        --multi-master "yes" \
+        {{- end }}
+        --port "${non_tls_port}" \
+        {{- if .Values.tls.enabled }}
+        --tls-port "{{ .Values.tls.port }}" \
+        --tls-cert-file "{{ .Values.tls.mountPath }}/tls.crt" \
+        --tls-key-file "{{ .Values.tls.mountPath }}/tls.key" \
+        --tls-ca-cert-file "{{ .Values.tls.mountPath }}/ca.crt" \
+        --tls-auth-clients "{{ .Values.tls.authClients }}" \
+        --tls-replication yes \
+        {{- end }}
+        --replica-read-only "no" \
+        "${replicas[@]}"
+
+  ping_liveness_local.sh: |
+    #!/bin/bash
+    set -e
+    [[ -n "${REDIS_PASSWORD}" ]] && export REDISCLI_AUTH="${REDIS_PASSWORD}"
+    cli_opts=("-h" "localhost" "-p" "${REDIS_PORT}")
+    if [ "${REDIS_TLS_ENABLED:-false}" = "true" ]; then
+      cli_opts+=("--tls" "--cacert" "${REDIS_CA_CERT}")
+    fi
+    response="$(
+      timeout -s 15 "${1}" \
+      keydb-cli "${cli_opts[@]}" PING
+    )"
+    if [ "${response}" != "PONG" ]; then
+      echo "${response}"
+      exit 1
+    fi
+
+  ping_readiness_local.sh: |
+    #!/bin/bash
+    set -e
+    loading_response="LOADING KeyDB is loading the dataset in memory"
+    [[ -n "${REDIS_PASSWORD}" ]] && export REDISCLI_AUTH="${REDIS_PASSWORD}"
+    cli_opts=("-h" "localhost" "-p" "${REDIS_PORT}")
+    if [ "${REDIS_TLS_ENABLED:-false}" = "true" ]; then
+      cli_opts+=("--tls" "--cacert" "${REDIS_CA_CERT}")
+    fi
+    response="$(
+      timeout -s 15 "${1}" \
+      keydb-cli "${cli_opts[@]}" PING
+    )"
+    if [ "${response}" = "${loading_response}" ]; then
+      echo "${response}"
+      exit 1
+    fi
+
+  cleanup_tempfiles.sh: |
+    #!/bin/bash
+    set -e
+    find /data/ -type f \( -name "temp-*.aof" -o -name "temp-*.rdb" \) -mmin +60 -delete
+

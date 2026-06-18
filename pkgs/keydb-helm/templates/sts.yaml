@@ -1,0 +1,168 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "keydb.fullname" . }}
+  labels:
+    helm.sh/chart: {{ include "keydb.chart" . }}
+    app.kubernetes.io/name: {{ include "keydb.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.nodes }}
+  serviceName: {{ include "keydb.fullname" . }}-headless
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "keydb.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        app.kubernetes.io/name: {{ include "keydb.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - {{ include "keydb.name" . | quote }}
+                - key: app.kubernetes.io/instance
+                  operator: In
+                  values:
+                  - {{ .Release.Name | quote }}
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      securityContext:
+        {{- toYaml .Values.securityContext | nindent 8 }}
+      containers:
+      - name: keydb
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - /utils/server.sh
+        env:
+        - name: REDIS_PORT
+          value: {{ if .Values.tls.enabled }}{{ .Values.tls.port | quote }}{{ else }}{{ .Values.port | quote }}{{ end }}
+        {{- if .Values.tls.enabled }}
+        - name: REDIS_TLS_ENABLED
+          value: "true"
+        - name: REDIS_CA_CERT
+          value: "{{ .Values.tls.mountPath }}/ca.crt"
+        {{- end }}
+        {{- if .Values.password }}
+        - name: REDIS_PASSWORD
+          value: {{ .Values.password | quote }}
+        {{- end }}
+        ports:
+        {{- if not (and .Values.tls.enabled .Values.tls.disableNonTls) }}
+        - name: keydb
+          containerPort: {{ .Values.port }}
+          protocol: TCP
+        {{- end }}
+        {{- if .Values.tls.enabled }}
+        - name: keydb-tls
+          containerPort: {{ .Values.tls.port }}
+          protocol: TCP
+        {{- end }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        livenessProbe:
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 6
+          successThreshold: 1
+          failureThreshold: 5
+          exec:
+            command:
+              - sh
+              - -c
+              - /health/ping_liveness_local.sh 5
+        readinessProbe:
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 5
+          exec:
+            command:
+              - sh
+              - -c
+              - /health/ping_readiness_local.sh 1
+        startupProbe:
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 24
+          exec:
+            command:
+              - sh
+              - -c
+              - /health/ping_readiness_local.sh 1
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+        - name: utils
+          mountPath: /utils
+          readOnly: true
+        - name: health
+          mountPath: /health
+          readOnly: true
+        - name: keydb-data
+          mountPath: /data
+        {{- if .Values.tls.enabled }}
+        - name: certs
+          mountPath: {{ .Values.tls.mountPath }}
+          readOnly: true
+        {{- end }}
+      volumes:
+      - name: utils
+        configMap:
+          name: {{ include "keydb.fullname" . }}-utils
+          defaultMode: 0755
+          items:
+          - key: server.sh
+            path: server.sh
+      - name: health
+        configMap:
+          name: {{ include "keydb.fullname" . }}-utils
+          defaultMode: 0755
+          items:
+          - key: ping_liveness_local.sh
+            path: ping_liveness_local.sh
+          - key: ping_readiness_local.sh
+            path: ping_readiness_local.sh
+          - key: cleanup_tempfiles.sh
+            path: cleanup_tempfiles.sh
+      {{- if not .Values.persistence.enabled }}
+      - name: keydb-data
+        emptyDir: {}
+      {{- end }}
+      {{- if .Values.tls.enabled }}
+      - name: certs
+        secret:
+          secretName: {{ .Values.tls.secretName | quote }}
+      {{- end }}
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: keydb-data
+    spec:
+      accessModes:
+        - {{ .Values.persistence.accessModes | default "ReadWriteOnce" }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size }}
+      {{- if .Values.persistence.storageClass }}
+      storageClassName: {{ .Values.persistence.storageClass }}
+      {{- end }}
+  {{- end }}

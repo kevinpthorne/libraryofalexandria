@@ -1,0 +1,36 @@
+image:
+  repository: ghcr.io/kevinpthorne/keydb
+  tag: latest
+  pullPolicy: Always
+
+nodes: 3
+port: 6379
+password: ""
+
+multiMaster: true
+activeReplica: true
+
+# List of external KeyDB peer addresses/hostnames (e.g. keydb-peer:6379) for multi-cluster active-active replication
+externalPeers: []
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+
+resources: {}
+
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClass: ""
+
+tls:
+  enabled: false
+  secretName: ""
+  mountPath: /certs
+  port: 6380
+  disableNonTls: true
+  authClients: "no"
+

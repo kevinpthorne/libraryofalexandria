@@ -13,7 +13,7 @@ spec:
       releaseName: federation-p2p-vpn
       valuesObject:
         p2pVpn:
-          generateDataKey: true # Generate the data key via ExternalSecrets in THIS cluster! Remove after bootstrapping
+          generateDataKey: false # Delivered via Colmena and installed via p2p-vpn-secret-install
           address: {{ .Values.cluster.p2pVpnAddress }}
           isBootstrapPeer: {{ .Values.cluster.federationBootstrap.isBootstrapPeer }}
           bootstrapPeers:
