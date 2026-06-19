@@ -76,6 +76,8 @@ spec:
                   key: secretKey
             - name: SSL_CERT_FILE
               value: "/certs/cas/ca-bundle.crt"
+            - name: GODEBUG
+              value: "tlsmlkem=0"
             {{- if $hasFederation }}
             - name: PGSSLCERT
               value: "/certs/db-client/tls.crt"
