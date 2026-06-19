@@ -42,13 +42,13 @@ spec:
               SSL_MODE: verify-full
             session:
               PROVIDER: redis
-              PROVIDER_CONFIG: "rediss://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380/0?pool_size=100&idle_timeout=180s&insecureskipverify=true"
+              PROVIDER_CONFIG: "rediss://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380/0?pool_size=100&idle_timeout=180s"
             cache:
               ADAPTER: redis
-              HOST: "rediss://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380/0?pool_size=100&idle_timeout=180s&insecureskipverify=true"
+              HOST: "rediss://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380/0?pool_size=100&idle_timeout=180s"
             queue:
               TYPE: redis
-              CONN_STR: "rediss://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380/0?pool_size=100&idle_timeout=180s&insecureskipverify=true"
+              CONN_STR: "rediss://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380/0?pool_size=100&idle_timeout=180s"
             {{- end }}
         podSecurityContext:
           fsGroup: 1000
@@ -104,6 +104,10 @@ spec:
         extraVolumeMounts:
           - name: cas
             mountPath: /certs/cas
+            readOnly: true
+          - name: cas
+            mountPath: /etc/ssl/certs/ca-certificates.crt
+            subPath: ca-bundle.crt
             readOnly: true
           - name: gitea-tls
             mountPath: /certs/gitea
