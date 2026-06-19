@@ -5,9 +5,6 @@ metadata:
   namespace: {{ .Values.keydb.namespace }}
 spec:
   secretName: keydb-restricted-tls
-  usages:
-    - server auth
-    - client auth
   dnsNames:
     - "localhost"
     - "keydb-restricted-keydb-helm"
