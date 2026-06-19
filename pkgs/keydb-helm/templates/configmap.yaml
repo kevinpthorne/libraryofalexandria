@@ -58,6 +58,7 @@ data:
         --tls-replication yes \
         {{- end }}
         --replica-read-only "no" \
+        --loglevel debug \
         "${replicas[@]}"
 
   ping_liveness_local.sh: |
