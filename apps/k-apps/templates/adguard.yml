@@ -18,6 +18,9 @@ spec:
           staticIP: {{ $adguard }}
           {{- end }}
           domain: adguard.k.loa.internal
+          additionalRewrites:
+            - domain: unifi
+              answer: unifi.k.loa.internal
         {{- $dns := (((.Values.cluster | default dict).virtualIps | default dict).reservations | default dict).dns }}
         upstreamDns:
           {{- if $dns }}

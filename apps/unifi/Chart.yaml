@@ -1,0 +1,6 @@
+apiVersion: v2
+name: unifi
+description: UniFi Network Application Controller
+type: application
+version: 0.1.0
+appVersion: "latest"

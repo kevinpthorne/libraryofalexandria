@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "unifi.fullname" . }}
+  labels:
+    {{- include "unifi.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "unifi.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "unifi.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "unifi.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: init-config
+          image: busybox:1.36
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          command: ["sh", "-c"]
+          args:
+            - |
+              mkdir -p /config/data
+              cat <<EOF > /config/data/db.properties
+              db.mongo.local=false
+              db.mongo.uri=mongodb://unifi:${DB_PASSWORD}@{{ include "unifi.fullname" . }}-db:27017/unifi?ssl=true&sslInvalidHostNameAllowed=true
+              statdb.mongo.uri=mongodb://unifi:${DB_PASSWORD}@{{ include "unifi.fullname" . }}-db:27017/unifi_stat?ssl=true&sslInvalidHostNameAllowed=true
+              EOF
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "unifi.fullname" . }}-db-credentials
+                  key: unifi-password
+          volumeMounts:
+            - name: unifi-config
+              mountPath: /config
+      containers:
+        - name: unifi
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - name: gui-https
+              containerPort: 8443
+              protocol: TCP
+            - name: device-inform
+              containerPort: 8080
+              protocol: TCP
+            - name: stun-udp
+              containerPort: 3478
+              protocol: UDP
+            - name: discovery-udp
+              containerPort: 10001
+              protocol: UDP
+          env:
+            - name: TZ
+              value: {{ .Values.timezone }}
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+          livenessProbe:
+            tcpSocket:
+              port: 8443
+            initialDelaySeconds: 120
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 8443
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          volumeMounts:
+            - name: unifi-config
+              mountPath: /config
+  volumeClaimTemplates:
+    - metadata:
+        name: unifi-config
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- if .Values.persistence.storageClass }}
+        storageClassName: "{{ .Values.persistence.storageClass }}"
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}

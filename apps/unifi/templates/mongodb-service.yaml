@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "unifi.fullname" . }}-db
+  labels:
+    {{- include "unifi.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 27017
+      targetPort: 27017
+      protocol: TCP
+      name: mongodb
+  selector:
+    {{- include "unifi.selectorLabels" . | nindent 4 }}
+    app: {{ include "unifi.fullname" . }}-db

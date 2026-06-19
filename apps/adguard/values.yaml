@@ -14,6 +14,7 @@ adguard:
   tz: "America/New_York"
   domain: "adguard.k.loa.internal"
   staticIP: ""
+  additionalRewrites: []
 
 upstreamDns:
   - 1.1.1.3

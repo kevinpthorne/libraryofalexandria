@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "unifi.fullname" . }}-db
+  labels:
+    {{- include "unifi.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "unifi.fullname" . }}-db
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "unifi.selectorLabels" . | nindent 6 }}
+      app: {{ include "unifi.fullname" . }}-db
+  template:
+    metadata:
+      labels:
+        {{- include "unifi.selectorLabels" . | nindent 8 }}
+        app: {{ include "unifi.fullname" . }}-db
+    spec:
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+      initContainers:
+        - name: init-pem
+          image: busybox:1.36
+          command: ["sh", "-c"]
+          args:
+            - |
+              cat /etc/ssl/certs/tls.crt /etc/ssl/certs/tls.key > /etc/ssl/mongodb/mongodb.pem
+              chmod 600 /etc/ssl/mongodb/mongodb.pem
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /etc/ssl/certs
+              readOnly: true
+            - name: mongodb-tls
+              mountPath: /etc/ssl/mongodb
+      containers:
+        - name: mongodb
+          image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag }}"
+          imagePullPolicy: {{ .Values.mongodb.image.pullPolicy }}
+          command: ["mongod"]
+          args:
+            - "--storageEngine"
+            - "mmapv1"
+            - "--sslMode"
+            - "requireSSL"
+            - "--sslPEMKeyFile"
+            - "/etc/ssl/mongodb/mongodb.pem"
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: "admin"
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "unifi.fullname" . }}-db-credentials
+                  key: root-password
+            - name: MONGO_USER
+              value: "unifi"
+            - name: MONGO_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "unifi.fullname" . }}-db-credentials
+                  key: unifi-password
+            - name: MONGO_DBNAME
+              value: "unifi"
+          resources:
+            {{- toYaml .Values.mongodb.resources | nindent 12 }}
+          volumeMounts:
+            - name: db-data
+              mountPath: /data/db
+            - name: mongodb-tls
+              mountPath: /etc/ssl/mongodb
+              readOnly: true
+            - name: init-script
+              mountPath: /docker-entrypoint-initdb.d/init-mongo.sh
+              subPath: init-mongo.sh
+              readOnly: true
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: {{ include "unifi.fullname" . }}-db-tls
+        - name: mongodb-tls
+          emptyDir: {}
+        - name: init-script
+          configMap:
+            name: {{ include "unifi.fullname" . }}-mongodb-init
+            defaultMode: 0755
+  volumeClaimTemplates:
+    - metadata:
+        name: db-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- if .Values.mongodb.persistence.storageClass }}
+        storageClassName: "{{ .Values.mongodb.persistence.storageClass }}"
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.mongodb.persistence.size }}

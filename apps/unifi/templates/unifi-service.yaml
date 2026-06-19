@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "unifi.fullname" . }}
+  labels:
+    {{- include "unifi.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: gui-https
+      port: 8443
+      targetPort: 8443
+      protocol: TCP
+    - name: device-inform
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: stun-udp
+      port: 3478
+      targetPort: 3478
+      protocol: UDP
+    - name: discovery-udp
+      port: 10001
+      targetPort: 10001
+      protocol: UDP
+  selector:
+    {{- include "unifi.selectorLabels" . | nindent 4 }}

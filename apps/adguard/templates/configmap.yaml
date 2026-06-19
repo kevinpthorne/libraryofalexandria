@@ -71,6 +71,10 @@ data:
       rewrites:
       - domain: '{{ .Values.adguard.domain }}'
         answer: '{{ .Values.adguard.staticIP }}'
+      {{- range .Values.adguard.additionalRewrites }}
+      - domain: '{{ .domain }}'
+        answer: '{{ .answer }}'
+      {{- end }}
     tls:
       enabled: true
       server_name: {{ .Values.adguard.domain }}

@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "unifi.fullname" . }}-db-tls
+  labels:
+    {{- include "unifi.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "unifi.fullname" . }}-db-tls
+  dnsNames:
+    - {{ include "unifi.fullname" . }}-db
+    - {{ include "unifi.fullname" . }}-db.{{ .Release.Namespace }}.svc
+    - {{ include "unifi.fullname" . }}-db.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    name: pki-bootstrap
+    kind: ClusterIssuer
