@@ -29,6 +29,7 @@ timezone: "America/New_York"
 
 service:
   type: LoadBalancer
+  domains: []
 
 podSecurityContext:
   runAsUser: 999

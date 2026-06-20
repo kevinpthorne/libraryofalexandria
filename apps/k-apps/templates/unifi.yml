@@ -9,6 +9,11 @@ spec:
     repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
     path: apps/unifi
     targetRevision: HEAD
+    helm:
+      valuesObject:
+        service:
+          domains:
+            - unifi.k.loa.internal
   destination:
     server: https://kubernetes.default.svc
     namespace: unifi

@@ -4,6 +4,12 @@ metadata:
   name: {{ include "unifi.fullname" . }}
   labels:
     {{- include "unifi.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.service.domains }}
+    external-dns.alpha.kubernetes.io/hostname: {{ join "," .Values.service.domains | quote }}
+    {{- else }}
+    {}
+    {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:
