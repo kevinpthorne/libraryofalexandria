@@ -16,48 +16,24 @@ spec:
         {{- include "unifi.selectorLabels" . | nindent 8 }}
     spec:
       securityContext:
+        runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
-      initContainers:
-        - name: init-config
-          image: busybox:1.36
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1000
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            seccompProfile:
-              type: RuntimeDefault
-          command: ["sh", "-c"]
-          args:
-            - |
-              mkdir -p /config/data
-              cat <<EOF > /config/data/db.properties
-              db.mongo.local=false
-              db.mongo.uri=mongodb://unifi:${DB_PASSWORD}@{{ include "unifi.fullname" . }}-db:27017/unifi?ssl=true&sslInvalidHostNameAllowed=true
-              statdb.mongo.uri=mongodb://unifi:${DB_PASSWORD}@{{ include "unifi.fullname" . }}-db:27017/unifi_stat?ssl=true&sslInvalidHostNameAllowed=true
-              EOF
-          env:
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "unifi.fullname" . }}-db-credentials
-                  key: unifi-password
-          volumeMounts:
-            - name: unifi-config
-              mountPath: /config
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: unifi
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
             allowPrivilegeEscalation: false
             capabilities:
-              drop: ["ALL"]
-            seccompProfile:
-              type: RuntimeDefault
+              drop:
+                - ALL
           ports:
             - name: gui-https
               containerPort: 8443
@@ -74,10 +50,40 @@ spec:
           env:
             - name: TZ
               value: {{ .Values.timezone }}
-            - name: PUID
+            - name: RUNAS_UID0
+              value: "false"
+            - name: UNIFI_UID
               value: "1000"
-            - name: PGID
+            - name: UNIFI_GID
               value: "1000"
+            - name: DB_NAME
+              value: "unifi"
+            - name: DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "unifi.fullname" . }}-db-credentials
+                  key: unifi-password
+                  # Wait, DB_URI needs the full connection string. We can construct it:
+                  # mongodb://unifi:${DB_PASSWORD}@{{ include "unifi.fullname" . }}-db:27017/unifi?ssl=true&sslInvalidHostNameAllowed=true
+                  # Wait, we can't reference another env var in the valueFrom directly.
+                  # But we can use env var expansion in the command, or we can just pass DB_PASSWORD and DB_URI using a shell script,
+                  # OR we can use $(DB_PASSWORD) in the environment variable values!
+                  # In Kubernetes, $(VAR) syntax expands environment variables defined earlier in the list!
+                  # Let's define DB_PASSWORD first, then DB_URI:
+                  # - name: DB_PASSWORD
+                  #   valueFrom: ...
+                  # - name: DB_URI
+                  #   value: mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi?ssl=true&sslInvalidHostNameAllowed=true
+                  # This is extremely clean and natively supported by Kubernetes env var expansion!
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "unifi.fullname" . }}-db-credentials
+                  key: unifi-password
+            - name: DB_URI
+              value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi?ssl=true&sslInvalidHostNameAllowed=true"
+            - name: STATDB_URI
+              value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi_stat?ssl=true&sslInvalidHostNameAllowed=true"
           livenessProbe:
             tcpSocket:
               port: 8443
@@ -90,7 +96,7 @@ spec:
             periodSeconds: 10
           volumeMounts:
             - name: unifi-config
-              mountPath: /config
+              mountPath: /unifi
   volumeClaimTemplates:
     - metadata:
         name: unifi-config

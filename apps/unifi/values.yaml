@@ -1,9 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: lscr.io/linuxserver/unifi-network-application
+  repository: jacobalberty/unifi
   pullPolicy: IfNotPresent
-  tag: latest
+  tag: stable
 
 mongodb:
   image:
