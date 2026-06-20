@@ -26,6 +26,9 @@ spec:
         registry: "txt"
         txtOwnerId: {{ .Values.cluster.federation.name }}
 
+        extraArgs:
+          - --txt-wildcard-replacement=wildcard
+
         # Tell ExternalDNS to watch the Gateway API
         sources:
           - gateway-tlsroute

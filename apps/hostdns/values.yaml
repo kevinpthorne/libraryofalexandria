@@ -33,6 +33,7 @@ external-dns:
     # Update this to match your actual PowerDNS server IP or hostname.
     - --pdns-server=http://powerdns.hostdns.svc.cluster.local:8081
     - --pdns-api-key=$(EXTERNAL_DNS_PDNS_API_KEY)
+    - --txt-wildcard-replacement=wildcard
 
   domainFilters:
     - .internal
