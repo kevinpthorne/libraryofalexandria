@@ -58,23 +58,6 @@ spec:
               value: "1000"
             - name: DB_NAME
               value: "unifi"
-            - name: DB_URI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "unifi.fullname" . }}-db-credentials
-                  key: unifi-password
-                  # Wait, DB_URI needs the full connection string. We can construct it:
-                  # mongodb://unifi:${DB_PASSWORD}@{{ include "unifi.fullname" . }}-db:27017/unifi?ssl=true&sslInvalidHostNameAllowed=true
-                  # Wait, we can't reference another env var in the valueFrom directly.
-                  # But we can use env var expansion in the command, or we can just pass DB_PASSWORD and DB_URI using a shell script,
-                  # OR we can use $(DB_PASSWORD) in the environment variable values!
-                  # In Kubernetes, $(VAR) syntax expands environment variables defined earlier in the list!
-                  # Let's define DB_PASSWORD first, then DB_URI:
-                  # - name: DB_PASSWORD
-                  #   valueFrom: ...
-                  # - name: DB_URI
-                  #   value: mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi?ssl=true&sslInvalidHostNameAllowed=true
-                  # This is extremely clean and natively supported by Kubernetes env var expansion!
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
