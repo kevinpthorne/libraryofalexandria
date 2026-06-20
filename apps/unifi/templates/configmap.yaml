@@ -7,8 +7,8 @@ metadata:
 data:
   init-mongo.sh: |
     #!/bin/bash
-    if which mongosh > /dev/null 2>&1; then mongo_init_bin='mongosh'; else mongo_init_bin='mongo'; fi
-    "${mongo_init_bin}" <<EOF
+    if which mongosh > /dev/null 2>&1; then mongo_init_bin='mongosh --tls --tlsAllowInvalidCertificates'; else mongo_init_bin='mongo --ssl --sslAllowInvalidCertificates'; fi
+    ${mongo_init_bin} <<EOF
     use admin
     db.createUser({
       user: "${MONGO_USER}",

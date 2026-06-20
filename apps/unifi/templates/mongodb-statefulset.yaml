@@ -58,7 +58,6 @@ spec:
             capabilities:
               drop:
                 - ALL
-          command: ["mongod"]
           args:
             - "--bind_ip_all"
             - "--wiredTigerCacheSizeGB"
