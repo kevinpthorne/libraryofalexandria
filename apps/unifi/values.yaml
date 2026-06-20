@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: jacobalberty/unifi
   pullPolicy: IfNotPresent
-  tag: stable
+  tag: latest
 
 mongodb:
   image:
