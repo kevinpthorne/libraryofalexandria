@@ -60,6 +60,7 @@ spec:
                 - ALL
           command: ["mongod"]
           args:
+            - "--bind_ip_all"
             - "--wiredTigerCacheSizeGB"
             - "0.25"
             - "--tlsMode"
