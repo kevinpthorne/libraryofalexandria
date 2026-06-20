@@ -69,6 +69,7 @@ spec:
             - "/etc/ssl/mongodb/mongodb.pem"
             - "--tlsCAFile"
             - "/etc/ssl/certs/cas/ca-bundle.crt"
+            - "--tlsAllowConnectionsWithoutCertificates"
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
               value: "admin"
