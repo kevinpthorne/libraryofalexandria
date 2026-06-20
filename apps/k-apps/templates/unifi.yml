@@ -21,37 +21,3 @@ spec:
     managedNamespaceMetadata:
       labels:
         zarf.dev/agent: "ignore"
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: unifi-gateway
-  namespace: {{ .Values.argoNamespace }}
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
-    path: pkgs/gateway-helm
-    targetRevision: HEAD
-    helm:
-      valuesObject:
-        endpoints:
-          - name: unifi
-            createGateway: false
-            gatewayName: local-gateway
-            gatewayNamespace: kube-system
-            hostnames:
-              - "unifi.k.loa.internal"
-            ports:
-              - port: 443
-                protocol: TLS
-                targetPort: 8443
-                targetService: unifi
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: unifi
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true

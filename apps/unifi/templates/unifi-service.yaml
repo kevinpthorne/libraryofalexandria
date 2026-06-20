@@ -8,7 +8,7 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - name: gui-https
-      port: 8443
+      port: 443
       targetPort: 8443
       protocol: TCP
     - name: device-inform
