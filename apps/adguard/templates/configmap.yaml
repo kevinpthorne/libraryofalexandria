@@ -68,13 +68,17 @@ data:
       local_ptr_upstreams: []
       use_private_ptr_resolvers: true
       resolve_clients: true
-      rewrites:
-      - domain: '{{ .Values.adguard.domain }}'
-        answer: '{{ .Values.adguard.staticIP }}'
-      {{- range .Values.adguard.additionalRewrites }}
-      - domain: '{{ .domain }}'
-        answer: '{{ .answer }}'
-      {{- end }}
+    {{- if or .Values.adguard.staticIP .Values.adguard.additionalRewrites }}
+    rewrites:
+    {{- if .Values.adguard.staticIP }}
+    - domain: '{{ .Values.adguard.domain }}'
+      answer: '{{ .Values.adguard.staticIP }}'
+    {{- end }}
+    {{- range .Values.adguard.additionalRewrites }}
+    - domain: '{{ .domain }}'
+      answer: '{{ .answer }}'
+    {{- end }}
+    {{- end }}
     tls:
       enabled: true
       server_name: {{ .Values.adguard.domain }}
