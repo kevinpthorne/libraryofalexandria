@@ -11,5 +11,5 @@ spec:
     - {{ include "unifi.fullname" . }}-db.{{ .Release.Namespace }}.svc
     - {{ include "unifi.fullname" . }}-db.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
-    name: pki-bootstrap
+    name: app-pki-bootstrap-issuer
     kind: ClusterIssuer
