@@ -9,17 +9,17 @@ mongodb:
   image:
     repository: mongo
     pullPolicy: IfNotPresent
-    tag: "3.6"
+    tag: "7.0"
   persistence:
     storageClass: longhorn
     size: 2Gi
   resources:
     limits:
       cpu: 500m
-      memory: 100Mi
+      memory: 350Mi
     requests:
       cpu: 100m
-      memory: 100Mi
+      memory: 256Mi
 
 persistence:
   storageClass: longhorn

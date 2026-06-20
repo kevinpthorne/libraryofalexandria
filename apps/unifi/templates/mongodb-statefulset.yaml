@@ -60,11 +60,11 @@ spec:
                 - ALL
           command: ["mongod"]
           args:
-            - "--storageEngine"
-            - "mmapv1"
-            - "--sslMode"
-            - "requireSSL"
-            - "--sslPEMKeyFile"
+            - "--wiredTigerCacheSizeGB"
+            - "0.25"
+            - "--tlsMode"
+            - "requireTLS"
+            - "--tlsCertificateKeyFile"
             - "/etc/ssl/mongodb/mongodb.pem"
           env:
             - name: MONGO_INITDB_ROOT_USERNAME

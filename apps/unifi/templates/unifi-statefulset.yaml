@@ -81,9 +81,9 @@ spec:
                   name: {{ include "unifi.fullname" . }}-db-credentials
                   key: unifi-password
             - name: DB_URI
-              value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi?ssl=true&sslInvalidHostNameAllowed=true"
+              value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi?tls=true&tlsAllowInvalidHostnames=true"
             - name: STATDB_URI
-              value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi_stat?ssl=true&sslInvalidHostNameAllowed=true"
+              value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi_stat?tls=true&tlsAllowInvalidHostnames=true"
           livenessProbe:
             tcpSocket:
               port: 8443
