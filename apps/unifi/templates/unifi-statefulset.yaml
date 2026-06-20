@@ -22,6 +22,35 @@ spec:
         fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        - name: init-cacerts
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          command: ["sh", "-c"]
+          args:
+            - |
+              CACERTS_PATH=$(find /usr /opt /etc -name cacerts | head -n 1)
+              if [ -n "$CACERTS_PATH" ]; then
+                cp "$CACERTS_PATH" /unifi/cacerts
+                keytool -importcert -trustcacerts -noprompt -alias cluster-ca -file /certs/cas/ca-bundle.crt -keystore /unifi/cacerts -storepass changeit
+              else
+                echo "cacerts not found!"
+                exit 1
+              fi
+          volumeMounts:
+            - name: unifi-config
+              mountPath: /unifi
+            - name: trusted-ca
+              mountPath: /certs/cas
+              readOnly: true
       containers:
         - name: unifi
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -64,9 +93,11 @@ spec:
                   name: {{ include "unifi.fullname" . }}-db-credentials
                   key: unifi-password
             - name: DB_URI
-              value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi?tls=true&tlsAllowInvalidHostnames=true"
+              value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi?tls=true"
             - name: STATDB_URI
-              value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi_stat?tls=true&tlsAllowInvalidHostnames=true"
+              value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi_stat?tls=true"
+            - name: JVM_EXTRA_OPTS
+              value: "-Djavax.net.ssl.trustStore=/unifi/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
           livenessProbe:
             tcpSocket:
               port: 8443
@@ -80,6 +111,10 @@ spec:
           volumeMounts:
             - name: unifi-config
               mountPath: /unifi
+      volumes:
+        - name: trusted-ca
+          configMap:
+            name: trusted-ca-bundle
   volumeClaimTemplates:
     - metadata:
         name: unifi-config

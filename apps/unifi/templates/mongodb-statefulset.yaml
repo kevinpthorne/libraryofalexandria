@@ -66,6 +66,8 @@ spec:
             - "requireTLS"
             - "--tlsCertificateKeyFile"
             - "/etc/ssl/mongodb/mongodb.pem"
+            - "--tlsCAFile"
+            - "/etc/ssl/certs/cas/ca-bundle.crt"
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
               value: "admin"
@@ -95,6 +97,9 @@ spec:
               mountPath: /docker-entrypoint-initdb.d/init-mongo.sh
               subPath: init-mongo.sh
               readOnly: true
+            - name: trusted-ca
+              mountPath: /etc/ssl/certs/cas
+              readOnly: true
       volumes:
         - name: tls-certs
           secret:
@@ -105,6 +110,9 @@ spec:
           configMap:
             name: {{ include "unifi.fullname" . }}-mongodb-init
             defaultMode: 0755
+        - name: trusted-ca
+          configMap:
+            name: trusted-ca-bundle
   volumeClaimTemplates:
     - metadata:
         name: db-data
