@@ -23,13 +23,6 @@ data:
       querylog_interval: 90
       querylog_size_memory: 1000
       anonymize_client_ip: false
-      protection_enabled: true
-      blocking_mode: default
-      blocking_ipv4: ""
-      blocking_ipv6: ""
-      blocked_response_ttl: 10
-      parental_block_host: family-block.dns.adguard.com
-      safebrowsing_block_host: standard-block.dns.adguard.com
       ratelimit: 20
       ratelimit_whitelist: []
       refuse_any: true
@@ -68,17 +61,27 @@ data:
       local_ptr_upstreams: []
       use_private_ptr_resolvers: true
       resolve_clients: true
-    {{- if or .Values.adguard.staticIP .Values.adguard.additionalRewrites }}
-    rewrites:
-    {{- if .Values.adguard.staticIP }}
-    - domain: '{{ .Values.adguard.domain }}'
-      answer: '{{ .Values.adguard.staticIP }}'
-    {{- end }}
-    {{- range .Values.adguard.additionalRewrites }}
-    - domain: '{{ .domain }}'
-      answer: '{{ .answer }}'
-    {{- end }}
-    {{- end }}
+    filtering:
+      filtering_enabled: true
+      protection_enabled: true
+      blocking_mode: default
+      blocking_ipv4: ""
+      blocking_ipv6: ""
+      blocked_response_ttl: 10
+      parental_block_host: family-block.dns.adguard.com
+      safebrowsing_block_host: standard-block.dns.adguard.com
+      rewrites_enabled: true
+      {{- if or .Values.adguard.staticIP .Values.adguard.additionalRewrites }}
+      rewrites:
+      {{- if .Values.adguard.staticIP }}
+      - domain: '{{ .Values.adguard.domain }}'
+        answer: '{{ .Values.adguard.staticIP }}'
+      {{- end }}
+      {{- range .Values.adguard.additionalRewrites }}
+      - domain: '{{ .domain }}'
+        answer: '{{ .answer }}'
+      {{- end }}
+      {{- end }}
     tls:
       enabled: true
       server_name: {{ .Values.adguard.domain }}
