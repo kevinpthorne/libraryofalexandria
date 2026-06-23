@@ -61,16 +61,6 @@ data:
       local_ptr_upstreams: []
       use_private_ptr_resolvers: true
       resolve_clients: true
-    filtering:
-      filtering_enabled: true
-      protection_enabled: true
-      blocking_mode: default
-      blocking_ipv4: ""
-      blocking_ipv6: ""
-      blocked_response_ttl: 10
-      parental_block_host: family-block.dns.adguard.com
-      safebrowsing_block_host: standard-block.dns.adguard.com
-      rewrites_enabled: true
       {{- if or .Values.adguard.staticIP .Values.adguard.additionalRewrites }}
       rewrites:
       {{- if .Values.adguard.staticIP }}
@@ -82,6 +72,16 @@ data:
         answer: '{{ .answer }}'
       {{- end }}
       {{- end }}
+    filtering:
+      filtering_enabled: true
+      protection_enabled: true
+      blocking_mode: default
+      blocking_ipv4: ""
+      blocking_ipv6: ""
+      blocked_response_ttl: 10
+      parental_block_host: family-block.dns.adguard.com
+      safebrowsing_block_host: standard-block.dns.adguard.com
+      rewrites_enabled: true
     tls:
       enabled: true
       server_name: {{ .Values.adguard.domain }}
