@@ -45,6 +45,8 @@ kind: KeydbClient
 metadata:
   name: immich
   namespace: {{ .Values.argoNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # KeydbClient comes in wave 0
 spec:
   appName: immich
   appNamespace: {{ .Values.immich.namespace }}
