@@ -67,26 +67,12 @@ spec:
         extraContainers:
           {{- if $hasFederation }}
           - name: stunnel
-            image: alpine:latest
-            command:
-              - /bin/sh
-              - -c
-              - |
-                apk add --no-cache stunnel
-                cat <<EOF > /tmp/stunnel.conf
-                foreground = yes
-                pid =
-                [redis]
-                client = yes
-                accept = 127.0.0.1:6379
-                connect = keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380
-                verifyChain = yes
-                CAfile = /certs/cas/ca-bundle.crt
-                cert = /certs/keydb-client/tls.crt
-                key = /certs/keydb-client/tls.key
-                EOF
-                exec stunnel /tmp/stunnel.conf
+            image: cgr.dev/chainguard/stunnel:latest
+            command: ["stunnel", "/etc/stunnel/stunnel.conf"]
             volumeMounts:
+              - name: stunnel-conf
+                mountPath: /etc/stunnel
+                readOnly: true
               - name: keydb-client-cert
                 mountPath: /certs/keydb-client
                 readOnly: true
@@ -143,6 +129,9 @@ spec:
             secret:
               secretName: keydb-gitea-client-cert
               defaultMode: 256
+          - name: stunnel-conf
+            configMap:
+              name: gitea-stunnel-conf
           {{- end }}
         extraVolumeMounts:
           - name: cas
@@ -402,4 +391,24 @@ metadata:
 spec:
   appName: gitea
   appNamespace: gitea
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitea-stunnel-conf
+  namespace: gitea
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+data:
+  stunnel.conf: |
+    foreground = yes
+    pid =
+    [redis]
+    client = yes
+    accept = 127.0.0.1:6379
+    connect = keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380
+    verifyChain = yes
+    CAfile = /certs/cas/ca-bundle.crt
+    cert = /certs/keydb-client/tls.crt
+    key = /certs/keydb-client/tls.key
 {{- end }}
