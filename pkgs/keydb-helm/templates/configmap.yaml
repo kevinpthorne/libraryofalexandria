@@ -58,6 +58,8 @@ data:
         --tls-replication yes \
         {{- end }}
         --replica-read-only "no" \
+        --protected-mode "no" \
+        --bind "0.0.0.0" \
         --loglevel debug \
         "${replicas[@]}"
 
