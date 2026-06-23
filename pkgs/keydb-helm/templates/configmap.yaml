@@ -74,6 +74,9 @@ data:
     cli_opts=("-h" "localhost" "-p" "${REDIS_PORT}")
     if [ "${REDIS_TLS_ENABLED:-false}" = "true" ]; then
       cli_opts+=("--tls" "--cacert" "${REDIS_CA_CERT}")
+      if [ -n "${REDIS_CERT}" ] && [ -n "${REDIS_KEY}" ]; then
+        cli_opts+=("--cert" "${REDIS_CERT}" "--key" "${REDIS_KEY}")
+      fi
     fi
     response="$(
       timeout -s 15 "${1}" \
@@ -92,6 +95,9 @@ data:
     cli_opts=("-h" "localhost" "-p" "${REDIS_PORT}")
     if [ "${REDIS_TLS_ENABLED:-false}" = "true" ]; then
       cli_opts+=("--tls" "--cacert" "${REDIS_CA_CERT}")
+      if [ -n "${REDIS_CERT}" ] && [ -n "${REDIS_KEY}" ]; then
+        cli_opts+=("--cert" "${REDIS_CERT}" "--key" "${REDIS_KEY}")
+      fi
     fi
     response="$(
       timeout -s 15 "${1}" \

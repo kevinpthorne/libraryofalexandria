@@ -60,6 +60,10 @@ spec:
         - name: REDIS_CA_CERT
           value: "{{ .Values.tls.mountPath }}/ca.crt"
         {{- end }}
+        - name: REDIS_CERT
+          value: "{{ .Values.tls.mountPath }}/tls.crt"
+        - name: REDIS_KEY
+          value: "{{ .Values.tls.mountPath }}/tls.key"
         {{- end }}
         {{- if .Values.password }}
         - name: REDIS_PASSWORD
