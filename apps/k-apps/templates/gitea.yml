@@ -42,13 +42,13 @@ spec:
               SSL_MODE: verify-full
             session:
               PROVIDER: redis
-              PROVIDER_CONFIG: "network=tcp,addr=keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380,db=0,pool_size=100,idle_timeout=180,tls=true"
+              PROVIDER_CONFIG: "redis://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
             cache:
               ADAPTER: redis
-              HOST: "network=tcp,addr=keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380,db=0,pool_size=100,idle_timeout=180,tls=true"
+              HOST: "redis://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
             queue:
               TYPE: redis
-              CONN_STR: "network=tcp,addr=keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380,db=0,pool_size=100,idle_timeout=180,tls=true"
+              CONN_STR: "redis://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
             {{- end }}
         podSecurityContext:
           fsGroup: 1000
