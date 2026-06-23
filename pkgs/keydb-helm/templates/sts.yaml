@@ -53,8 +53,13 @@ spec:
         {{- if .Values.tls.enabled }}
         - name: REDIS_TLS_ENABLED
           value: "true"
+        {{- if .Values.tls.caSecretName }}
+        - name: REDIS_CA_CERT
+          value: "/certs-ca/ca.crt"
+        {{- else }}
         - name: REDIS_CA_CERT
           value: "{{ .Values.tls.mountPath }}/ca.crt"
+        {{- end }}
         {{- end }}
         {{- if .Values.password }}
         - name: REDIS_PASSWORD
@@ -125,6 +130,11 @@ spec:
         - name: certs
           mountPath: {{ .Values.tls.mountPath }}
           readOnly: true
+        {{- if .Values.tls.caSecretName }}
+        - name: certs-ca
+          mountPath: /certs-ca
+          readOnly: true
+        {{- end }}
         {{- end }}
       volumes:
       - name: utils
@@ -153,6 +163,11 @@ spec:
       - name: certs
         secret:
           secretName: {{ .Values.tls.secretName | quote }}
+      {{- if .Values.tls.caSecretName }}
+      - name: certs-ca
+        secret:
+          secretName: {{ .Values.tls.caSecretName | quote }}
+      {{- end }}
       {{- end }}
   {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:

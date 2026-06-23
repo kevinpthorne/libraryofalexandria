@@ -19,6 +19,8 @@ spec:
         tls:
           enabled: true
           secretName: keydb-restricted-tls
+          caSecretName: keydb-client-ca-public
+          authClients: "yes"
           {{- if and .Values.keydb (hasKey .Values.keydb "tls") }}
           {{- toYaml .Values.keydb.tls | nindent 10 }}
           {{- end }}

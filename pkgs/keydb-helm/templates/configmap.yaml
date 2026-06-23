@@ -53,7 +53,11 @@ data:
         --tls-port "{{ .Values.tls.port }}" \
         --tls-cert-file "{{ .Values.tls.mountPath }}/tls.crt" \
         --tls-key-file "{{ .Values.tls.mountPath }}/tls.key" \
+        {{- if .Values.tls.caSecretName }}
+        --tls-ca-cert-file "/certs-ca/ca.crt" \
+        {{- else }}
         --tls-ca-cert-file "{{ .Values.tls.mountPath }}/ca.crt" \
+        {{- end }}
         --tls-auth-clients "{{ .Values.tls.authClients }}" \
         --tls-replication yes \
         {{- end }}

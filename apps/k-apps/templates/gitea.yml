@@ -42,13 +42,13 @@ spec:
               SSL_MODE: verify-full
             session:
               PROVIDER: redis
-              PROVIDER_CONFIG: "redis://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
+              PROVIDER_CONFIG: "redis://127.0.0.1:6379/0?pool_size=100&idle_timeout=180s"
             cache:
               ADAPTER: redis
-              HOST: "redis://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
+              HOST: "redis://127.0.0.1:6379/0?pool_size=100&idle_timeout=180s"
             queue:
               TYPE: redis
-              CONN_STR: "redis://keydb-restricted-keydb-helm.keydb.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s"
+              CONN_STR: "redis://127.0.0.1:6379/0?pool_size=100&idle_timeout=180s"
             {{- end }}
         podSecurityContext:
           fsGroup: 1000
@@ -58,6 +58,39 @@ spec:
           enabled: true
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
+        extraContainers:
+          {{- if $hasFederation }}
+          - name: stunnel
+            image: alpine:latest
+            command:
+              - /bin/sh
+              - -c
+              - |
+                apk add --no-cache stunnel
+                cat <<EOF > /tmp/stunnel.conf
+                foreground = yes
+                pid =
+                [redis]
+                client = yes
+                accept = 127.0.0.1:6379
+                connect = keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380
+                verifyChain = yes
+                CAfile = /certs/cas/ca-bundle.crt
+                cert = /certs/keydb-client/tls.crt
+                key = /certs/keydb-client/tls.key
+                EOF
+                exec stunnel /tmp/stunnel.conf
+            volumeMounts:
+              - name: keydb-client-cert
+                mountPath: /certs/keydb-client
+                readOnly: true
+              - name: cas
+                mountPath: /certs/cas
+                readOnly: true
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+          {{- end }}
           runAsNonRoot: true
           runAsUser: 1000
           runAsGroup: 1000
@@ -100,6 +133,10 @@ spec:
             secret:
               secretName: pgedge-gitea-client-cert
               defaultMode: 256 # 0400 in octal is 256 in decimal (user-read-only)
+          - name: keydb-client-cert
+            secret:
+              secretName: keydb-gitea-client-cert
+              defaultMode: 256
           {{- end }}
         extraVolumeMounts:
           - name: cas
@@ -350,4 +387,13 @@ spec:
   secret: "gitea-client-secret"
   redirectUris:
     - "https://gitea.{{ $cluster.name | default "k" }}.loa.internal/user/oauth2/keycloak/callback"
+---
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: KeydbClient
+metadata:
+  name: gitea
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  appName: gitea
+  appNamespace: gitea
 {{- end }}

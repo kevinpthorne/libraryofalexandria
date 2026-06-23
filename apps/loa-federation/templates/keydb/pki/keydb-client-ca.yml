@@ -1,0 +1,47 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: keydb-client-ca
+  namespace: {{ .Values.pki.certManagerNamespace }}
+spec:
+  isCA: true
+  commonName: "{{ .Values.pki.rootCAIssuer }}-keydb-client-ca"
+  secretName: keydb-client-ca-key-pair
+  secretTemplate:
+    labels:
+      pki.loa.kevinpthorne.com/trusted-ca: "true"
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Never
+  issuerRef:
+    name: {{ .Values.pki.rootCAIssuer }}
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: keydb-client-ca-issuer
+spec:
+  ca:
+    secretName: keydb-client-ca-key-pair
+---
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: keydb-client-ca-public
+spec:
+  sources:
+    - secret:
+        name: keydb-client-ca-key-pair
+        key: tls.crt
+    - secret:
+        name: keydb-client-ca-key-pair
+        key: ca.crt
+  target:
+    secret:
+      key: ca.crt
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: {{ .Values.keydb.namespace }}

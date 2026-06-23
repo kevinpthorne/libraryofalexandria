@@ -29,6 +29,7 @@ persistence:
 tls:
   enabled: false
   secretName: ""
+  caSecretName: ""
   mountPath: /certs
   port: 6380
   disableNonTls: true

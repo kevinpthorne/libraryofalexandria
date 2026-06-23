@@ -12,7 +12,20 @@ spec:
     helm:
       # We override the values to enforce a restricted security context
       values: |
-        {}
+        controllers:
+          main:
+            containers:
+              main:
+                env:
+                  REDIS_URL: 'ioredis://{{ printf "{\"tls\": {\"ca\": \"/certs/keydb-client/ca.crt\", \"cert\": \"/certs/keydb-client/tls.crt\", \"key\": \"/certs/keydb-client/tls.key\", \"rejectUnauthorized\": true}}" | b64enc }}'
+                  REDIS_HOSTNAME: ""
+        persistence:
+          keydb-client-cert:
+            type: secret
+            name: keydb-immich-client-cert
+            globalMounts:
+              - path: /certs/keydb-client
+                readOnly: true
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: {{ .Values.immich.namespace }}
@@ -26,3 +39,12 @@ spec:
     managedNamespaceMetadata:
       labels:
         zarf.dev/agent: "ignore"
+---
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: KeydbClient
+metadata:
+  name: immich
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  appName: immich
+  appNamespace: {{ .Values.immich.namespace }}
