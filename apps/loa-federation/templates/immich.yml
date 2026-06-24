@@ -268,7 +268,7 @@ data:
     [redis]
     client = yes
     accept = 127.0.0.1:6379
-    connect = keydb-restricted.{{ .Values.keydb.namespace }}.svc.cluster.local:6380
+    connect = keydb-restricted-keydb-helm.{{ .Values.keydb.namespace }}.svc.cluster.local:6380
     verifyChain = yes
     CAfile = /certs/keydb-client/ca.crt
     cert = /certs/keydb-client/tls.crt
