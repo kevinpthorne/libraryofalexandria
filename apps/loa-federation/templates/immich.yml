@@ -12,9 +12,7 @@ spec:
     helm:
       # We override the values to enforce a restricted security context
       values: |
-        postgresql:
-          enabled: false
-        redis:
+        valkey:
           enabled: false
         immich:
           persistence:
