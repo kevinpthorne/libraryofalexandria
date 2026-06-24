@@ -21,8 +21,21 @@ spec:
               existingClaim: immich-library-pvc
         controllers:
           main:
+            pod:
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                fsGroup: 1000
+                seccompProfile:
+                  type: RuntimeDefault
             containers:
               main:
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL
                 env:
                   REDIS_URL: 'ioredis://{{ printf "{\"host\": \"keydb-restricted.%s.svc.cluster.local\", \"port\": 6380, \"tls\": {\"ca\": \"/certs/keydb-client/ca.crt\", \"cert\": \"/certs/keydb-client/tls.crt\", \"key\": \"/certs/keydb-client/tls.key\", \"rejectUnauthorized\": true}}" .Values.keydb.namespace | b64enc }}'
                   REDIS_HOSTNAME: ""
