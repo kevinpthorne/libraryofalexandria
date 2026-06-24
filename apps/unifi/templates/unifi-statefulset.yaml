@@ -96,8 +96,14 @@ spec:
               value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi?tls=true&authSource=admin"
             - name: STATDB_URI
               value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi_stat?tls=true&authSource=admin"
+            - name: JVM_MAX_HEAP_SIZE
+              value: "192M"
+            - name: JVM_INIT_HEAP_SIZE
+              value: "128M"
             - name: JVM_EXTRA_OPTS
               value: "-Djavax.net.ssl.trustStore=/unifi/cacerts -Djavax.net.ssl.trustStorePassword=changeit"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
             tcpSocket:
               port: 8443
