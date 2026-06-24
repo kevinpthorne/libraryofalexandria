@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://immich-app.github.io/immich-charts
-    chart: immich/immich
+    chart: immich
     targetRevision: 0.12.0
     helm:
       # We override the values to enforce a restricted security context
