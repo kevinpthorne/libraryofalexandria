@@ -14,7 +14,7 @@ spec:
       schemaName: string
       userName: string
       appNamespace: string
-      extensions: "string | optional"
+      extensions: "string"
   resources:
     # 1. Certificate for client mutual TLS authentication
     - id: clientCert
