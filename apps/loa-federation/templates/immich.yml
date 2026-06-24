@@ -114,6 +114,7 @@ spec:
   schemaName: immich
   userName: immich
   appNamespace: {{ .Values.immich.namespace }}
+  extensions: "vector,earthdistance,cube"
 ---
 apiVersion: seaweed.seaweedfs.com/v1
 kind: S3Identity

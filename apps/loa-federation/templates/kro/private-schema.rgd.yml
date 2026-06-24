@@ -14,6 +14,7 @@ spec:
       schemaName: string
       userName: string
       appNamespace: string
+      extensions: "string | optional"
   resources:
     # 1. Certificate for client mutual TLS authentication
     - id: clientCert
@@ -83,6 +84,15 @@ spec:
                     GRANT ALL ON DATABASE ${schema.spec.databaseName} TO ${schema.spec.userName};
                     CREATE EXTENSION IF NOT EXISTS spock;
                     "
+                    EXTS='${schema.spec.extensions}'
+                    if [ "$EXTS" != "\${schema.spec.extensions}" ] && [ "$EXTS" != "null" ] && [ -n "$EXTS" ]; then
+                      echo "$EXTS" | tr ',' '\n' | while read ext; do
+                        ext=$(echo "$ext" | xargs)
+                        if [ -n "$ext" ]; then
+                          psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw -U admin -d ${schema.spec.databaseName} -c "CREATE EXTENSION IF NOT EXISTS \"$ext\" CASCADE;"
+                        fi
+                      done
+                    fi
                 volumeMounts:
                 - name: certs
                   mountPath: /certs
