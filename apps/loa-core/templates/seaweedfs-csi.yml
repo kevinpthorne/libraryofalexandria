@@ -14,6 +14,7 @@ spec:
     helm:
       values: |
         seaweedfsFiler: "seaweed-cluster-filer.seaweedfs-system.svc.cluster.local:8888"
+        tlsSecret: "seaweed-cluster-server-tls"
         storageClassName: seaweedfs-csi
         storageClassVolumeBindingMode: Immediate
         isDefaultStorageClass: false
