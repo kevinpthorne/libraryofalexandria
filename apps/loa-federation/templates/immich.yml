@@ -31,6 +31,10 @@ spec:
                   type: RuntimeDefault
             containers:
               main:
+                probes:
+                  startup:
+                    spec:
+                      failureThreshold: 120
                 securityContext:
                   allowPrivilegeEscalation: false
                   capabilities:
@@ -76,6 +80,12 @@ spec:
             name: pgedge-immich-client-cert
             globalMounts:
               - path: /certs/pgedge-client
+                readOnly: true
+          immich-tls:
+            type: secret
+            name: immich-tls
+            globalMounts:
+              - path: /certs/immich-server
                 readOnly: true
   destination:
     server: 'https://kubernetes.default.svc'
@@ -274,3 +284,81 @@ data:
     CAfile = /certs/keydb-client/ca.crt
     cert = /certs/keydb-client/tls.crt
     key = /certs/keydb-client/tls.key
+    [https]
+    accept = 8443
+    connect = 127.0.0.1:2283
+    cert = /certs/immich-server/tls.crt
+    key = /certs/immich-server/tls.key
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: immich-tls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "immich"
+        cert:
+          sans:
+            - "immich.{{ .Values.cluster.name }}.loa.internal"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.immich.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: immich-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: immich
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
+            hostnames:
+              - "immich.{{ .Values.cluster.name }}.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 8443
+                targetService: immich-tls
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.immich.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-tls
+  namespace: {{ .Values.immich.namespace }}
+spec:
+  selector:
+    app.kubernetes.io/name: server
+    app.kubernetes.io/controller: main
+  ports:
+    - name: https
+      port: 8443
+      targetPort: 8443
+      protocol: TCP
