@@ -21,3 +21,9 @@ externaldns:
   namespace: federation-externaldns
   apiKeySecret: cf-key
   apiKeySecretKey: api-key
+
+syncFolders:
+  - path: /immich-library
+
+syncBuckets:
+  - bucketName: immich-data

@@ -1,0 +1,87 @@
+{{- $local := .Values.cluster.name }}
+
+{{- range $folder := .Values.syncFolders }}
+  {{- range $peer, $peerConfig := $.Values.cluster.peers }}
+    {{- $syncDecision := false }}
+    
+    {{- $first := $local }}
+    {{- $second := $peer }}
+    {{- if gt $local $peer }}
+      {{- $first = $peer }}
+      {{- $second = $local }}
+    {{- end }}
+    
+    {{- $hashString := printf "%s-%s" $first $second }}
+    {{- $hashHex := sha1sum $hashString }}
+    {{- $firstChar := substr 0 1 $hashHex }}
+    {{- $isEven := has $firstChar (list "0" "1" "2" "3" "4" "5" "6" "7") }}
+    
+    {{- if and $isEven (eq $local $first) }}
+      {{- $syncDecision = true }}
+    {{- else if and (not $isEven) (eq $local $second) }}
+      {{- $syncDecision = true }}
+    {{- end }}
+
+    {{- if and $peerConfig (typeIs "map[string]interface {}" $peerConfig) }}
+      {{- if hasKey $peerConfig "sync" }}
+        {{- $syncDecision = $peerConfig.sync }}
+      {{- end }}
+    {{- end }}
+
+    {{- if $syncDecision }}
+---
+apiVersion: fs.loa.kevinpthorne.com/v1alpha1
+kind: SyncFolder
+metadata:
+  name: syncfolder-{{ $peer }}-{{ $folder.path | replace "/" "-" | trimPrefix "-" }}
+  namespace: seaweedfs-system
+spec:
+  sourceCluster: {{ $local }}
+  targetCluster: {{ $peer }}
+  path: {{ $folder.path }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+{{- range $bucket := .Values.syncBuckets }}
+  {{- range $peer, $peerConfig := $.Values.cluster.peers }}
+    {{- $syncDecision := false }}
+    
+    {{- $first := $local }}
+    {{- $second := $peer }}
+    {{- if gt $local $peer }}
+      {{- $first = $peer }}
+      {{- $second = $local }}
+    {{- end }}
+    
+    {{- $hashString := printf "%s-%s" $first $second }}
+    {{- $hashHex := sha1sum $hashString }}
+    {{- $firstChar := substr 0 1 $hashHex }}
+    {{- $isEven := has $firstChar (list "0" "1" "2" "3" "4" "5" "6" "7") }}
+    
+    {{- if and $isEven (eq $local $first) }}
+      {{- $syncDecision = true }}
+    {{- else if and (not $isEven) (eq $local $second) }}
+      {{- $syncDecision = true }}
+    {{- end }}
+
+    {{- if and $peerConfig (typeIs "map[string]interface {}" $peerConfig) }}
+      {{- if hasKey $peerConfig "sync" }}
+        {{- $syncDecision = $peerConfig.sync }}
+      {{- end }}
+    {{- end }}
+
+    {{- if $syncDecision }}
+---
+apiVersion: blob.loa.kevinpthorne.com/v1alpha1
+kind: PeerBucket
+metadata:
+  name: peerbucket-{{ $peer }}-{{ $bucket.bucketName }}
+  namespace: seaweedfs-system
+spec:
+  sourceCluster: {{ $local }}
+  targetCluster: {{ $peer }}
+  bucketName: {{ $bucket.bucketName }}
+    {{- end }}
+  {{- end }}
+{{- end }}

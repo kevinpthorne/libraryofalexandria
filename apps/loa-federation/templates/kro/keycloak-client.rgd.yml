@@ -12,7 +12,10 @@ spec:
     spec:
       realm: "string | default=loa"
       clientId: string
-      secret: "string"
+      secret: "string | optional"
+      secretRef:
+        name: "string | default=dummy"
+        key: "string | default=dummy"
       serviceAccountsEnabled: "boolean | default=false"
       redirectUris: "[]string | default=[]"
   resources:
@@ -36,7 +39,7 @@ spec:
                   - "-c"
                   - |
                     cat << 'EOF' > /tmp/client.json
-                    ${json.marshal({
+                                        ${json.marshal({
                       "realm": schema.spec.realm,
                       "clients": [
                         schema.spec.?secret != null ? {
@@ -46,12 +49,18 @@ spec:
                           "redirectUris": schema.spec.redirectUris
                         } : {
                           "clientId": schema.spec.clientId,
+                          "secret": "REPLACE_ME_SECRET",
                           "serviceAccountsEnabled": schema.spec.serviceAccountsEnabled,
                           "redirectUris": schema.spec.redirectUris
                         }
                       ]
                     })}
                     EOF
+                    if [ -n "$CLIENT_SECRET" ]; then
+                      sed -i "s/REPLACE_ME_SECRET/$CLIENT_SECRET/g" /tmp/client.json
+                    elif grep -q REPLACE_ME_SECRET /tmp/client.json; then
+                      sed -i '/"secret": "REPLACE_ME_SECRET"/d' /tmp/client.json
+                    fi
                     /opt/jboss/keycloak-config-cli.jar --import.files=/tmp/client.json
                 env:
                 - name: KEYCLOAK_URL
@@ -66,3 +75,9 @@ spec:
                 # keycloak-config-cli usually checks SSL cert validity. Since it is internal and uses a cert-manager TLS cert:
                 - name: KEYCLOAK_AVAILABILITYPROBE_TIMEOUT
                   value: "120s"
+                - name: CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${schema.spec.secretRef.name}
+                      key: ${schema.spec.secretRef.key}
+                      optional: true

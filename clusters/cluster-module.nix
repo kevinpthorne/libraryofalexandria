@@ -179,6 +179,11 @@
         type = with lib.types; listOf str;
         # generated
       };
+      sync = lib.mkOption {
+        type = lib.types.bool;
+        description = "Force this cluster to either deploy cross-cluster sync jobs or explicitly not deploy them.";
+        default = null;
+      };
     };
     # rendered options, never given outside this module
     # TODO remove this pattern, it sucks

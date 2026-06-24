@@ -38,3 +38,4 @@ spec:
     managedNamespaceMetadata:
       labels:
         zarf.dev/agent: "ignore"
+        pod-security.kubernetes.io/enforce: privileged

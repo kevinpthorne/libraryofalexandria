@@ -8,23 +8,43 @@ spec:
   source:
     repoURL: https://immich-app.github.io/immich-charts
     chart: immich/immich
-    targetRevision: 0.11.1
+    targetRevision: 0.12.0
     helm:
       # We override the values to enforce a restricted security context
       values: |
+        postgresql:
+          enabled: false
+        redis:
+          enabled: false
+        immich:
+          persistence:
+            library:
+              enabled: true
+              existingClaim: immich-library-pvc
         controllers:
           main:
             containers:
               main:
                 env:
-                  REDIS_URL: 'ioredis://{{ printf "{\"tls\": {\"ca\": \"/certs/keydb-client/ca.crt\", \"cert\": \"/certs/keydb-client/tls.crt\", \"key\": \"/certs/keydb-client/tls.key\", \"rejectUnauthorized\": true}}" | b64enc }}'
+                  REDIS_URL: 'ioredis://{{ printf "{\"host\": \"keydb-restricted.%s.svc.cluster.local\", \"port\": 6380, \"tls\": {\"ca\": \"/certs/keydb-client/ca.crt\", \"cert\": \"/certs/keydb-client/tls.crt\", \"key\": \"/certs/keydb-client/tls.key\", \"rejectUnauthorized\": true}}" .Values.keydb.namespace | b64enc }}'
                   REDIS_HOSTNAME: ""
+                  DB_URL: 'postgres://immich@{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.{{ .Values.pgedge.namespace }}.svc:5432/app?sslmode=verify-full&sslcert=/certs/pgedge-client/tls.crt&sslkey=/certs/pgedge-client/tls.key&sslrootcert=/certs/pgedge-client/ca.crt&options=-c%20search_path=immich'
+                  DB_HOSTNAME: ""
+                  DB_USERNAME: ""
+                  DB_PASSWORD: ""
+                  DB_DATABASE_NAME: ""
         persistence:
           keydb-client-cert:
             type: secret
             name: keydb-immich-client-cert
             globalMounts:
               - path: /certs/keydb-client
+                readOnly: true
+          pgedge-client-cert:
+            type: secret
+            name: pgedge-immich-client-cert
+            globalMounts:
+              - path: /certs/pgedge-client
                 readOnly: true
   destination:
     server: 'https://kubernetes.default.svc'
@@ -50,3 +70,155 @@ metadata:
 spec:
   appName: immich
   appNamespace: {{ .Values.immich.namespace }}
+---
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: PrivateSchema
+metadata:
+  name: immich-schema
+  namespace: {{ .Values.argoNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  databaseName: app
+  schemaName: immich
+  userName: immich
+  appNamespace: {{ .Values.immich.namespace }}
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Identity
+metadata:
+  name: immich
+  namespace: {{ .Values.immich.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Credentials
+metadata:
+  name: immich-s3-creds
+  namespace: {{ .Values.immich.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  identityRef:
+    name: immich
+  secretRef:
+    name: immich-s3-creds
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: Bucket
+metadata:
+  name: immich-data
+  namespace: {{ .Values.immich.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  clusterRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  name: immich-data
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Policy
+metadata:
+  name: immich-policy
+  namespace: {{ .Values.immich.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  statements:
+    - effect: Allow
+      actions: [s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket]
+      resources: [
+        "immich-data/*", "immich-data"
+      ]
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3PolicyBinding
+metadata:
+  name: immich-policy-binding
+  namespace: {{ .Values.immich.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  policyRef:
+    name: immich-policy
+  subjects:
+    - kind: S3Identity
+      name: immich
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: ResourceReferenceGrant
+metadata:
+  name: seaweed-immich-grant
+  namespace: seaweedfs-system
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  from:
+    - group: seaweed.seaweedfs.com
+      kind: S3Identity
+      namespace: {{ .Values.immich.namespace }}
+    - group: seaweed.seaweedfs.com
+      kind: S3Credentials
+      namespace: {{ .Values.immich.namespace }}
+    - group: seaweed.seaweedfs.com
+      kind: Bucket
+      namespace: {{ .Values.immich.namespace }}
+    - group: seaweed.seaweedfs.com
+      kind: S3Policy
+      namespace: {{ .Values.immich.namespace }}
+    - group: seaweed.seaweedfs.com
+      kind: S3PolicyBinding
+      namespace: {{ .Values.immich.namespace }}
+  to:
+    - group: seaweed.seaweedfs.com
+      kind: Seaweed
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-library-pv
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 50Gi
+  csi:
+    driver: seaweedfs-csi-driver
+    volumeHandle: immich-library
+    volumeAttributes:
+      path: "/immich-library"
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: seaweedfs-static
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-library-pvc
+  namespace: {{ .Values.immich.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: seaweedfs-static
+  volumeName: immich-library-pv

@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: seaweedfs-csi-driver
+  namespace: {{ .Values.argoNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    chart: seaweedfs-csi-driver
+    repoURL: https://seaweedfs.github.io/seaweedfs-csi-driver/helm
+    targetRevision: 0.2.27
+    helm:
+      values: |
+        seaweedfsFiler: "seaweed-cluster-filer.seaweedfs-system.svc.cluster.local:8888"
+        storageClassName: seaweedfs-csi
+        storageClassVolumeBindingMode: Immediate
+        isDefaultStorageClass: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: seaweedfs-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+        pod-security.kubernetes.io/enforce: privileged
