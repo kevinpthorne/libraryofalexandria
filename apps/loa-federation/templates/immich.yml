@@ -43,7 +43,7 @@ spec:
                 env:
                   REDIS_HOSTNAME: "127.0.0.1"
                   REDIS_PORT: "6379"
-                  DB_URL: 'postgres://immich@{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.{{ .Values.pgedge.namespace }}.svc:5432/app?sslmode=verify-full&sslcert=/certs/pgedge-client/tls.crt&sslkey=/certs/pgedge-client/tls.key&sslrootcert=/certs/pgedge-client/ca.crt&options=-c%20search_path=immich'
+                  DB_URL: 'postgres://immich@{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.{{ .Values.pgedge.namespace }}.svc:5432/app?sslmode=verify-full&sslcert=/certs/pgedge-client/tls.crt&sslkey=/certs/pgedge-client/tls.key&sslrootcert=/certs/pgedge-client/ca.crt&options=-c%20search_path=immich,public'
                   DB_HOSTNAME: ""
                   DB_USERNAME: ""
                   DB_PASSWORD: ""
