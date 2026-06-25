@@ -61,7 +61,7 @@ spec:
           args:
             - "--bind_ip_all"
             - "--wiredTigerCacheSizeGB"
-            - "0.1"
+            - "0.25"
             - "--tlsMode"
             - "requireTLS"
             - "--tlsCertificateKeyFile"
