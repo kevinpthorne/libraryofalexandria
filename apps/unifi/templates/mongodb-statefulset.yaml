@@ -6,7 +6,7 @@ metadata:
     {{- include "unifi.labels" . | nindent 4 }}
 spec:
   serviceName: {{ include "unifi.fullname" . }}-db
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       {{- include "unifi.selectorLabels" . | nindent 6 }}
