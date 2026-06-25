@@ -97,7 +97,7 @@ spec:
             - name: STATDB_URI
               value: "mongodb://unifi:$(DB_PASSWORD)@{{ include "unifi.fullname" . }}-db:27017/unifi_stat?tls=true&authSource=admin"
             - name: JVM_MAX_HEAP_SIZE
-              value: "192M"
+              value: "256M"
             - name: JVM_INIT_HEAP_SIZE
               value: "128M"
             - name: JVM_EXTRA_OPTS
