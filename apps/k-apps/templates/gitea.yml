@@ -18,6 +18,13 @@ spec:
         global:
           storageClass: "longhorn"
         gitea:
+          admin:
+            existingSecret: gitea-admin-secret
+          oauth:
+            - name: keycloak
+              provider: openidConnect
+              existingSecret: gitea-oauth-secret
+              autoDiscoverUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa/.well-known/openid-configuration"
           config:
             log:
               LEVEL: debug
@@ -360,6 +367,71 @@ spec:
       kind: Seaweed
 
 {{- if $hasFederation }}
+
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: gitea-admin-password
+  namespace: gitea
+spec:
+  length: 32
+  digits: 5
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gitea-admin-secret
+  namespace: gitea
+spec:
+  refreshInterval: "0"
+  target:
+    name: gitea-admin-secret
+    template:
+      engineVersion: v2
+      data:
+        password: "{{ `{{ .password }}` }}"
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: gitea-admin-password
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: gitea-oauth-password
+  namespace: gitea
+spec:
+  length: 32
+  digits: 5
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gitea-oauth-secret
+  namespace: gitea
+spec:
+  refreshInterval: "0"
+  target:
+    name: gitea-oauth-secret
+    template:
+      engineVersion: v2
+      data:
+        key: gitea
+        secret: "{{ `{{ .password }}` }}"
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: gitea-oauth-password
+
 ---
 apiVersion: db.loa.kevinpthorne.com/v1alpha1
 kind: PrivateSchema
@@ -379,7 +451,9 @@ metadata:
   namespace: gitea
 spec:
   clientId: gitea
-  secret: "gitea-client-secret"
+  secretRef:
+    name: gitea-oauth-secret
+    key: secret
   redirectUris:
     - "https://gitea.{{ $cluster.name | default "k" }}.loa.internal/user/oauth2/keycloak/callback"
 ---
