@@ -13,8 +13,7 @@ spec:
       databaseName: string
       userName: string
       appNamespace: string
-      extensions:
-        - name: string
+      extensions: "[]string | default=[]"
   resources:
     # 1. Certificate for client mutual TLS authentication (used by the App and this Job)
     - id: clientCert
@@ -50,7 +49,7 @@ spec:
           databaseReclaimPolicy: delete
           cluster:
             name: {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data
-          extensions: ${schema.spec.extensions}
+          extensions: ${schema.spec.extensions.map(ext, {"name": ext})}
 
     # 3. Database Bootstrap Job running in the pgedge namespace
     - id: createDatabaseJob

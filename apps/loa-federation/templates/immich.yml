@@ -125,9 +125,9 @@ spec:
   userName: immich
   appNamespace: {{ .Values.immich.namespace }}
   extensions:
-    - name: vector
-    - name: earthdistance
-    - name: cube
+    - vector
+    - earthdistance
+    - cube
 ---
 apiVersion: seaweed.seaweedfs.com/v1
 kind: S3Identity
