@@ -119,6 +119,7 @@ metadata:
   namespace: {{ .Values.argoNamespace }}
   annotations:
     argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   databaseName: immich
   userName: immich
