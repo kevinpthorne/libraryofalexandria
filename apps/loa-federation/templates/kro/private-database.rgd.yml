@@ -1,0 +1,145 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: privatedatabases
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  schema:
+    apiVersion: v1alpha1
+    kind: PrivateDatabase
+    group: db.loa.kevinpthorne.com
+    spec:
+      databaseName: string
+      userName: string
+      appNamespace: string
+      extensions:
+        - name: string
+  resources:
+    # 1. Certificate for client mutual TLS authentication (used by the App and this Job)
+    - id: clientCert
+      template:
+        apiVersion: cert-manager.io/v1
+        kind: Certificate
+        metadata:
+          name: pgedge-${schema.spec.userName}-client-cert
+          namespace: "${schema.spec.appNamespace}"
+        spec:
+          secretName: pgedge-${schema.spec.userName}-client-cert
+          usages:
+            - client auth
+          commonName: "${schema.spec.userName}"
+          issuerRef:
+            name: pgedge-{{ .Values.pgedge.appName }}-client-ca-issuer
+            kind: ClusterIssuer
+            group: cert-manager.io
+          privateKey:
+            rotationPolicy: Never
+
+    # 2. Declarative CNPG Database for cascading deletion
+    - id: cnpgDatabase
+      template:
+        apiVersion: postgresql.cnpg.io/v1
+        kind: Database
+        metadata:
+          name: ${schema.spec.databaseName}
+          namespace: {{ .Values.pgedge.namespace }}
+        spec:
+          name: ${schema.spec.databaseName}
+          owner: ${schema.spec.userName}
+          reclaimPolicy: delete
+          cluster:
+            name: {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data
+          extensions: ${schema.spec.extensions}
+
+    # 3. Database Bootstrap Job running in the pgedge namespace
+    - id: createDatabaseJob
+      template:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: pgedge-database-job-${schema.spec.databaseName}
+          namespace: {{ .Values.pgedge.namespace }}
+        spec:
+          ttlSecondsAfterFinished: 3600
+          template:
+            spec:
+              restartPolicy: OnFailure
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                fsGroup: 1000
+                seccompProfile:
+                  type: RuntimeDefault
+              containers:
+              - name: psql
+                image: postgres:15-alpine
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  readOnlyRootFilesystem: true
+                command:
+                  - "sh"
+                  - "-c"
+                  - |
+                    # Wait for CNPG operator to create the database
+                    echo "Waiting for database '${schema.spec.databaseName}' to be created by CNPG..."
+                    until psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw -U admin -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '${schema.spec.databaseName}'" | grep -q 1; do
+                      sleep 5
+                    done
+                    echo "Database exists! Proceeding with Spock setup."
+                    
+                    psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw -U admin -d ${schema.spec.databaseName} -c "
+                    CREATE EXTENSION IF NOT EXISTS spock;
+                    
+                    -- Initialize Local Spock Node
+                    DO \$\$
+                    BEGIN
+                      IF NOT EXISTS (SELECT 1 FROM spock.node WHERE node_name = '{{ .Values.cluster.name }}') THEN
+                        PERFORM spock.node_create(
+                            node_name := '{{ .Values.cluster.name }}',
+                            dsn := 'host={{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.{{ .Values.pgedge.namespace }}.svc port=5432 dbname=${schema.spec.databaseName} user=admin sslcert=/controller/certificates/streaming_replica/tls.crt sslkey=/controller/certificates/streaming_replica/tls.key sslmode=require'
+                        );
+                      END IF;
+                    END
+                    \$\$;
+                    "
+                    
+                    # Wire up subscriptions to peer clusters
+                    {{- range $peerName, $peerConfig := .Values.cluster.federation.peers }}
+                    psql -h {{ $.Values.pgedge.appName }}-{{ $.Values.cluster.name }}-data-rw -U admin -d ${schema.spec.databaseName} -c "
+                    DO \$\$
+                    BEGIN
+                      IF NOT EXISTS (SELECT 1 FROM spock.subscription WHERE sub_name = 'sub_{{ $.Values.cluster.name }}_to_{{ $peerName }}') THEN
+                        PERFORM spock.sub_create(
+                            subscription_name := 'sub_{{ $.Values.cluster.name }}_to_{{ $peerName }}',
+                            provider_dsn := 'host={{ $.Values.pgedge.appName }}-{{ $peerName }}-data-rw.svc.cluster.{{ $peerName }} port=5432 dbname=${schema.spec.databaseName} user=admin sslcert=/controller/certificates/streaming_replica/tls.crt sslkey=/controller/certificates/streaming_replica/tls.key sslmode=require'
+                        );
+                      END IF;
+                    END
+                    \$\$;
+                    "
+                    {{- end }}
+                    
+                volumeMounts:
+                - name: certs
+                  mountPath: /certs
+                env:
+                - name: PGSSLCERT
+                  value: /certs/tls.crt
+                - name: PGSSLKEY
+                  value: /certs/tls.key
+                - name: PGSSLROOTCERT
+                  value: /certs/ca.crt
+                - name: PGSSLMODE
+                  value: verify-full
+              volumes:
+              - name: certs
+                secret:
+                  secretName: admin-client-cert
+                  defaultMode: 0400

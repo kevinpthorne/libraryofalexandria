@@ -23,7 +23,7 @@ spec:
           host: {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.pgedge.svc
           port: "5432"
           schema: keycloak
-          name: app
+          name: keycloak
           username: keycloak
           jdbcParams: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp-private/tls.fixed.key&sslrootcert=/etc/x509/cas/ca-bundle.crt"
         
