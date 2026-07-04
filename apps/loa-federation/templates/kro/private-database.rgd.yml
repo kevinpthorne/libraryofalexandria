@@ -47,7 +47,7 @@ spec:
         spec:
           name: ${schema.spec.databaseName}
           owner: ${schema.spec.userName}
-          reclaimPolicy: delete
+          databaseReclaimPolicy: delete
           cluster:
             name: {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data
           extensions: ${schema.spec.extensions}
