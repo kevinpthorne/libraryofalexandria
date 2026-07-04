@@ -49,7 +49,7 @@ spec:
           databaseReclaimPolicy: delete
           cluster:
             name: {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data
-          extensions: ${schema.spec.extensions.map(ext, {"name": ext})}
+          extensions: "${schema.spec.extensions.map(ext, {'name': ext})}"
 
     # 3. Database Bootstrap Job running in the pgedge namespace
     - id: createDatabaseJob
