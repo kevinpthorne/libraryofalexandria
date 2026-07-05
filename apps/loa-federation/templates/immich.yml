@@ -243,7 +243,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   capacity:
-    storage: 50Gi
+    storage: 500Gi
   csi:
     driver: seaweedfs-csi-driver
     volumeHandle: immich-library
@@ -264,7 +264,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 50Gi
+      storage: 500Gi
   storageClassName: seaweedfs-csi
   volumeName: immich-library-pv
 ---

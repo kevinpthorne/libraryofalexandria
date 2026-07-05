@@ -3,7 +3,7 @@ cluster: {}
 
 seaweedfs:
   storageClass: longhorn
-  size: 250G
+  size: 600G
   spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodMeta.ServiceAccountName }}"
 
 hostdns:
