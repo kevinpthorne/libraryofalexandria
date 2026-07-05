@@ -31,6 +31,11 @@ spec:
                   type: RuntimeDefault
             containers:
               main:
+                resources:
+                  requests:
+                    memory: 256Mi
+                  limits:
+                    memory: 2Gi
                 probes:
                   startup:
                     spec:
@@ -41,6 +46,8 @@ spec:
                     drop:
                       - ALL
                 env:
+                  NODE_OPTIONS: "--max-old-space-size=1536"
+                  IMMICH_CONFIG_FILE: "/etc/immich/immich-config.json"
                   REDIS_HOSTNAME: "127.0.0.1"
                   REDIS_PORT: "6379"
                   DB_URL: 'postgres://immich@{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.{{ .Values.pgedge.namespace }}.svc:5432/immich?sslmode=verify-full&sslcert=/certs/pgedge-client/tls.crt&sslkey=/certs/pgedge-client/tls.key&sslrootcert=/certs/pgedge-client/ca.crt&options=-c%20search_path=public'
@@ -63,6 +70,12 @@ spec:
                     drop:
                       - ALL
         persistence:
+          immich-config:
+            type: secret
+            name: immich-oauth-secret
+            globalMounts:
+              - path: /etc/immich
+                readOnly: true
           stunnel-conf:
             type: configMap
             name: immich-stunnel-conf
@@ -365,3 +378,63 @@ spec:
       port: 8443
       targetPort: 8443
       protocol: TCP
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: immich-oauth-password
+  namespace: {{ .Values.immich.namespace }}
+spec:
+  length: 32
+  digits: 5
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: immich-oauth-secret
+  namespace: {{ .Values.immich.namespace }}
+spec:
+  refreshInterval: "0"
+  target:
+    name: immich-oauth-secret
+    template:
+      engineVersion: v2
+      data:
+        secret: "{{ `{{ .password }}` }}"
+        immich-config.json: |
+          {
+            "oauth": {
+              "enabled": true,
+              "issuerUrl": "https://ident.{{ .Values.cluster.name | default "k" }}.loa.internal/realms/loa/.well-known/openid-configuration",
+              "clientId": "immich",
+              "clientSecret": "{{ `{{ .password }}` }}",
+              "mobileRedirectUri": "app.immich:///oauth-callback",
+              "buttonText": "Login with Keycloak",
+              "autoRegister": true,
+              "autoLaunch": false,
+              "scope": "openid email profile"
+            }
+          }
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: immich-oauth-password
+---
+apiVersion: authn.loa.kevinpthorne.com/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: immich
+  namespace: {{ .Values.immich.namespace }}
+spec:
+  clientId: immich
+  secretRef:
+    name: immich-oauth-secret
+    key: secret
+  redirectUris:
+    - "app.immich:///oauth-callback"
+    - "https://immich.{{ .Values.cluster.name }}.loa.internal/auth/login"
+    - "https://immich.{{ .Values.cluster.name }}.loa.internal/user-settings"
