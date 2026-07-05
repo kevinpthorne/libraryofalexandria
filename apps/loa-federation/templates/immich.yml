@@ -250,7 +250,7 @@ spec:
     volumeAttributes:
       path: "/immich-library"
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: seaweedfs-static
+  storageClassName: seaweedfs-csi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -265,7 +265,7 @@ spec:
   resources:
     requests:
       storage: 50Gi
-  storageClassName: seaweedfs-static
+  storageClassName: seaweedfs-csi
   volumeName: immich-library-pv
 ---
 apiVersion: v1
