@@ -14,6 +14,8 @@ spec:
   image: chrislusf/seaweedfs:4.33
   volume:
     replicas: 1
+    extraArgs:
+      - "-max=100"  # let longhorn monitor capacity, otherwise we hit 7 volumes (30Gi per) quickly
     storageClassName: {{ .Values.seaweedfs.storageClass | quote }}
     requests:
       storage: {{ .Values.seaweedfs.size | quote }}
