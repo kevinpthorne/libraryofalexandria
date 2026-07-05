@@ -22,7 +22,7 @@ spec:
           type: postgres
           host: {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.pgedge.svc
           port: "5432"
-          schema: keycloak
+          schema: public
           name: keycloak
           username: keycloak
           jdbcParams: "sslmode=verify-full&sslcert=/etc/x509/db-client/tls.crt&sslkey=/tmp-private/tls.fixed.key&sslrootcert=/etc/x509/cas/ca-bundle.crt"
@@ -31,9 +31,9 @@ spec:
         # We inject the DB credentials and the JDBC Cert-Auth string here.
         extraEnvVars:
           - name: KC_DB
-            value: app
+            value: keycloak
           - name: KC_DB_URL_DATABASE
-            value: "app"
+            value: "keycloak"
           - name: KC_DB_URL_HOST
             value: "{{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.pgedge.svc"
           - name: KC_DB_URL_PORT
