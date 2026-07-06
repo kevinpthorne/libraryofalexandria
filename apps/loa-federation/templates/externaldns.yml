@@ -27,14 +27,16 @@ spec:
         txtOwnerId: {{ .Values.cluster.federation.name }}
 
         extraArgs:
+          - "--default-targets={{ .Values.cluster.externalDomain }}"
+          - "--force-default-targets"
           - --txt-wildcard-replacement=wildcard
 
         # Tell ExternalDNS to watch the Gateway API
         sources:
           - gateway-tlsroute
-          - gateway
 
         # TODO only do for federation services gateways
+        annotationFilter: "external-dns.loa.internal/federate in (true)"
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: {{ .Values.externaldns.namespace }}

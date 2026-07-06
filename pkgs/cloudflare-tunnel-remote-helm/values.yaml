@@ -1,0 +1,51 @@
+# Cloudflare parameters.
+cloudflare:
+  # The name of the Kubernetes secret containing the tunnel token
+  tunnelKeySecret: ""
+  # The key in the secret containing the tunnel token
+  tunnelKeySecretKey: ""
+
+image:
+  repository: cloudflare/cloudflared
+  pullPolicy: IfNotPresent
+  # If supplied, this overrides "latest"
+  tag: ""
+
+replicaCount: 2
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+# Security items common to everything in the pod. Here we require that it
+# does not run as the user defined in the image, literally named "nonroot".
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+
+# Security items for one container.
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65532
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

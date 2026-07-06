@@ -323,6 +323,7 @@ spec:
         cert:
           sans:
             - "immich.{{ .Values.cluster.name }}.loa.internal"
+            - "immich.kpt.link"
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.immich.namespace }}
@@ -351,11 +352,14 @@ spec:
             gatewayNamespace: kube-system
             hostnames:
               - "immich.{{ .Values.cluster.name }}.loa.internal"
+              - "immich.kpt.link"
             ports:
               - port: 443
                 protocol: TLS
                 targetPort: 8443
                 targetService: immich-tls
+                annotations:
+                  "external-dns.loa.internal/federate": "true"
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.immich.namespace }}

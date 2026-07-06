@@ -27,3 +27,8 @@ syncFolders:
 
 syncBuckets:
   - bucketName: immich-data
+
+cloudflared:
+  namespace: federation-cloudflared
+  tunnelKeySecret: cf-key
+  tunnelKeySecretKey: api-key

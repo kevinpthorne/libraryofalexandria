@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: federation-cloudflared
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/cloudflare-tunnel-remote-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        cloudflare:
+          tunnelKeySecret: {{ .Values.cloudflared.tunnelKeySecret | quote }}
+          tunnelKeySecretKey: {{ .Values.cloudflared.tunnelKeySecretKey | quote }}
+
+        # Enforce restricted security contexts
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: {{ .Values.cloudflared.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"

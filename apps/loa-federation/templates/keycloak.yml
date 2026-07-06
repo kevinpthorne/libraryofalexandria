@@ -61,6 +61,7 @@ spec:
               name: {{ .Values.pki.rootCAIssuer }}
               kind: ClusterIssuer
             dnsNames:
+            - ident.kpt.link
             - ident.{{ .Values.cluster.name }}.loa.internal
             - localhost
             - keycloak.keycloak.svc.cluster.local
