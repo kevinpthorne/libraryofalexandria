@@ -20,6 +20,10 @@ endpoints: []
 #       protocol: HTTP      # Supported: HTTP, HTTPS, TCP, UDP, TLS
 #       targetPort: 8080    # Optional: defaults to 'port'
 #       targetService: example-app # Optional: defaults to endpoint 'name'
+#       annotations:
+#         foo: bar          # Optional: annotations added to the generated Route resource
+#       labels:
+#         baz: qux          # Optional: labels added to the generated Route resource
 #     - port: 443
 #       protocol: HTTPS
 #       tls:

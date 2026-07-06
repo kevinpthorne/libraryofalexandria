@@ -8,6 +8,14 @@ kind: UDPRoute
 metadata:
   name: {{ $endpoint.name }}-{{ .protocol | lower }}-{{ .port }}
   namespace: {{ $endpoint.namespace | default $.Release.Namespace }}
+  {{- if .annotations }}
+  annotations:
+    {{- toYaml .annotations | nindent 4 }}
+  {{- end }}
+  {{- if .labels }}
+  labels:
+    {{- toYaml .labels | nindent 4 }}
+  {{- end }}
 spec:
   parentRefs:
   - name: {{ $endpoint.gatewayName | default $endpoint.name }}
