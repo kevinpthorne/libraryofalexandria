@@ -51,10 +51,12 @@ spec:
           # - name: JAVA_OPTS_APPEND
           #   value: "-Djavax.net.debug=ssl,handshake"
           # Vital for functioning behind an Ingress
-          # - name: KC_PROXY
-          #   value: "edge" 
-          # - name: KC_HOSTNAME_STRICT
-          #   value: "false"
+          - name: KC_PROXY
+            value: "edge"
+          - name: KC_PROXY_HEADERS
+            value: "xforwarded"
+          - name: KC_HOSTNAME_STRICT
+            value: "false"  # protected by gateway only accepting certain domains
 
         tls:
           enabled: true
