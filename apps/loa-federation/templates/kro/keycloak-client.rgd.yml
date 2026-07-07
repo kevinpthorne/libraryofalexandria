@@ -12,10 +12,10 @@ spec:
     spec:
       realm: "string | default=loa"
       clientId: string
-      secret: "string"
+      secret: "string | default=null"
       secretRef:
-        name: "string"
-        key: "string"
+        name: "string | default=null"
+        key: "string | default=null"
       serviceAccountsEnabled: "boolean | default=false"
       redirectUris: "[]string | default=[]"
   resources:
@@ -42,7 +42,7 @@ spec:
                                         ${json.marshal({
                       "realm": schema.spec.realm,
                       "clients": [
-                        schema.spec.?secret != null ? {
+                        schema.spec.secret != null && schema.spec.secret != "null" ? {
                           "clientId": schema.spec.clientId,
                           "secret": schema.spec.secret,
                           "serviceAccountsEnabled": schema.spec.serviceAccountsEnabled,
@@ -62,22 +62,37 @@ spec:
                       sed -i '/"secret": "REPLACE_ME_SECRET"/d' /tmp/client.json
                     fi
                     /opt/jboss/keycloak-config-cli.jar --import.files=/tmp/client.json
-                env:
-                - name: KEYCLOAK_URL
-                  value: "https://keycloak.keycloak.svc.cluster.local:8443"
-                - name: KEYCLOAK_USER
-                  value: "admin"
-                - name: KEYCLOAK_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: keycloak
-                      key: admin-password
-                # keycloak-config-cli usually checks SSL cert validity. Since it is internal and uses a cert-manager TLS cert:
-                - name: KEYCLOAK_AVAILABILITYPROBE_TIMEOUT
-                  value: "120s"
-                - name: CLIENT_SECRET
-                  valueFrom:
-                    secretKeyRef:
-                      name: "${schema.spec.?secretRef.?name != null ? schema.spec.secretRef.name : 'dummy'}"
-                      key: "${schema.spec.?secretRef.?key != null ? schema.spec.secretRef.key : 'dummy'}"
-                      optional: true
+                env: >-
+                  ${[
+                    {
+                      "name": "KEYCLOAK_URL",
+                      "value": "https://keycloak.keycloak.svc.cluster.local:8443"
+                    },
+                    {
+                      "name": "KEYCLOAK_USER",
+                      "value": "admin"
+                    },
+                    {
+                      "name": "KEYCLOAK_PASSWORD",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "keycloak",
+                          "key": "admin-password"
+                        }
+                      }
+                    },
+                    {
+                      "name": "KEYCLOAK_AVAILABILITYPROBE_TIMEOUT",
+                      "value": "120s"
+                    }
+                  ] + (schema.spec.secretRef.name != null && schema.spec.secretRef.name != "null" ? [
+                    {
+                      "name": "CLIENT_SECRET",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": schema.spec.secretRef.name,
+                          "key": schema.spec.secretRef.key
+                        }
+                      }
+                    }
+                  ] : [])}
