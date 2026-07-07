@@ -78,6 +78,6 @@ spec:
                 - name: CLIENT_SECRET
                   valueFrom:
                     secretKeyRef:
-                      name: ${schema.spec.?secretRef.?name != null ? schema.spec.secretRef.name : "dummy"}
-                      key: ${schema.spec.?secretRef.?key != null ? schema.spec.secretRef.key : "dummy"}
+                      name: "${schema.spec.?secretRef.?name != null ? schema.spec.secretRef.name : 'dummy'}"
+                      key: "${schema.spec.?secretRef.?key != null ? schema.spec.secretRef.key : 'dummy'}"
                       optional: true
