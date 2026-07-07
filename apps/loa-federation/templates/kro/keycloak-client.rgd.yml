@@ -26,6 +26,10 @@ spec:
         metadata:
           name: keycloak-client-sync-${schema.metadata.name}-v2
           namespace: keycloak
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
         spec:
           ttlSecondsAfterFinished: 3600
           template:

@@ -21,6 +21,10 @@ spec:
         metadata:
           name: "seaweedfs-sync-${schema.metadata.name}"
           namespace: seaweedfs-system
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
         spec:
           replicas: 1
           selector:

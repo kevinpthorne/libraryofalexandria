@@ -23,6 +23,10 @@ spec:
         metadata:
           name: keycloak-realm-config-${schema.metadata.name}
           namespace: keycloak
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
         data:
           realm.json: ${schema.spec.realmConfig}
 
@@ -34,6 +38,10 @@ spec:
         metadata:
           name: keycloak-realm-sync-sa-${schema.metadata.name}
           namespace: keycloak
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
 
     # 3. ClusterRole for read access to KeycloakRealm CRs
     - id: syncClusterRole
@@ -42,6 +50,10 @@ spec:
         kind: ClusterRole
         metadata:
           name: keycloak-realm-sync-cr-${schema.metadata.name}
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
         rules:
         - apiGroups: ["authn.loa.kevinpthorne.com"]
           resources: ["keycloakrealms"]
@@ -54,6 +66,10 @@ spec:
         kind: ClusterRoleBinding
         metadata:
           name: keycloak-realm-sync-crb-${schema.metadata.name}
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
         roleRef:
           apiGroup: rbac.authorization.k8s.io
           kind: ClusterRole
@@ -71,8 +87,11 @@ spec:
         metadata:
           name: keycloak-realm-sync-${schema.metadata.name}
           namespace: keycloak
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
         spec:
-          ttlSecondsAfterFinished: 3600
           replicas: 1
           selector:
             matchLabels:

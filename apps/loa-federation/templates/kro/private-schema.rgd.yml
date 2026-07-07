@@ -24,6 +24,10 @@ spec:
         metadata:
           name: pgedge-${schema.spec.userName}-client-cert
           namespace: "${schema.spec.appNamespace}"
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
         spec:
           secretName: pgedge-${schema.spec.userName}-client-cert
           usages:
@@ -44,6 +48,10 @@ spec:
         metadata:
           name: pgedge-schema-job-${schema.spec.schemaName}
           namespace: {{ .Values.pgedge.namespace }}
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
         spec:
           ttlSecondsAfterFinished: 3600
           template:
