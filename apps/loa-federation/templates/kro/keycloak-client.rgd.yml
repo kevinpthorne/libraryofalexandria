@@ -74,7 +74,7 @@ spec:
         apiVersion: batch/v1
         kind: Job
         metadata:
-          name: keycloak-client-sync-${schema.metadata.name}-v4
+          name: keycloak-client-sync-${schema.metadata.name}-v5
           namespace: keycloak
           labels: >-
             ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
@@ -139,7 +139,7 @@ spec:
                     elif grep -q REPLACE_ME_SECRET /tmp/client.json; then
                       sed -i '/"secret": "REPLACE_ME_SECRET"/d' /tmp/client.json
                     fi
-                    java -jar /app/keycloak-config-cli.jar --import.files=/tmp/client.json
+                    java -jar /app/keycloak-config-cli.jar
                 env:
                 - name: KEYCLOAK_URL
                   value: "https://keycloak.keycloak.svc.cluster.local:8443"
@@ -152,3 +152,5 @@ spec:
                       key: admin-password
                 - name: KEYCLOAK_AVAILABILITYPROBE_TIMEOUT
                   value: "120s"
+                - name: IMPORT_FILES_LOCATIONS
+                  value: "/tmp/client.json"
