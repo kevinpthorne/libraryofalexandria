@@ -420,7 +420,7 @@ spec:
               "mobileRedirectUri": "app.immich:///oauth-callback",
               "buttonText": "Login with Keycloak",
               "autoRegister": true,
-              "autoLaunch": true,
+              "oauthAutoLaunch": true,
               "scope": "openid email profile"
             }
           }
