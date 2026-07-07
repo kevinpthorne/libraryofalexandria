@@ -115,7 +115,7 @@ spec:
                 - name: REALM_DISPLAY_NAME
                   value: ${schema.spec.displayName}
                 - name: REALM_ENABLED
-                  value: "${schema.spec.enabled}"
+                  value: "${schema.spec.enabled ? 'true' : 'false'}"
                 # Force Pod rollout if configuration changes
                 - name: REALM_CONFIG_HASH
                   value: ${schema.spec.realmConfig}
