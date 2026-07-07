@@ -19,12 +19,62 @@ spec:
       serviceAccountsEnabled: "boolean | default=false"
       redirectUris: "[]string | default=[]"
   resources:
+    # 1. ServiceAccount for the sync Job to query secrets in client namespaces
+    - id: syncServiceAccount
+      template:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: keycloak-client-sync-sa-${schema.metadata.name}
+          namespace: keycloak
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
+
+    # 2. ClusterRole allowing GET access to Secrets
+    - id: syncClusterRole
+      template:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRole
+        metadata:
+          name: keycloak-client-sync-cr-${schema.metadata.name}
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
+        rules:
+        - apiGroups: [""]
+          resources: ["secrets"]
+          verbs: ["get"]
+
+    # 3. ClusterRoleBinding linking ServiceAccount to ClusterRole
+    - id: syncClusterRoleBinding
+      template:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: keycloak-client-sync-crb-${schema.metadata.name}
+          labels: >-
+            ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
+          annotations: >-
+            ${has(schema.metadata.annotations) && "argocd.argoproj.io/tracking-id" in schema.metadata.annotations ? {"argocd.argoproj.io/tracking-id": schema.metadata.annotations["argocd.argoproj.io/tracking-id"]} : {}}
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: keycloak-client-sync-cr-${schema.metadata.name}
+        subjects:
+        - kind: ServiceAccount
+          name: keycloak-client-sync-sa-${schema.metadata.name}
+          namespace: keycloak
+
+    # 4. Job running in keycloak namespace to sync client representation
     - id: syncJob
       template:
         apiVersion: batch/v1
         kind: Job
         metadata:
-          name: keycloak-client-sync-${schema.metadata.name}-v2
+          name: keycloak-client-sync-${schema.metadata.name}-v3
           namespace: keycloak
           labels: >-
             ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
@@ -35,6 +85,7 @@ spec:
           template:
             spec:
               restartPolicy: OnFailure
+              serviceAccountName: keycloak-client-sync-sa-${schema.metadata.name}
               securityContext:
                 runAsNonRoot: true
                 runAsUser: 1000
@@ -53,6 +104,18 @@ spec:
                   - "sh"
                   - "-c"
                   - |
+                    APISERVER=https://kubernetes.default.svc
+                    SERVICEACCOUNT=/var/run/secrets/kubernetes.io/serviceaccount
+                    TOKEN=$(cat $SERVICEACCOUNT/token)
+                    CACERT=$SERVICEACCOUNT/ca.crt
+
+                    CLIENT_SECRET=""
+                    if [ "${schema.spec.secretRef.name}" != "null" ]; then
+                      echo "Fetching secret ${schema.spec.secretRef.name} from namespace ${schema.metadata.namespace}..."
+                      SECRET_JSON=$(wget -qO- --no-check-certificate --header="Authorization: Bearer $TOKEN" "$APISERVER/api/v1/namespaces/${schema.metadata.namespace}/secrets/${schema.spec.secretRef.name}")
+                      CLIENT_SECRET=$(echo "$SECRET_JSON" | tr -d ' \n\r' | grep -o '"'"${schema.spec.secretRef.key}"'":"[^"]*' | grep -o '[^"]*$' | base64 -d)
+                    fi
+
                     cat << 'EOF' > /tmp/client.json
                                         ${json.marshal({
                       "realm": schema.spec.realm,
@@ -77,37 +140,15 @@ spec:
                       sed -i '/"secret": "REPLACE_ME_SECRET"/d' /tmp/client.json
                     fi
                     /opt/jboss/keycloak-config-cli.jar --import.files=/tmp/client.json
-                env: >-
-                  ${[
-                    {
-                      "name": "KEYCLOAK_URL",
-                      "value": "https://keycloak.keycloak.svc.cluster.local:8443"
-                    },
-                    {
-                      "name": "KEYCLOAK_USER",
-                      "value": "admin"
-                    },
-                    {
-                      "name": "KEYCLOAK_PASSWORD",
-                      "valueFrom": {
-                        "secretKeyRef": {
-                          "name": "keycloak",
-                          "key": "admin-password"
-                        }
-                      }
-                    },
-                    {
-                      "name": "KEYCLOAK_AVAILABILITYPROBE_TIMEOUT",
-                      "value": "120s"
-                    }
-                  ] + (schema.spec.secretRef.name != "null" ? [
-                    {
-                      "name": "CLIENT_SECRET",
-                      "valueFrom": {
-                        "secretKeyRef": {
-                          "name": schema.spec.secretRef.name,
-                          "key": schema.spec.secretRef.key
-                        }
-                      }
-                    }
-                  ] : [])}
+                env:
+                - name: KEYCLOAK_URL
+                  value: "https://keycloak.keycloak.svc.cluster.local:8443"
+                - name: KEYCLOAK_USER
+                  value: "admin"
+                - name: KEYCLOAK_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak
+                      key: admin-password
+                - name: KEYCLOAK_AVAILABILITYPROBE_TIMEOUT
+                  value: "120s"
