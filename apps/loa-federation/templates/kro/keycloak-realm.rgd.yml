@@ -224,12 +224,12 @@ spec:
                       - |
                         APISERVER=https://kubernetes.default.svc
                         SERVICEACCOUNT=/var/run/secrets/kubernetes.io/serviceaccount
-                        TOKEN=$(cat ${SERVICEACCOUNT}/token)
-                        CACERT=${SERVICEACCOUNT}/ca.crt
+                        TOKEN=$(cat $SERVICEACCOUNT/token)
+                        CACERT=$SERVICEACCOUNT/ca.crt
                         
                         echo "Querying Kubernetes API for KeycloakRealm $REALM_CR_NAME in namespace $REALM_CR_NAMESPACE..."
-                        CR_JSON=$(curl -k -s --cacert ${CACERT} -H "Authorization: Bearer ${TOKEN}" \
-                          "${APISERVER}/apis/authn.loa.kevinpthorne.com/v1alpha1/namespaces/${REALM_CR_NAMESPACE}/keycloakrealms/${REALM_CR_NAME}")
+                        CR_JSON=$(curl -k -s --cacert $CACERT -H "Authorization: Bearer $TOKEN" \
+                          "$APISERVER/apis/authn.loa.kevinpthorne.com/v1alpha1/namespaces/$REALM_CR_NAMESPACE/keycloakrealms/$REALM_CR_NAME")
                         
                         DELETION_TIMESTAMP=$(echo "$CR_JSON" | grep -o '"deletionTimestamp":"[^"]*' | grep -o '[^"]*$')
                         
