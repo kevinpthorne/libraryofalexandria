@@ -74,7 +74,7 @@ spec:
         apiVersion: batch/v1
         kind: Job
         metadata:
-          name: keycloak-client-sync-${schema.metadata.name}-v5
+          name: keycloak-client-sync-${schema.metadata.name}-v6
           namespace: keycloak
           labels: >-
             ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
@@ -116,6 +116,12 @@ spec:
                       CLIENT_SECRET=$(echo "$SECRET_JSON" | tr -d ' \n\r' | grep -o '"'"${schema.spec.secretRef.key}"'":"[^"]*' | grep -o '[^"]*$' | base64 -d)
                     fi
 
+                    # Create a Java Truststore from the mounted CA bundle
+                    if [ -f /etc/x509/cas/ca-bundle.crt ]; then
+                      echo "Generating truststore from ca-bundle.crt..."
+                      keytool -importcert -noprompt -file /etc/x509/cas/ca-bundle.crt -keystore /tmp/truststore.p12 -storetype PKCS12 -alias custom-ca -storepass changeit
+                    fi
+
                     cat << 'EOF' > /tmp/client.json
                                         ${json.marshal({
                       "realm": schema.spec.realm,
@@ -154,3 +160,17 @@ spec:
                   value: "120s"
                 - name: IMPORT_FILES_LOCATIONS
                   value: "/tmp/client.json"
+                - name: KEYCLOAK_TLS_TRUSTSTORE
+                  value: "/tmp/truststore.p12"
+                - name: KEYCLOAK_TLS_TRUSTSTOREPASSWORD
+                  value: "changeit"
+                - name: KEYCLOAK_TLS_TRUSTSTORETYPE
+                  value: "PKCS12"
+                volumeMounts:
+                - name: cas
+                  mountPath: /etc/x509/cas
+                  readOnly: true
+              volumes:
+              - name: cas
+                configMap:
+                  name: trusted-ca-bundle
