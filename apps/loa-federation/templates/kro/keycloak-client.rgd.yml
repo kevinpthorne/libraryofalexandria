@@ -74,7 +74,7 @@ spec:
         apiVersion: batch/v1
         kind: Job
         metadata:
-          name: keycloak-client-sync-${schema.metadata.name}-v6
+          name: keycloak-client-sync-${schema.metadata.name}-v7
           namespace: keycloak
           labels: >-
             ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
@@ -145,7 +145,7 @@ spec:
                     elif grep -q REPLACE_ME_SECRET /tmp/client.json; then
                       sed -i '/"secret": "REPLACE_ME_SECRET"/d' /tmp/client.json
                     fi
-                    java -jar /app/keycloak-config-cli.jar
+                    java -Djavax.net.ssl.trustStore=/tmp/truststore.p12 -Djavax.net.ssl.trustStorePassword=changeit -jar /app/keycloak-config-cli.jar
                 env:
                 - name: KEYCLOAK_URL
                   value: "https://keycloak.keycloak.svc.cluster.local:8443"
@@ -160,12 +160,6 @@ spec:
                   value: "120s"
                 - name: IMPORT_FILES_LOCATIONS
                   value: "/tmp/client.json"
-                - name: KEYCLOAK_TLS_TRUSTSTORE
-                  value: "/tmp/truststore.p12"
-                - name: KEYCLOAK_TLS_TRUSTSTOREPASSWORD
-                  value: "changeit"
-                - name: KEYCLOAK_TLS_TRUSTSTORETYPE
-                  value: "PKCS12"
                 volumeMounts:
                 - name: cas
                   mountPath: /etc/x509/cas
