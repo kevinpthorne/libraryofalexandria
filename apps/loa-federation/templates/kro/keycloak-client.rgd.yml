@@ -27,7 +27,7 @@ spec:
           name: keycloak-client-sync-${schema.metadata.name}
           namespace: keycloak
         spec:
-          ttlSecondsAfterFinished: 600
+          ttlSecondsAfterFinished: 3600
           template:
             spec:
               restartPolicy: OnFailure

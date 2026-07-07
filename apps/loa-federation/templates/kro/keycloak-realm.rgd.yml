@@ -72,6 +72,7 @@ spec:
           name: keycloak-realm-sync-${schema.metadata.name}
           namespace: keycloak
         spec:
+          ttlSecondsAfterFinished: 3600
           replicas: 1
           selector:
             matchLabels:
