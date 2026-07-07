@@ -373,6 +373,9 @@ kind: Service
 metadata:
   name: immich-tls
   namespace: {{ .Values.immich.namespace }}
+  annotations:
+    service.cilium.io/global: "true"
+    io.cilium/service-affinity: local
 spec:
   selector:
     app.kubernetes.io/name: server
@@ -411,7 +414,7 @@ spec:
           {
             "oauth": {
               "enabled": true,
-              "issuerUrl": "https://ident.{{ .Values.cluster.name | default "k" }}.loa.internal/realms/loa/.well-known/openid-configuration",
+              "issuerUrl": "https://ident.kpt.link/realms/loa/.well-known/openid-configuration",
               "clientId": "immich",
               "clientSecret": "{{ `{{ .password }}` }}",
               "mobileRedirectUri": "app.immich:///oauth-callback",
@@ -440,5 +443,7 @@ spec:
     key: secret
   redirectUris:
     - "app.immich:///oauth-callback"
+    - "https://immich.kpt.link/auth/login"
+    - "https://immich.kpt.link/user-settings"
     - "https://immich.{{ .Values.cluster.name }}.loa.internal/auth/login"
     - "https://immich.{{ .Values.cluster.name }}.loa.internal/user-settings"

@@ -14,6 +14,11 @@ spec:
       values: |
         replicaCount: 1
         
+        service:
+          annotations:
+            service.cilium.io/global: "true"
+            io.cilium/service-affinity: local
+
         # 2. Database (Disable internal, we use pgEdge)
         postgres:
           enabled: false
