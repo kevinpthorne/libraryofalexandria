@@ -1,0 +1,261 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: keycloakrealms
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  schema:
+    apiVersion: v1alpha1
+    kind: KeycloakRealm
+    group: authn.loa.kevinpthorne.com
+    spec:
+      realm: string
+      displayName: "string | default=null"
+      enabled: "boolean | default=true"
+      realmConfig: "string | default=null"
+  resources:
+    # 1. ConfigMap containing the optional full realm JSON config representation
+    - id: realmConfigMap
+      template:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: keycloak-realm-config-${schema.metadata.name}
+          namespace: keycloak
+        data:
+          realm.json: ${schema.spec.realmConfig}
+
+    # 2. ServiceAccount for the sync Pod to query the parent CR
+    - id: syncServiceAccount
+      template:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: keycloak-realm-sync-sa-${schema.metadata.name}
+          namespace: keycloak
+
+    # 3. ClusterRole for read access to KeycloakRealm CRs
+    - id: syncClusterRole
+      template:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRole
+        metadata:
+          name: keycloak-realm-sync-cr-${schema.metadata.name}
+        rules:
+        - apiGroups: ["authn.loa.kevinpthorne.com"]
+          resources: ["keycloakrealms"]
+          verbs: ["get", "list"]
+
+    # 4. ClusterRoleBinding binding the SA to the ClusterRole
+    - id: syncClusterRoleBinding
+      template:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: keycloak-realm-sync-crb-${schema.metadata.name}
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: keycloak-realm-sync-cr-${schema.metadata.name}
+        subjects:
+        - kind: ServiceAccount
+          name: keycloak-realm-sync-sa-${schema.metadata.name}
+          namespace: keycloak
+
+    # 5. Deployment that manages the creation/update and deletion lifecycles
+    - id: syncDeployment
+      template:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: keycloak-realm-sync-${schema.metadata.name}
+          namespace: keycloak
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: keycloak-realm-sync-${schema.metadata.name}
+          template:
+            metadata:
+              labels:
+                app: keycloak-realm-sync-${schema.metadata.name}
+            spec:
+              serviceAccountName: keycloak-realm-sync-sa-${schema.metadata.name}
+              restartPolicy: Always
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                fsGroup: 1000
+                seccompProfile:
+                  type: RuntimeDefault
+              initContainers:
+              - name: create-realm
+                image: curlimages/curl:8.2.1
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop: ["ALL"]
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  readOnlyRootFilesystem: true
+                env:
+                - name: KEYCLOAK_URL
+                  value: "https://keycloak.keycloak.svc.cluster.local:8443"
+                - name: KEYCLOAK_USER
+                  value: "admin"
+                - name: KEYCLOAK_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak
+                      key: admin-password
+                - name: REALM_NAME
+                  value: ${schema.spec.realm}
+                - name: REALM_DISPLAY_NAME
+                  value: ${schema.spec.displayName}
+                - name: REALM_ENABLED
+                  value: "${schema.spec.enabled}"
+                # Force Pod rollout if configuration changes
+                - name: REALM_CONFIG_HASH
+                  value: ${schema.spec.realmConfig}
+                volumeMounts:
+                - name: config-volume
+                  mountPath: /config
+                command:
+                - "sh"
+                - "-c"
+                - |
+                  set -e
+                  
+                  echo "Waiting for Keycloak at $KEYCLOAK_URL..."
+                  until curl -k -s -I "$KEYCLOAK_URL" > /dev/null; do
+                    sleep 5
+                  done
+                  
+                  echo "Getting Admin Token..."
+                  TOKEN=$(curl -k -s -d "client_id=admin-cli" \
+                    -d "username=$KEYCLOAK_USER" \
+                    -d "password=$KEYCLOAK_PASSWORD" \
+                    -d "grant_type=password" \
+                    "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$')
+                  
+                  if [ -z "$TOKEN" ]; then
+                    echo "Failed to get access token."
+                    exit 1
+                  fi
+                  
+                  echo "Checking if realm $REALM_NAME exists..."
+                  STATUS=$(curl -k -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/$REALM_NAME")
+                  
+                  if [ -f /config/realm.json ] && [ "$(cat /config/realm.json)" != "null" ]; then
+                    PAYLOAD=$(cat /config/realm.json)
+                  else
+                    PAYLOAD="{\"realm\": \"$REALM_NAME\", \"enabled\": $REALM_ENABLED"
+                    if [ "$REALM_DISPLAY_NAME" != "null" ]; then
+                      PAYLOAD="$PAYLOAD, \"displayName\": \"$REALM_DISPLAY_NAME\""
+                    fi
+                    PAYLOAD="$PAYLOAD}"
+                  fi
+                  
+                  if [ "$STATUS" = "200" ]; then
+                    echo "Realm $REALM_NAME already exists. Updating..."
+                    UPDATE_STATUS=$(curl -k -s -o /dev/null -w "%{http_code}" -X PUT \
+                      -H "Authorization: Bearer $TOKEN" \
+                      -H "Content-Type: application/json" \
+                      -d "$PAYLOAD" \
+                      "$KEYCLOAK_URL/admin/realms/$REALM_NAME")
+                    if [ "$UPDATE_STATUS" = "204" ] || [ "$UPDATE_STATUS" = "200" ]; then
+                      echo "Realm $REALM_NAME updated successfully."
+                    else
+                      echo "Failed to update realm $REALM_NAME. Status: $UPDATE_STATUS"
+                      exit 1
+                    fi
+                  else
+                    echo "Realm $REALM_NAME does not exist. Creating..."
+                    CREATE_STATUS=$(curl -k -s -o /dev/null -w "%{http_code}" -X POST \
+                      -H "Authorization: Bearer $TOKEN" \
+                      -H "Content-Type: application/json" \
+                      -d "$PAYLOAD" \
+                      "$KEYCLOAK_URL/admin/realms")
+                    if [ "$CREATE_STATUS" = "201" ] || [ "$CREATE_STATUS" = "200" ]; then
+                      echo "Realm $REALM_NAME created successfully."
+                    else
+                      echo "Failed to create realm $REALM_NAME. Status: $CREATE_STATUS"
+                      exit 1
+                    fi
+                  fi
+              containers:
+              - name: keep-alive
+                image: curlimages/curl:8.2.1
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop: ["ALL"]
+                  runAsNonRoot: true
+                  runAsUser: 1000
+                  readOnlyRootFilesystem: true
+                env:
+                - name: KEYCLOAK_URL
+                  value: "https://keycloak.keycloak.svc.cluster.local:8443"
+                - name: KEYCLOAK_USER
+                  value: "admin"
+                - name: KEYCLOAK_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak
+                      key: admin-password
+                - name: REALM_NAME
+                  value: ${schema.spec.realm}
+                - name: REALM_CR_NAME
+                  value: ${schema.metadata.name}
+                - name: REALM_CR_NAMESPACE
+                  value: ${schema.metadata.namespace}
+                command:
+                - "sh"
+                - "-c"
+                - "sleep infinity"
+                lifecycle:
+                  preStop:
+                    exec:
+                      command:
+                      - "sh"
+                      - "-c"
+                      - |
+                        APISERVER=https://kubernetes.default.svc
+                        SERVICEACCOUNT=/var/run/secrets/kubernetes.io/serviceaccount
+                        TOKEN=$(cat ${SERVICEACCOUNT}/token)
+                        CACERT=${SERVICEACCOUNT}/ca.crt
+                        
+                        echo "Querying Kubernetes API for KeycloakRealm $REALM_CR_NAME in namespace $REALM_CR_NAMESPACE..."
+                        CR_JSON=$(curl -k -s --cacert ${CACERT} -H "Authorization: Bearer ${TOKEN}" \
+                          "${APISERVER}/apis/authn.loa.kevinpthorne.com/v1alpha1/namespaces/${REALM_CR_NAMESPACE}/keycloakrealms/${REALM_CR_NAME}")
+                        
+                        DELETION_TIMESTAMP=$(echo "$CR_JSON" | grep -o '"deletionTimestamp":"[^"]*' | grep -o '[^"]*$')
+                        
+                        if [ -n "$DELETION_TIMESTAMP" ]; then
+                          echo "Parent KeycloakRealm CR is being deleted (deletionTimestamp: $DELETION_TIMESTAMP). Proceeding with Keycloak realm deletion..."
+                          
+                          echo "Getting Keycloak Admin Token..."
+                          KC_TOKEN=$(curl -k -s -d "client_id=admin-cli" \
+                            -d "username=$KEYCLOAK_USER" \
+                            -d "password=$KEYCLOAK_PASSWORD" \
+                            -d "grant_type=password" \
+                            "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$')
+                          
+                          if [ -n "$KC_TOKEN" ]; then
+                            echo "Deleting realm $REALM_NAME from Keycloak..."
+                            DELETE_STATUS=$(curl -k -s -o /dev/null -w "%{http_code}" -X DELETE \
+                              -H "Authorization: Bearer $KC_TOKEN" \
+                              "$KEYCLOAK_URL/admin/realms/$REALM_NAME")
+                            echo "Delete status: $DELETE_STATUS"
+                          else
+                            echo "Failed to get Keycloak token for deletion."
+                          fi
+                        else
+                          echo "Parent KeycloakRealm CR is NOT being deleted (this is a rolling update or pod restart). Skipping realm deletion."
+                        fi
+              volumes:
+              - name: config-volume
+                configMap:
+                  name: keycloak-realm-config-${schema.metadata.name}

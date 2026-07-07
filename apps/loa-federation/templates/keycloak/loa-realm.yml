@@ -1,0 +1,12 @@
+apiVersion: authn.loa.kevinpthorne.com/v1alpha1
+kind: KeycloakRealm
+metadata:
+  name: loa-realm
+  namespace: keycloak
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  realm: loa
+  displayName: "Library of Alexandria"
+  enabled: true
