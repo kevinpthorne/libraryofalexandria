@@ -42,7 +42,7 @@ spec:
                                         ${json.marshal({
                       "realm": schema.spec.realm,
                       "clients": [
-                        schema.spec.secret != null && schema.spec.secret != "null" ? {
+                        schema.spec.secret != "null" ? {
                           "clientId": schema.spec.clientId,
                           "secret": schema.spec.secret,
                           "serviceAccountsEnabled": schema.spec.serviceAccountsEnabled,
@@ -85,7 +85,7 @@ spec:
                       "name": "KEYCLOAK_AVAILABILITYPROBE_TIMEOUT",
                       "value": "120s"
                     }
-                  ] + (schema.spec.secretRef.name != null && schema.spec.secretRef.name != "null" ? [
+                  ] + (schema.spec.secretRef.name != "null" ? [
                     {
                       "name": "CLIENT_SECRET",
                       "valueFrom": {
