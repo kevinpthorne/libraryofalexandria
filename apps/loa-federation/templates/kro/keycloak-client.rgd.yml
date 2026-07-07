@@ -24,7 +24,7 @@ spec:
         apiVersion: batch/v1
         kind: Job
         metadata:
-          name: keycloak-client-sync-${schema.metadata.name}
+          name: keycloak-client-sync-${schema.metadata.name}-v2
           namespace: keycloak
         spec:
           ttlSecondsAfterFinished: 3600
