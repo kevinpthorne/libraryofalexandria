@@ -12,7 +12,7 @@ spec:
     spec:
       realm: "string | default=loa"
       clientId: string
-      secret: "string | default=null"
+      secret: "string"
       secretRef:
         name: "string | default=dummy"
         key: "string | default=dummy"
@@ -42,7 +42,7 @@ spec:
                                         ${json.marshal({
                       "realm": schema.spec.realm,
                       "clients": [
-                        schema.spec.?secret != "null" ? {
+                        schema.spec.?secret != null ? {
                           "clientId": schema.spec.clientId,
                           "secret": schema.spec.secret,
                           "serviceAccountsEnabled": schema.spec.serviceAccountsEnabled,
