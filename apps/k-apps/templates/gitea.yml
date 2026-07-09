@@ -442,7 +442,7 @@ spec:
   databaseName: gitea
   userName: gitea
   appNamespace: gitea
-  spockReplication: false
+  federate: false
 ---
 apiVersion: authn.loa.kevinpthorne.com/v1alpha1
 kind: KeycloakClient
