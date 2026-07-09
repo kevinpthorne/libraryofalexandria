@@ -24,7 +24,7 @@ spec:
             - name: keycloak
               provider: openidConnect
               existingSecret: gitea-oauth-secret
-              autoDiscoverUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa/.well-known/openid-configuration"
+              autoDiscoverUrl: "https://keycloak.keycloak.svc.cluster.internal:8443/realms/loa/.well-known/openid-configuration"
           config:
             log:
               LEVEL: debug
