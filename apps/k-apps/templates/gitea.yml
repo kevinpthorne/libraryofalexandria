@@ -43,9 +43,8 @@ spec:
             database:
               DB_TYPE: postgres
               HOST: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc:5432"
-              NAME: app
+              NAME: gitea
               USER: gitea
-              SCHEMA: gitea
               SSL_MODE: verify-full
             session:
               PROVIDER: redis
@@ -435,13 +434,12 @@ spec:
 
 ---
 apiVersion: db.loa.kevinpthorne.com/v1alpha1
-kind: PrivateSchema
+kind: PrivateDatabase
 metadata:
   name: gitea
   namespace: gitea
 spec:
-  databaseName: app
-  schemaName: gitea
+  databaseName: gitea
   userName: gitea
   appNamespace: gitea
 ---
