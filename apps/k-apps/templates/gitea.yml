@@ -393,6 +393,7 @@ spec:
       engineVersion: v2
       data:
         password: "{{ `{{ .password }}` }}"
+        username: "admin"
   dataFrom:
   - sourceRef:
       generatorRef:
