@@ -45,6 +45,7 @@ spec:
               HOST: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc:5432"
               NAME: gitea
               USER: gitea
+              SCHEMA: public
               SSL_MODE: verify-full
             session:
               PROVIDER: redis
