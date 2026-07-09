@@ -74,7 +74,7 @@ spec:
         apiVersion: batch/v1
         kind: Job
         metadata:
-          name: keycloak-client-sync-${schema.metadata.name}-v7
+          name: keycloak-client-sync-${schema.metadata.name}-v8
           namespace: keycloak
           labels: >-
             ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
@@ -127,11 +127,13 @@ spec:
                       "realm": schema.spec.realm,
                       "clients": [
                         schema.spec.secret != "null" ? {
+                          "name": schema.spec.clientId,
                           "clientId": schema.spec.clientId,
                           "secret": schema.spec.secret,
                           "serviceAccountsEnabled": schema.spec.serviceAccountsEnabled,
                           "redirectUris": schema.spec.redirectUris
                         } : {
+                          "name": schema.spec.clientId,
                           "clientId": schema.spec.clientId,
                           "secret": "REPLACE_ME_SECRET",
                           "serviceAccountsEnabled": schema.spec.serviceAccountsEnabled,
