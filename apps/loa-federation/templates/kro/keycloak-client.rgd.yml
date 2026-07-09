@@ -162,6 +162,8 @@ spec:
                   value: "120s"
                 - name: IMPORT_FILES_LOCATIONS
                   value: "/tmp/client.json"
+                - name: IMPORT_MANAGED_CLIENT
+                  value: "no-delete"
                 volumeMounts:
                 - name: cas
                   mountPath: /etc/x509/cas
