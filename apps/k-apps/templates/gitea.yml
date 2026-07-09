@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://dl.gitea.com/charts/
     chart: gitea
-    targetRevision: 11.0.0
+    targetRevision: 12.6.0
     helm:
       valuesObject:
         strategy:
@@ -393,7 +393,7 @@ spec:
       engineVersion: v2
       data:
         password: "{{ `{{ .password }}` }}"
-        username: "admin"
+        username: gitea_admin
   dataFrom:
   - sourceRef:
       generatorRef:
