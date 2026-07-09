@@ -14,6 +14,7 @@ spec:
       userName: string
       appNamespace: string
       extensions: "[]string | default=[]"
+      spockReplication: "boolean | default=true"
   resources:
     # 1. Certificate for client mutual TLS authentication (used by the App and this Job)
     - id: clientCert
@@ -103,39 +104,43 @@ spec:
                     until psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw -U admin -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '${schema.spec.databaseName}'" | grep -q 1; do
                       sleep 5
                     done
-                    echo "Database exists! Proceeding with Spock setup."
-                    
-                    psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw -U admin -d ${schema.spec.databaseName} -c "
-                    CREATE EXTENSION IF NOT EXISTS spock;
-                    
-                    -- Initialize Local Spock Node
-                    DO \$\$
-                    BEGIN
-                      IF NOT EXISTS (SELECT 1 FROM spock.node WHERE node_name = '{{ .Values.cluster.name }}') THEN
-                        PERFORM spock.node_create(
-                            node_name := '{{ .Values.cluster.name }}',
-                            dsn := 'host={{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.{{ .Values.pgedge.namespace }}.svc port=5432 dbname=${schema.spec.databaseName} user=admin sslcert=/controller/certificates/streaming_replica/tls.crt sslkey=/controller/certificates/streaming_replica/tls.key sslmode=require'
-                        );
-                      END IF;
-                    END
-                    \$\$;
-                    "
-                    
-                    # Wire up subscriptions to peer clusters
-                    {{- range $peerName, $peerConfig := .Values.cluster.federation.peers }}
-                    psql -h {{ $.Values.pgedge.appName }}-{{ $.Values.cluster.name }}-data-rw -U admin -d ${schema.spec.databaseName} -c "
-                    DO \$\$
-                    BEGIN
-                      IF NOT EXISTS (SELECT 1 FROM spock.subscription WHERE sub_name = 'sub_{{ $.Values.cluster.name }}_to_{{ $peerName }}') THEN
-                        PERFORM spock.sub_create(
-                            subscription_name := 'sub_{{ $.Values.cluster.name }}_to_{{ $peerName }}',
-                            provider_dsn := 'host={{ $.Values.pgedge.appName }}-{{ $peerName }}-data-rw.svc.cluster.{{ $peerName }} port=5432 dbname=${schema.spec.databaseName} user=admin sslcert=/controller/certificates/streaming_replica/tls.crt sslkey=/controller/certificates/streaming_replica/tls.key sslmode=require'
-                        );
-                      END IF;
-                    END
-                    \$\$;
-                    "
-                    {{- end }}
+                    if [ "${schema.spec.spockReplication}" = "true" ]; then
+                      echo "Database exists! Proceeding with Spock setup."
+                      
+                      psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw -U admin -d ${schema.spec.databaseName} -c "
+                      CREATE EXTENSION IF NOT EXISTS spock;
+                      
+                      -- Initialize Local Spock Node
+                      DO \$\$
+                      BEGIN
+                        IF NOT EXISTS (SELECT 1 FROM spock.node WHERE node_name = '{{ .Values.cluster.name }}') THEN
+                          PERFORM spock.node_create(
+                              node_name := '{{ .Values.cluster.name }}',
+                              dsn := 'host={{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw.{{ .Values.pgedge.namespace }}.svc port=5432 dbname=${schema.spec.databaseName} user=admin sslcert=/controller/certificates/streaming_replica/tls.crt sslkey=/controller/certificates/streaming_replica/tls.key sslmode=require'
+                          );
+                        END IF;
+                      END
+                      \$\$;
+                      "
+                      
+                      # Wire up subscriptions to peer clusters
+                      {{- range $peerName, $peerConfig := .Values.cluster.federation.peers }}
+                      psql -h {{ $.Values.pgedge.appName }}-{{ $.Values.cluster.name }}-data-rw -U admin -d ${schema.spec.databaseName} -c "
+                      DO \$\$
+                      BEGIN
+                        IF NOT EXISTS (SELECT 1 FROM spock.subscription WHERE sub_name = 'sub_{{ $.Values.cluster.name }}_to_{{ $peerName }}') THEN
+                          PERFORM spock.sub_create(
+                              subscription_name := 'sub_{{ $.Values.cluster.name }}_to_{{ $peerName }}',
+                              provider_dsn := 'host={{ $.Values.pgedge.appName }}-{{ $peerName }}-data-rw.svc.cluster.{{ $peerName }} port=5432 dbname=${schema.spec.databaseName} user=admin sslcert=/controller/certificates/streaming_replica/tls.crt sslkey=/controller/certificates/streaming_replica/tls.key sslmode=require'
+                          );
+                        END IF;
+                      END
+                      \$\$;
+                      "
+                      {{- end }}
+                    else
+                      echo "Database exists! Spock replication is disabled, skipping setup."
+                    fi
                     
                 volumeMounts:
                 - name: certs
