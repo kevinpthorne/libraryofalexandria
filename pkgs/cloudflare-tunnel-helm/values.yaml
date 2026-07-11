@@ -4,12 +4,24 @@ cloudflare:
   tunnelKeySecret: ""
   # The key in the secret containing the tunnel token
   tunnelKeySecretKey: ""
+  # The UUID of the tunnel
+  tunnelId: ""
+  # If true, turn on WARP routing for TCP
+  enableWarp: false
+  # Define ingress rules for the tunnel.
+  ingress: []
 
 image:
   repository: cloudflare/cloudflared
   pullPolicy: IfNotPresent
-  # If supplied, this overrides "latest"
+  # If supplied, this overrides the appVersion
   tag: ""
+
+tokenDecoder:
+  image:
+    repository: alpine
+    tag: 3.18
+    pullPolicy: IfNotPresent
 
 replicaCount: 2
 
@@ -29,8 +41,7 @@ serviceAccount:
 podAnnotations: {}
 podLabels: {}
 
-# Security items common to everything in the pod. Here we require that it
-# does not run as the user defined in the image, literally named "nonroot".
+# Security items common to everything in the pod.
 podSecurityContext:
   runAsNonRoot: true
   runAsUser: 65532

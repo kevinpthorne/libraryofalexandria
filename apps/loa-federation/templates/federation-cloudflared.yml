@@ -7,13 +7,24 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
-    path: pkgs/cloudflare-tunnel-remote-helm
+    path: pkgs/cloudflare-tunnel-helm
     targetRevision: HEAD
     helm:
       valuesObject:
         cloudflare:
           tunnelKeySecret: {{ .Values.cloudflared.tunnelKeySecret | quote }}
           tunnelKeySecretKey: {{ .Values.cloudflared.tunnelKeySecretKey | quote }}
+          tunnelId: {{ .Values.cloudflared.tunnelId | quote }}
+          ingress:
+            - hostname: "*.{{ .Values.cluster.externalDomain }}"
+              service: https://cilium-gateway-local-gateway.kube-system.svc.cluster.local:443
+              originRequest:
+                noTLSVerify: true
+            - hostname: {{ .Values.cluster.externalDomain | quote }}
+              service: https://cilium-gateway-local-gateway.kube-system.svc.cluster.local:443
+              originRequest:
+                noTLSVerify: true
+            - service: http_status:404
 
         # Enforce restricted security contexts
         podSecurityContext:

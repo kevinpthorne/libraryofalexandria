@@ -1,0 +1,7 @@
+apiVersion: v2
+name: cloudflare-tunnel
+description: Creation of a cloudflared deployment - a reverse tunnel for an environment
+type: application
+version: 0.3.2
+appVersion: "2024.8.3"
+icon: https://developers.cloudflare.com/cloudflare-one/favicon-32x32.png

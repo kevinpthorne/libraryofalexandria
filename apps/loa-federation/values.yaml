@@ -32,3 +32,4 @@ cloudflared:
   namespace: federation-cloudflared
   tunnelKeySecret: cf-key
   tunnelKeySecretKey: api-key
+  tunnelId: "ffbc28dc-96bf-4e12-86a4-3667783e505b"

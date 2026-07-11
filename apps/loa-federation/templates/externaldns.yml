@@ -27,7 +27,7 @@ spec:
         txtOwnerId: {{ .Values.cluster.federation.name }}
 
         extraArgs:
-          - "--default-targets=ffbc28dc-96bf-4e12-86a4-3667783e505b.cfargotunnel.com"  # TODO set per federation
+          - "--default-targets={{ .Values.cloudflared.tunnelId }}.cfargotunnel.com"  # TODO set per federation
           - "--force-default-targets"
           - --txt-wildcard-replacement=wildcard
           - --cloudflare-proxied

@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cloudflare-tunnel.fullname" . }}
+  labels:
+    {{- include "cloudflare-tunnel.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "cloudflare-tunnel.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "cloudflare-tunnel.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "cloudflare-tunnel.fullname" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      {{- if .Values.cloudflare.tunnelKeySecret }}
+      initContainers:
+      - name: token-decoder
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        image: "{{ .Values.tokenDecoder.image.repository }}:{{ .Values.tokenDecoder.image.tag }}"
+        imagePullPolicy: {{ .Values.tokenDecoder.image.pullPolicy }}
+        command:
+          - sh
+          - -c
+          - |
+            if [ -n "$TUNNEL_TOKEN" ]; then
+              echo "$TUNNEL_TOKEN" | base64 -d | sed 's/"a":/"AccountTag":/g; s/"t":/"TunnelID":/g; s/"s":/"TunnelSecret":/g' > /creds/credentials.json
+            else
+              echo "Error: TUNNEL_TOKEN env var is empty"
+              exit 1
+            fi
+        env:
+        - name: TUNNEL_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cloudflare.tunnelKeySecret }}
+              key: {{ .Values.cloudflare.tunnelKeySecretKey | default "tunnelToken" }}
+        volumeMounts:
+        - name: creds
+          mountPath: /creds
+      {{- end }}
+
+      containers:
+      - name: {{ .Chart.Name }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+          - tunnel
+          - --config
+          - /etc/cloudflared/config/config.yaml
+          - run
+        livenessProbe:
+          httpGet:
+            path: /ready
+            port: 2000
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        volumeMounts:
+          - name: config
+            mountPath: /etc/cloudflared/config
+            readOnly: true
+          - name: creds
+            mountPath: /etc/cloudflared/creds
+            readOnly: true
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      volumes:
+        - name: creds
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ include "cloudflare-tunnel.fullname" . }}
+            items:
+              - key: config.yaml
+                path: config.yaml
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,27 @@
+# This configmap stores the configuration used by cloudflared.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cloudflare-tunnel.fullname" . }}
+  labels:
+    {{- include "cloudflare-tunnel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    # Name or UUID of the tunnel you want to run
+    tunnel: {{ required "A valid .Values.cloudflare.tunnelId entry is required!" .Values.cloudflare.tunnelId }}
+    # The location of the secret containing the tunnel credentials
+    credentials-file: /etc/cloudflared/creds/credentials.json
+    # General purpose TCP routing for the network
+    warp-routing:
+      enabled: {{ .Values.cloudflare.enableWarp }}
+    # Serves the metrics server under /metrics and the readiness server under /ready
+    metrics: 0.0.0.0:2000
+    # Autoupdates doesn't make sense in Kubernetes
+    no-autoupdate: true
+    # Ingress configuration
+    ingress:
+      {{- with .Values.cloudflare.ingress }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      # Default fallback rule responding with HTTP 404
+      - service: http_status:404
