@@ -33,3 +33,6 @@ cloudflared:
   tunnelKeySecret: cf-key
   tunnelKeySecretKey: api-key
   tunnelId: "32cab819-2ee5-4055-8c19-d56a7115b00c"
+  domains:
+    - "immich.kpt.link"
+    - "ident.kpt.link"

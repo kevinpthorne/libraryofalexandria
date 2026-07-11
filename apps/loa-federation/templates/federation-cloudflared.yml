@@ -16,16 +16,13 @@ spec:
           tunnelKeySecretKey: {{ .Values.cloudflared.tunnelKeySecretKey | quote }}
           tunnelId: {{ .Values.cloudflared.tunnelId | quote }}
           ingress:
-            - hostname: "*.kpt.link"  # TODO set per federation
+            {{- range .Values.cloudflared.domains }}
+            - hostname: {{ . | quote }}
               service: https://cilium-gateway-local-gateway.kube-system.svc.cluster.local:443
               originRequest:
                 noTLSVerify: true
-                matchSNItoHost: true
-            - hostname: kpt.link
-              service: https://cilium-gateway-local-gateway.kube-system.svc.cluster.local:443
-              originRequest:
-                noTLSVerify: true
-                matchSNItoHost: true
+                originServerName: {{ . | quote }}
+            {{- end }}
 
         # Enforce restricted security contexts
         podSecurityContext:
