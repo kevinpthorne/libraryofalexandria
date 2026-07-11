@@ -23,6 +23,7 @@ data:
       noTLSVerify: true
       keepAliveConnections: 0 # Kills the SNI pool poisoning bug
       matchSNItoHost: true
+      http2Origin: false
 
     # Ingress configuration
     ingress:

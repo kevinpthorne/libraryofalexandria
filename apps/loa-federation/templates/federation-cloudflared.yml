@@ -20,10 +20,12 @@ spec:
               service: https://cilium-gateway-local-gateway.kube-system.svc.cluster.local:443
               originRequest:
                 noTLSVerify: true
+                matchSNItoHost: true
             - hostname: kpt.link
               service: https://cilium-gateway-local-gateway.kube-system.svc.cluster.local:443
               originRequest:
                 noTLSVerify: true
+                matchSNItoHost: true
 
         # Enforce restricted security contexts
         podSecurityContext:
