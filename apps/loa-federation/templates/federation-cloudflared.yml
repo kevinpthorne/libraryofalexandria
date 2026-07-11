@@ -16,11 +16,11 @@ spec:
           tunnelKeySecretKey: {{ .Values.cloudflared.tunnelKeySecretKey | quote }}
           tunnelId: {{ .Values.cloudflared.tunnelId | quote }}
           ingress:
-            - hostname: "*.{{ .Values.cluster.externalDomain }}"
+            - hostname: "*.kpt.link"  # TODO set per federation
               service: https://cilium-gateway-local-gateway.kube-system.svc.cluster.local:443
               originRequest:
                 noTLSVerify: true
-            - hostname: {{ .Values.cluster.externalDomain | quote }}
+            - hostname: kpt.link
               service: https://cilium-gateway-local-gateway.kube-system.svc.cluster.local:443
               originRequest:
                 noTLSVerify: true
