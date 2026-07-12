@@ -69,14 +69,14 @@ resources:
 livenessProbe:
   tcpSocket:
     port: 25565  # match service.javaPort
-  initialDelaySeconds: 60 # Give plenty of time before the first kill attempt
+  initialDelaySeconds: 120 # Give plenty of time before the first kill attempt
   periodSeconds: 15
   failureThreshold: 3
 
 readinessProbe:
   tcpSocket:
     port: 25565  # match service.javaPort
-  initialDelaySeconds: 30 # Give the server time to allocate RAM and generate the world
+  initialDelaySeconds: 60 # Give the server time to allocate RAM and generate the world
   periodSeconds: 10
   failureThreshold: 3
 
