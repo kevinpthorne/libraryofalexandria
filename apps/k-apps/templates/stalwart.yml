@@ -42,7 +42,7 @@ spec:
             data: postgresql
             fts: postgresql
             lookup: redis
-            directory: keycloak
+            directory: sql
             {{- else }}
             directory: internal
             {{- end }}
