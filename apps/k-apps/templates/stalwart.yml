@@ -1,0 +1,440 @@
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stalwart
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: ghcr.io/antigenic-oss/charts
+    chart: antigenic-stalwart-helm-chart
+    targetRevision: "*"
+    helm:
+      valuesObject:
+        fullnameOverride: stalwart
+        service:
+          mail:
+            enabled:
+              smtp: false
+              submission: false
+              smtps: true
+              imap: false
+              imaps: true
+              sieve: false
+        config:
+          certificate:
+            default:
+              cert: "%{file:/opt/stalwart/certs/tls.crt}%"
+              private-key: "%{file:/opt/stalwart/certs/tls.key}%"
+              default: true
+          listeners:
+            smtp: null
+            submission: null
+            imap: null
+            sieve: null
+          server:
+            hostname: "mail.kevinpthorne.com"
+          storage:
+            blob: s3
+            {{- if $hasFederation }}
+            data: postgresql
+            fts: postgresql
+            lookup: redis
+            directory: keycloak
+            {{- else }}
+            directory: internal
+            {{- end }}
+          {{- if $hasFederation }}
+          directory:
+            keycloak:
+              type: oidc
+              issuer-url: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
+              client-id: stalwart
+              client-secret: "%{env:OIDC_CLIENT_SECRET}%"
+          cluster:
+            coordinator: redis
+          postgresql:
+            host: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc:5432"
+            database: stalwart
+            user: stalwart
+            tls:
+              enable: true
+              allowInvalidCerts: false
+          redis:
+            timeout: 10s
+          {{- end }}
+          s3:
+            bucket: stalwart
+            region: us-east-1
+            endpoint: "https://seaweed-cluster-s3-https.seaweedfs-system.svc.cluster.local:8333"
+            tls:
+              allowInvalidCerts: false
+        extraEnv:
+          - name: S3_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: stalwart-s3-creds
+                key: accessKey
+          - name: S3_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: stalwart-s3-creds
+                key: secretKey
+          {{- if $hasFederation }}
+          - name: REDIS_URL
+            value: "redis://127.0.0.1:6379/0"
+          - name: PGSSLCERT
+            value: "/certs/db-client/tls.crt"
+          - name: PGSSLKEY
+            value: "/certs/db-client/tls.key"
+          - name: PGSSLROOTCERT
+            value: "/certs/cas/ca-bundle.crt"
+          - name: PGSSLMODE
+            value: verify-full
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: stalwart-oauth-secret
+                key: secret
+          {{- end }}
+        {{- if $hasFederation }}
+        extraContainers:
+          - name: stunnel
+            image: cgr.dev/chainguard/stunnel:latest
+            command: ["stunnel", "/etc/stunnel/stunnel.conf"]
+            volumeMounts:
+              - name: stunnel-conf
+                mountPath: /etc/stunnel
+                readOnly: true
+              - name: keydb-client-cert
+                mountPath: /certs/keydb-client
+                readOnly: true
+              - name: cas
+                mountPath: /certs/cas
+                readOnly: true
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              capabilities:
+                drop:
+                  - ALL
+        {{- end }}
+        extraVolumes:
+          - name: cas
+            configMap:
+              name: trusted-ca-bundle
+          - name: stalwart-tls
+            secret:
+              secretName: stalwart-tls
+          {{- if $hasFederation }}
+          - name: db-client-certs
+            secret:
+              secretName: pgedge-stalwart-client-cert
+              defaultMode: 256
+          - name: keydb-client-cert
+            secret:
+              secretName: keydb-stalwart-client-cert
+              defaultMode: 256
+          - name: stunnel-conf
+            configMap:
+              name: stalwart-stunnel-conf
+          {{- end }}
+        extraVolumeMounts:
+          - name: cas
+            mountPath: /certs/cas
+            readOnly: true
+          - name: cas
+            mountPath: /etc/ssl/certs/ca-certificates.crt
+            subPath: ca-bundle.crt
+            readOnly: true
+          - name: stalwart-tls
+            mountPath: /opt/stalwart/certs
+            readOnly: true
+          {{- if $hasFederation }}
+          - name: db-client-certs
+            mountPath: /certs/db-client
+            readOnly: true
+          {{- end }}
+        resources:
+          requests:
+            memory: "256Mi"
+          limits:
+            memory: "512Mi"
+        podSecurityContext:
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mail
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stalwart-tls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "stalwart"
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        cert:
+          secretName: "stalwart-tls"
+          sans:
+            - "mail.kevinpthorne.com"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mail
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stalwart-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: stalwart
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
+            hostnames:
+              - "mail.kevinpthorne.com"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 8080
+                targetService: stalwart
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mail
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Identity
+metadata:
+  name: stalwart
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Credentials
+metadata:
+  name: stalwart-s3-creds
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  identityRef:
+    name: stalwart
+  secretRef:
+    name: stalwart-s3-creds
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: Bucket
+metadata:
+  name: stalwart
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  clusterRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  name: stalwart
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Policy
+metadata:
+  name: stalwart-policy
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  statements:
+    - effect: Allow
+      actions: [s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket]
+      resources: [
+        "stalwart/*", "stalwart"
+      ]
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3PolicyBinding
+metadata:
+  name: stalwart-policy-binding
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  policyRef:
+    name: stalwart-policy
+  subjects:
+    - kind: S3Identity
+      name: stalwart
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: ResourceReferenceGrant
+metadata:
+  name: seaweed-stalwart-grant
+  namespace: seaweedfs-system
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  from:
+    - group: seaweed.seaweedfs.com
+      kind: S3Identity
+      namespace: mail
+    - group: seaweed.seaweedfs.com
+      kind: S3Credentials
+      namespace: mail
+    - group: seaweed.seaweedfs.com
+      kind: Bucket
+      namespace: mail
+    - group: seaweed.seaweedfs.com
+      kind: S3Policy
+      namespace: mail
+    - group: seaweed.seaweedfs.com
+      kind: S3PolicyBinding
+      namespace: mail
+  to:
+    - group: seaweed.seaweedfs.com
+      kind: Seaweed
+
+{{- if $hasFederation }}
+
+---
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: PrivateDatabase
+metadata:
+  name: stalwart
+  namespace: mail
+spec:
+  databaseName: stalwart
+  userName: stalwart
+  appNamespace: mail
+  federate: false
+---
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: KeydbClient
+metadata:
+  name: stalwart
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  appName: stalwart
+  appNamespace: mail
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: stalwart-oauth-password
+  namespace: mail
+spec:
+  length: 32
+  digits: 5
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: stalwart-oauth-secret
+  namespace: mail
+spec:
+  refreshInterval: "0"
+  target:
+    name: stalwart-oauth-secret
+    template:
+      engineVersion: v2
+      data:
+        key: stalwart
+        secret: "{{ `{{ .password }}` }}"
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: stalwart-oauth-password
+---
+apiVersion: authn.loa.kevinpthorne.com/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: stalwart
+  namespace: mail
+spec:
+  clientId: stalwart
+  secretRef:
+    name: stalwart-oauth-secret
+    key: secret
+  redirectUris:
+    - "https://mail.kevinpthorne.com/oidc/callback"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stalwart-stunnel-conf
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+data:
+  stunnel.conf: |
+    foreground = yes
+    pid =
+    [redis]
+    client = yes
+    accept = 127.0.0.1:6379
+    connect = keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380
+    verifyChain = yes
+    CAfile = /certs/cas/ca-bundle.crt
+    cert = /certs/keydb-client/tls.crt
+    key = /certs/keydb-client/tls.key
+{{- end }}
