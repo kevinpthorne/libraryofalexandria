@@ -11,6 +11,7 @@ spec:
     targetRevision: HEAD
     helm:
       valuesObject:
+        replicaCount: 0
         otbr:
           enabled: true
           resources:
