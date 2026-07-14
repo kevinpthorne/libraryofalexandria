@@ -434,6 +434,7 @@ data:
     key = /certs/keydb-client/tls.key
     [postgres]
     client = yes
+    protocol = pgsql
     accept = 127.0.0.1:5432
     connect = {{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc:5432
     verifyChain = yes
