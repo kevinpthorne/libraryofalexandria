@@ -56,7 +56,7 @@ spec:
           cluster:
             coordinator: redis
           postgresql:
-            host: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc:5432"
+            host: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc"
             database: stalwart
             user: stalwart
             tls:
