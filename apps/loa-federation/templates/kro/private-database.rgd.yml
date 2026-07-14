@@ -122,7 +122,7 @@ spec:
                     \$\$;
                     "
                     
-                    if [ "${schema.spec.federate}" = "true" ]; then
+                    if [ "${string(schema.spec.federate)}" = "true" ]; then
                       # Wire up subscriptions to peer clusters
                       {{- range $peerName, $peerConfig := .Values.cluster.federation.peers }}
                       psql -h {{ $.Values.pgedge.appName }}-{{ $.Values.cluster.name }}-data-rw -U admin -d ${schema.spec.databaseName} -c "
