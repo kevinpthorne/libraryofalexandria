@@ -99,6 +99,17 @@ spec:
                   - "sh"
                   - "-c"
                   - |
+                    # Ensure the user role exists before waiting for the database
+                    psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw -U admin -d postgres -c "
+                    DO \$\$
+                    BEGIN
+                      IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = '${schema.spec.userName}') THEN
+                        CREATE ROLE ${schema.spec.userName} WITH LOGIN;
+                      END IF;
+                    END
+                    \$\$;
+                    "
+
                     # Wait for CNPG operator to create the database
                     echo "Waiting for database '${schema.spec.databaseName}' to be created by CNPG..."
                     until psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name }}-data-rw -U admin -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '${schema.spec.databaseName}'" | grep -q 1; do
