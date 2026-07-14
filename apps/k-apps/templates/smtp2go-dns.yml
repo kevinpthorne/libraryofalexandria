@@ -6,6 +6,7 @@ metadata:
   namespace: mail
   annotations:
     external-dns.alpha.kubernetes.io/hostname: "em666660.k.kpt.link"
+    external-dns.alpha.kubernetes.io/target: "return.smtp2go.net"
     external-dns.loa.internal/expose: "public"
 spec:
   type: ExternalName
@@ -18,6 +19,7 @@ metadata:
   namespace: mail
   annotations:
     external-dns.alpha.kubernetes.io/hostname: "s666660._domainkey.k.kpt.link"
+    external-dns.alpha.kubernetes.io/target: "dkim.smtp2go.net"
     external-dns.loa.internal/expose: "public"
 spec:
   type: ExternalName
@@ -30,6 +32,7 @@ metadata:
   namespace: mail
   annotations:
     external-dns.alpha.kubernetes.io/hostname: "link.k.kpt.link"
+    external-dns.alpha.kubernetes.io/target: "track.smtp2go.net"
     external-dns.loa.internal/expose: "public"
 spec:
   type: ExternalName
