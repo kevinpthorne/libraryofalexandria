@@ -20,7 +20,6 @@ spec:
           txtOwnerId: {{ .Values.cluster.name }}
           extraArgs:
             - "--default-targets={{ .Values.cluster.externalDomain }}"
-            - "--force-default-targets"
             - "--txt-wildcard-replacement=wildcard"
           env:
             - name: CF_API_TOKEN
