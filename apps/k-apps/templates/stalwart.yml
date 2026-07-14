@@ -199,6 +199,7 @@ spec:
           sans:
             - "mail.kevinpthorne.com"
             - "mail.k.kpt.link"
+            - "mail.k.loa.internal"
   destination:
     server: https://kubernetes.default.svc
     namespace: mail
@@ -229,6 +230,7 @@ spec:
             hostnames:
               - "mail.kevinpthorne.com"
               - "mail.k.kpt.link"
+              - "mail.k.loa.internal"
             ports:
               - port: 443
                 protocol: TLS
