@@ -169,6 +169,15 @@ spec:
           fsGroup: 1000
           seccompProfile:
             type: RuntimeDefault
+        initContainer:
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
   destination:
     server: https://kubernetes.default.svc
     namespace: mail
