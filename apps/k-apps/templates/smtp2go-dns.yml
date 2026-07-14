@@ -1,0 +1,36 @@
+# SMTP2Go DNS records for k.kpt.link
+apiVersion: v1
+kind: Service
+metadata:
+  name: smtp2go-return-path
+  namespace: mail
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "em666660.k.kpt.link"
+    external-dns.loa.internal/expose: "public"
+spec:
+  type: ExternalName
+  externalName: return.smtp2go.net
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smtp2go-dkim
+  namespace: mail
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "s666660._domainkey.k.kpt.link"
+    external-dns.loa.internal/expose: "public"
+spec:
+  type: ExternalName
+  externalName: dkim.smtp2go.net
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smtp2go-tracking
+  namespace: mail
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "link.k.kpt.link"
+    external-dns.loa.internal/expose: "public"
+spec:
+  type: ExternalName
+  externalName: track.smtp2go.net
