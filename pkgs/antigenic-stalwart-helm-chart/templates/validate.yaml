@@ -1,0 +1,111 @@
+{{- if and .Values.ingress.enabled .Values.httpRoute.enabled -}}
+{{- fail "Only one of ingress.enabled or httpRoute.enabled can be true." -}}
+{{- end -}}
+{{- if and (not .Values.secret.create) (not .Values.secret.name) -}}
+{{- fail "secret.name is required when secret.create is false." -}}
+{{- end -}}
+{{- if and .Values.ingress.enabled (eq (len .Values.ingress.hosts) 0) -}}
+{{- fail "ingress.hosts must include at least one host when ingress.enabled is true." -}}
+{{- end -}}
+{{- if and .Values.httpRoute.enabled (eq (len .Values.httpRoute.hostnames) 0) -}}
+{{- fail "httpRoute.hostnames must include at least one hostname when httpRoute.enabled is true." -}}
+{{- end -}}
+{{- if and .Values.ingress.enabled (not .Values.service.http.enabled) -}}
+{{- fail "ingress.enabled=true requires service.http.enabled=true because Ingress routes to the plain HTTP backend service port." -}}
+{{- end -}}
+{{- if and .Values.httpRoute.enabled (not .Values.service.http.enabled) -}}
+{{- fail "httpRoute.enabled=true requires service.http.enabled=true because HTTPRoute routes to the plain HTTP backend service port." -}}
+{{- end -}}
+{{- if and .Values.config.metrics.prometheus.enable (not .Values.config.metrics.prometheus.auth.username) -}}
+{{- fail "config.metrics.prometheus.auth.username is required when Prometheus metrics are enabled." -}}
+{{- end -}}
+{{- if and .Values.config.metrics.prometheus.enable .Values.secret.create (not .Values.secret.data.PROMETHEUS_SECRET) -}}
+{{- fail "secret.data.PROMETHEUS_SECRET is required when Prometheus metrics are enabled and secret.create is true." -}}
+{{- end -}}
+{{- if and .Values.config.metrics.openTelemetry.enable (not .Values.config.metrics.openTelemetry.endpoint) -}}
+{{- fail "config.metrics.openTelemetry.endpoint is required when OpenTelemetry metrics are enabled." -}}
+{{- end -}}
+{{- if and .Values.certManager.enabled (not .Values.certManager.secretName) -}}
+{{- fail "certManager.secretName is required when certManager.enabled is true." -}}
+{{- end -}}
+{{- if and .Values.certManager.enabled (not .Values.certManager.mountPath) -}}
+{{- fail "certManager.mountPath is required when certManager.enabled is true." -}}
+{{- end -}}
+{{- if and .Values.certManager.enabled (not .Values.certManager.issuerName) -}}
+{{- fail "certManager.issuerName is required when certManager.enabled is true." -}}
+{{- end -}}
+{{- if regexMatch "^https?://" .Values.config.http.url -}}
+{{- fail "config.http.url must be a Stalwart expression string (for example: protocol + '://' + config_get('server.hostname') + ':' + local_port), not a plain https URL." -}}
+{{- end -}}
+{{- if and (ne .Values.config.storage.directory "internal") (ne .Values.config.storage.directory "sql") -}}
+{{- fail "config.storage.directory must be either internal (default) or sql." -}}
+{{- end -}}
+{{- if eq .Values.config.storage.directory "sql" -}}
+  {{- if not (default "" .Values.config.postgresql.query.name) -}}
+  {{- fail "config.postgresql.query.name is required when config.storage.directory=sql." -}}
+  {{- end -}}
+  {{- if not (default "" .Values.config.postgresql.query.members) -}}
+  {{- fail "config.postgresql.query.members is required when config.storage.directory=sql." -}}
+  {{- end -}}
+  {{- if not (default "" .Values.config.postgresql.query.recipients) -}}
+  {{- fail "config.postgresql.query.recipients is required when config.storage.directory=sql." -}}
+  {{- end -}}
+  {{- if not (default "" .Values.config.postgresql.query.emails) -}}
+  {{- fail "config.postgresql.query.emails is required when config.storage.directory=sql." -}}
+  {{- end -}}
+{{- end -}}
+{{- if contains "%{BASE_PATH}%" .Values.config.tracer.log.path -}}
+{{- fail "config.tracer.log.path must be an absolute path (for example /opt/stalwart/logs). %{BASE_PATH}% is not supported here." -}}
+{{- end -}}
+{{- $enabledMailPorts := 0 -}}
+{{- range $name, $enabled := .Values.service.mail.enabled -}}
+  {{- if $enabled -}}
+    {{- $enabledMailPorts = add1 $enabledMailPorts -}}
+  {{- end -}}
+{{- end -}}
+{{- if eq $enabledMailPorts 0 -}}
+{{- fail "At least one mail service port must be enabled under service.mail.enabled." -}}
+{{- end -}}
+{{- $isHetznerLB := hasKey .Values.service.mail.annotations "load-balancer.hetzner.cloud/name" -}}
+{{- $hetznerType := index .Values.service.mail.annotations "load-balancer.hetzner.cloud/type" | default "" -}}
+{{- $listenerCount := add $enabledMailPorts (ternary 2 1 .Values.service.http.enabled) -}}
+{{- if and (eq .Values.service.mail.type "LoadBalancer") $isHetznerLB (eq $hetznerType "lb11") (gt $listenerCount 5) -}}
+{{- fail "Unified mail+http service uses mail listeners plus HTTP+HTTPS. For Hetzner, lb11 is insufficient for this port set; use load-balancer.hetzner.cloud/type=lb21 or reduce enabled ports." -}}
+{{- end -}}
+{{- if and .Values.ciliumEgressGatewayPolicy.enabled (eq (len .Values.ciliumEgressGatewayPolicy.destinationCIDRs) 0) -}}
+{{- fail "ciliumEgressGatewayPolicy.destinationCIDRs must include at least one CIDR when ciliumEgressGatewayPolicy.enabled is true." -}}
+{{- end -}}
+{{- if and .Values.ciliumEgressGatewayPolicy.enabled (not .Values.ciliumEgressGatewayPolicy.egressGateway.nodeSelector) -}}
+{{- fail "ciliumEgressGatewayPolicy.egressGateway.nodeSelector is required when ciliumEgressGatewayPolicy.enabled is true." -}}
+{{- end -}}
+{{- if and .Values.ciliumEgressGatewayPolicy.enabled (not .Values.ciliumEgressGatewayPolicy.egressGateway.egressIP) -}}
+{{- fail "ciliumEgressGatewayPolicy.egressGateway.egressIP is required when ciliumEgressGatewayPolicy.enabled is true." -}}
+{{- end -}}
+{{- $globalTrusted := gt (len .Values.config.proxy.trustedNetworks) 0 -}}
+{{- $hasAllowlist := gt (len .Values.config.server.allowedIPs) 0 -}}
+{{- $hasHttpGroup := hasKey .Values.config.proxy.byService "http" -}}
+{{- $hasMailGroup := hasKey .Values.config.proxy.byService "mail" -}}
+{{- $proxyValidation := dict "missingTrustContext" false -}}
+{{- range $name, $listener := .Values.config.listeners -}}
+  {{- $hasListenerProxy := $globalTrusted -}}
+  {{- $hasListenerTrusted := $globalTrusted -}}
+  {{- if and (eq $listener.protocol "http") $hasHttpGroup -}}
+    {{- $hasListenerProxy = gt (len (default (list) $.Values.config.proxy.byService.http)) 0 -}}
+    {{- $hasListenerTrusted = $hasListenerProxy -}}
+  {{- else if and (ne $listener.protocol "http") $hasMailGroup -}}
+    {{- $hasListenerProxy = gt (len (default (list) $.Values.config.proxy.byService.mail)) 0 -}}
+    {{- $hasListenerTrusted = $hasListenerProxy -}}
+  {{- end -}}
+  {{- if hasKey $listener "trustedNetworks" -}}
+    {{- $hasListenerProxy = gt (len (default (list) $listener.trustedNetworks)) 0 -}}
+    {{- $hasListenerTrusted = $hasListenerProxy -}}
+  {{- end -}}
+  {{- if $hasListenerProxy -}}
+    {{- if and (not $globalTrusted) (not $hasListenerTrusted) (not $hasAllowlist) -}}
+      {{- $_ := set $proxyValidation "missingTrustContext" true -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $proxyValidation.missingTrustContext -}}
+{{- fail "Proxy trust is configured for at least one listener group, but no trust context is configured. Set config.proxy.trustedNetworks and/or config.server.allowedIPs for your load balancer addresses." -}}
+{{- end -}}

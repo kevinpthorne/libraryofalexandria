@@ -1,0 +1,63 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "America/Los_Angeles",
+  "schedule": [
+    "before 10am on monday"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "dependencyDashboard": true,
+  "prConcurrentLimit": 10,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "repository:\\s*(?<depName>[^\\s]+)\\s*\\n\\s*tag:\\s*(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "labels": [
+        "dependencies",
+        "github-actions"
+      ]
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchFileNames": [
+        "values.yaml"
+      ],
+      "labels": [
+        "dependencies",
+        "docker-image"
+      ],
+      "commitMessageTopic": "stalwart image",
+      "postUpgradeTasks": {
+        "commands": [
+          "./scripts/renovate-bump-chart.sh"
+        ],
+        "fileFilters": [
+          "Chart.yaml",
+          "examples/argocd/application.yaml",
+          "examples/flux/helmrelease.yaml"
+        ],
+        "executionMode": "update"
+      }
+    }
+  ]
+}

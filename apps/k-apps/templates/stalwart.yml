@@ -8,9 +8,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: ghcr.io/antigenic-oss/charts
-    chart: antigenic-stalwart-helm-chart
-    targetRevision: "*"
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/antigenic-stalwart-helm-chart
+    targetRevision: HEAD
     helm:
       valuesObject:
         fullnameOverride: stalwart
@@ -169,15 +169,6 @@ spec:
           fsGroup: 1000
           seccompProfile:
             type: RuntimeDefault
-        initContainer:
-          securityContext:
-            allowPrivilegeEscalation: false
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
-            capabilities:
-              drop:
-                - ALL
   destination:
     server: https://kubernetes.default.svc
     namespace: mail

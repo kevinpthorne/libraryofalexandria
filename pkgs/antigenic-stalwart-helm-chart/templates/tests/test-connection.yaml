@@ -1,0 +1,26 @@
+{{- if .Values.testConnection.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "stalwart.fullname" . }}-test-connection"
+  labels:
+    {{- include "stalwart.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+spec:
+  containers:
+    - name: wget
+      image: "{{ .Values.testConnection.image.repository }}:{{ .Values.testConnection.image.tag }}"
+      imagePullPolicy: {{ .Values.testConnection.image.pullPolicy }}
+      command:
+        - sh
+        - -c
+        - |
+          {{- if .Values.service.http.enabled }}
+          wget -qO- "http://{{ include "stalwart.httpServiceName" . }}:{{ .Values.service.http.port }}/healthz/ready"
+          {{- else }}
+          wget --no-check-certificate -qO- "https://{{ include "stalwart.httpServiceName" . }}:443/healthz/ready"
+          {{- end }}
+  restartPolicy: Never
+{{- end }}

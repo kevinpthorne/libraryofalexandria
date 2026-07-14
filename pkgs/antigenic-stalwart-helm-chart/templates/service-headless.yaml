@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "stalwart.fullname" . }}-headless
+  labels:
+    {{- include "stalwart.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    {{- include "stalwart.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- if .Values.service.http.enabled }}
+    - name: http
+      port: {{ .Values.service.http.port }}
+      targetPort: {{ .Values.service.http.targetPort }}
+    {{- end }}
+    - name: https
+      port: 443
+      targetPort: 443

@@ -1,0 +1,43 @@
+name: Bug report
+description: Report a chart bug or regression
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken?
+    validations:
+      required: true
+  - type: input
+    id: chart_version
+    attributes:
+      label: Chart version
+      placeholder: "0.3.0"
+    validations:
+      required: true
+  - type: textarea
+    id: values
+    attributes:
+      label: Relevant values overrides
+      description: Share minimal non-sensitive values used to reproduce.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior / logs
+    validations:
+      required: true

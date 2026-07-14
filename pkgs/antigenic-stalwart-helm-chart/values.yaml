@@ -1,0 +1,372 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: stalwartlabs/stalwart
+  tag: v0.15.5
+  pullPolicy: IfNotPresent
+
+replicaCount: 3
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+  automountServiceAccountToken: false
+
+strategy:
+  type: RollingUpdate
+
+resources: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+topologySpreadConstraints: []
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+terminationGracePeriodSeconds: 60
+
+persistence:
+  enabled: true
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+
+service:
+  http:
+    enabled: true
+    port: 8080
+    targetPort: 8080
+  mail:
+    type: LoadBalancer
+    externalTrafficPolicy: Cluster
+    annotations: {}
+    enabled:
+      smtp: true
+      submission: true
+      smtps: true
+      imap: false
+      imaps: true
+      sieve: true
+    ports:
+      smtp: 25
+      submission: 587
+      smtps: 465
+      imap: 143
+      imaps: 993
+      sieve: 4190
+
+networkPolicy:
+  enabled: false
+  ingress:
+    allowSameNamespace: true
+    allowInternet: true
+    internetCidrs:
+      - 0.0.0.0/0
+      - ::/0
+    additionalFrom: []
+
+ciliumEgressGatewayPolicy:
+  enabled: false
+  name: ""
+  selectors: []
+  destinationCIDRs:
+    - 0.0.0.0/0
+  excludedCIDRs: []
+  egressGateway:
+    nodeSelector: {}
+    egressIP: ""
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: mail.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+httpRoute:
+  enabled: false
+  hostnames:
+    - mail.example.com
+  parentRefs:
+    - name: cilium-gateway
+      namespace: kube-system
+      sectionName: https
+  matches:
+    - path:
+        type: PathPrefix
+        value: /
+
+config:
+  localKeys:
+    - '!server.blocked-ip.*' # Must set manually in webadmin
+    - authentication.fallback-admin.*
+    - certificate.*
+    - cluster.*
+    - config.local-keys.*
+    - directory.*
+    - http.*
+    - metrics.*
+    - server.*
+    - server.allowed-ip.*
+    - storage.blob
+    - storage.data
+    - storage.directory
+    - storage.fts
+    - storage.lookup
+    - store.*
+    - tracer.*
+
+  server:
+    hostname: mail.example.com
+    allowedIPs: []
+
+  proxy:
+    byService: {}
+    trustedNetworks: []
+
+  listeners:
+    smtp:
+      bind:
+        - "[::]:25"
+      protocol: smtp
+      tlsImplicit: false
+    submission:
+      bind:
+        - "[::]:587"
+      protocol: smtp
+      tlsImplicit: false
+    submissions:
+      bind:
+        - "[::]:465"
+      protocol: smtp
+      tlsImplicit: true
+    imap:
+      bind:
+        - "[::]:143"
+      protocol: imap
+      tlsImplicit: false
+    imaps:
+      bind:
+        - "[::]:993"
+      protocol: imap
+      tlsImplicit: true
+    sieve:
+      bind:
+        - "[::]:4190"
+      protocol: managesieve
+      tlsImplicit: false
+    https:
+      bind:
+        - "[::]:443"
+      protocol: http
+      tlsImplicit: true
+    http:
+      bind:
+        - "[::]:8080"
+      protocol: http
+      tlsImplicit: false
+
+  http:
+    url: "protocol + '://' + config_get('server.hostname') + ':' + local_port"
+    useXForwarded: false
+    headers:
+      - "Cache-Control: no-store"
+      - "Pragma: no-cache"
+      - "Server: Stalwart"
+
+  cluster:
+    coordinator: redis
+
+  storage:
+    data: postgresql
+    blob: s3
+    fts: meilisearch
+    lookup: redis
+    directory: internal
+
+  postgresql:
+    host: postgres.example.svc.cluster.local
+    port: 5432
+    database: stalwart
+    user: stalwart
+    timeout: 15s
+    tls:
+      enable: false
+      allowInvalidCerts: false
+    pool:
+      maxConnections: 20
+    purge:
+      frequency: "0 0 *"
+    # SQL directory mode only (config.storage.directory=sql):
+    # These query strings are examples adapted from Stalwart documentation and may need
+    # adjustments for your schema and operational model.
+    query:
+      name: "SELECT name, type, secret, description, quota FROM accounts WHERE name = $1 AND active = true"
+      members: "SELECT member_of FROM group_members WHERE name = $1"
+      recipients: "SELECT name FROM emails WHERE address = $1 ORDER BY name ASC"
+      emails: "SELECT address FROM emails WHERE name = $1 ORDER BY type DESC, address ASC"
+
+  s3:
+    compression: lz4
+    bucket: stalwart
+    region: eu-central-1
+    endpoint: https://minio.example.svc.cluster.local:9000
+    maxRetries: 3
+    timeout: 30s
+    keyPrefix: stalwart/
+    purge:
+      frequency: "0 0 *"
+
+  meilisearch:
+    url: http://meilisearch.example.svc.cluster.local:7700
+    task:
+      pollInterval: 500ms
+      pollRetries: 60
+    tls:
+      allowInvalidCerts: false
+
+  redis:
+    timeout: 10s
+
+  tracer:
+    log:
+      type: log
+      path: /opt/stalwart/logs
+      prefix: stalwart.log
+      rotate: daily
+      level: info
+      ansi: true
+      enable: true
+    console:
+      type: console
+      level: info
+      ansi: true
+      enable: true
+    otel:
+      type: open-telemetry
+      transport: grpc
+      endpoint: ""
+      headers: []
+      level: info
+      enableLogExporter: false
+      enableSpanExporter: true
+      throttle: 1s
+      lossy: false
+      enable: false
+
+  metrics:
+    openTelemetry:
+      enable: false
+      transport: grpc
+      endpoint: ""
+      interval: 1m
+      headers: []
+    prometheus:
+      enable: false
+      auth:
+        username: prometheus
+
+  fallbackAdmin:
+    user: admin
+
+certManager:
+  enabled: false
+  issuerName: ""
+  issuerKind: ClusterIssuer
+  issuerGroup: cert-manager.io
+  certificateName: stalwart-mail-cert
+  secretName: stalwart-mail-tls
+  dnsNames: []
+  mountPath: /opt/stalwart/certs
+  certificate:
+    name: default
+    certFile: tls.crt
+    keyFile: tls.key
+    default: true
+    subjects: []
+
+secret:
+  name: stalwart-secrets
+  create: true
+  annotations: {}
+  data:
+    ADMIN_SECRET: change-me
+    PROMETHEUS_SECRET: change-me
+    POSTGRES_PASSWORD: change-me
+    S3_ACCESS_KEY: change-me
+    S3_SECRET_KEY: change-me
+    MEILISEARCH_API_KEY: change-me
+    REDIS_URL: redis://default:change-me@redis.default.svc.cluster.local:6379
+
+extraEnv: []
+extraVolumes: []
+extraVolumeMounts: []
+
+livenessProbe:
+  httpGet:
+    path: /healthz/live
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 6
+
+readinessProbe:
+  httpGet:
+    path: /healthz/ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 6
+
+startupProbe:
+  httpGet:
+    path: /healthz/ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 30
+
+initContainer:
+  image:
+    repository: busybox
+    tag: "1.36"
+    pullPolicy: IfNotPresent
+
+testConnection:
+  enabled: true
+  image:
+    repository: busybox
+    tag: "1.36"
+    pullPolicy: IfNotPresent

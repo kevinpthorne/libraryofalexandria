@@ -1,0 +1,75 @@
+name: publish-oci-chart
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Verify tag matches Chart.yaml version
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          CHART_VERSION="$(sed -n 's/^version:[[:space:]]*//p' Chart.yaml | head -n1 | tr -d '\"')"
+          CHART_NAME="$(sed -n 's/^name:[[:space:]]*//p' Chart.yaml | head -n1 | tr -d '\"')"
+
+          if [ -z "${CHART_VERSION}" ]; then
+            echo "Unable to parse Chart.yaml version."
+            exit 1
+          fi
+          if [ -z "${CHART_NAME}" ]; then
+            echo "Unable to parse Chart.yaml name."
+            exit 1
+          fi
+
+          if [ "${TAG_VERSION}" != "${CHART_VERSION}" ]; then
+            echo "Tag/version mismatch. Tag=${TAG_VERSION}, Chart.yaml=${CHART_VERSION}"
+            exit 1
+          fi
+
+          echo "Tag and Chart.yaml version are aligned: ${CHART_VERSION}"
+          echo "CHART_NAME=${CHART_NAME}" >> "$GITHUB_ENV"
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Login to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "${GITHUB_TOKEN}" | helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Package chart
+        run: |
+          mkdir -p .dist
+          helm package . --destination .dist
+
+      - name: Push chart to GHCR (OCI)
+        run: |
+          helm push .dist/*.tgz oci://ghcr.io/${OWNER_LC}/charts
+
+      - name: Setup ORAS
+        uses: oras-project/setup-oras@v1
+
+      - name: Login to GHCR (ORAS)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "${GITHUB_TOKEN}" | oras login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push Artifact Hub repository metadata
+        run: |
+          oras push \
+            "ghcr.io/${OWNER_LC}/charts/${CHART_NAME}:artifacthub.io" \
+            artifacthub-repo.yml:application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml

@@ -1,0 +1,490 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string", "minLength": 1 },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      },
+      "required": ["repository", "tag", "pullPolicy"]
+    },
+    "serviceAccount": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "create": { "type": "boolean" },
+        "name": { "type": "string" },
+        "automountServiceAccountToken": { "type": "boolean" }
+      }
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "http": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "targetPort": { "type": ["integer", "string"] }
+          },
+          "required": ["enabled", "port", "targetPort"]
+        },
+        "mail": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["ClusterIP", "NodePort", "LoadBalancer"]
+            },
+            "externalTrafficPolicy": {
+              "type": "string",
+              "enum": ["Local", "Cluster"]
+            },
+            "enabled": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "smtp": { "type": "boolean" },
+                "submission": { "type": "boolean" },
+                "smtps": { "type": "boolean" },
+                "imap": { "type": "boolean" },
+                "imaps": { "type": "boolean" },
+                "sieve": { "type": "boolean" }
+              },
+              "required": ["smtp", "submission", "smtps", "imap", "imaps", "sieve"]
+            },
+            "ports": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "smtp": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                "submission": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                "smtps": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                "imap": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                "imaps": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                "sieve": { "type": "integer", "minimum": 1, "maximum": 65535 }
+              },
+              "required": ["smtp", "submission", "smtps", "imap", "imaps", "sieve"]
+            }
+          },
+          "required": ["type", "enabled", "ports"]
+        }
+      }
+    },
+    "secret": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "create": { "type": "boolean" },
+        "data": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "properties": {
+            "ADMIN_SECRET": { "type": "string", "minLength": 1 },
+            "PROMETHEUS_SECRET": { "type": "string", "minLength": 1 },
+            "POSTGRES_PASSWORD": { "type": "string", "minLength": 1 },
+            "S3_ACCESS_KEY": { "type": "string", "minLength": 1 },
+            "S3_SECRET_KEY": { "type": "string", "minLength": 1 },
+            "MEILISEARCH_API_KEY": { "type": "string", "minLength": 1 },
+            "REDIS_URL": { "type": "string", "minLength": 1 }
+          }
+        }
+      },
+      "required": ["name", "create"]
+    },
+    "certManager": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "issuerName": { "type": "string" },
+        "issuerKind": { "type": "string", "minLength": 1 },
+        "issuerGroup": { "type": "string", "minLength": 1 },
+        "certificateName": { "type": "string", "minLength": 1 },
+        "secretName": { "type": "string", "minLength": 1 },
+        "dnsNames": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "mountPath": { "type": "string", "minLength": 1 },
+        "certificate": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "certFile": { "type": "string", "minLength": 1 },
+            "keyFile": { "type": "string", "minLength": 1 },
+            "default": { "type": "boolean" },
+            "subjects": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "server": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "hostname": { "type": "string", "minLength": 1 },
+            "allowedIPs": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "http": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "url": { "type": "string", "minLength": 1 },
+            "useXForwarded": { "type": "boolean" },
+            "headers": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "storage": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "directory": {
+              "type": "string",
+              "enum": ["internal", "sql"]
+            }
+          }
+        },
+        "proxy": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "byService": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "http": {
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "mail": {
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1 }
+                }
+              }
+            },
+            "trustedNetworks": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "listeners": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "bind": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "protocol": { "type": "string", "minLength": 1 },
+              "tlsImplicit": { "type": "boolean" },
+              "trustedNetworks": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "prometheus": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "enable": { "type": "boolean" },
+                "auth": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "username": { "type": "string", "minLength": 1 }
+                  }
+                }
+              }
+            },
+            "openTelemetry": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "enable": { "type": "boolean" },
+                "transport": {
+                  "type": "string",
+                  "enum": ["grpc", "http"]
+                },
+                "endpoint": { "type": "string" },
+                "interval": { "type": "string", "minLength": 1 },
+                "headers": {
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        },
+        "tracer": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "log": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "type": { "type": "string", "minLength": 1 },
+                "path": { "type": "string", "minLength": 1 },
+                "prefix": { "type": "string", "minLength": 1 },
+                "rotate": { "type": "string", "minLength": 1 },
+                "level": { "type": "string", "minLength": 1 },
+                "ansi": { "type": "boolean" },
+                "enable": { "type": "boolean" }
+              }
+            },
+            "console": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "type": { "type": "string", "minLength": 1 },
+                "level": { "type": "string", "minLength": 1 },
+                "ansi": { "type": "boolean" },
+                "enable": { "type": "boolean" }
+              }
+            },
+            "otel": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "type": { "type": "string", "minLength": 1 },
+                "transport": {
+                  "type": "string",
+                  "enum": ["grpc", "http"]
+                },
+                "endpoint": { "type": "string" },
+                "headers": {
+                  "type": "array",
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "level": { "type": "string", "minLength": 1 },
+                "enableLogExporter": { "type": "boolean" },
+                "enableSpanExporter": { "type": "boolean" },
+                "throttle": { "type": "string", "minLength": 1 },
+                "lossy": { "type": "boolean" },
+                "enable": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "className": { "type": "string" },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "host": { "type": "string", "minLength": 1 },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": { "type": "string", "minLength": 1 },
+                    "pathType": {
+                      "type": "string",
+                      "enum": ["Prefix", "Exact", "ImplementationSpecific"]
+                    }
+                  },
+                  "required": ["path", "pathType"]
+                }
+              }
+            },
+            "required": ["host", "paths"]
+          }
+        }
+      }
+    },
+    "httpRoute": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "hostnames": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "parentRefs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "name": { "type": "string", "minLength": 1 }
+            },
+            "required": ["name"]
+          }
+        }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "storageClass": { "type": "string" },
+        "accessModes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "size": { "type": "string", "minLength": 1 }
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "ingress": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "allowSameNamespace": { "type": "boolean" },
+            "allowInternet": { "type": "boolean" },
+            "internetCidrs": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "additionalFrom": {
+              "type": "array",
+              "items": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "ciliumEgressGatewayPolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "name": { "type": "string" },
+        "selectors": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "destinationCIDRs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "excludedCIDRs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "egressGateway": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "nodeSelector": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "egressIP": { "type": "string" }
+          }
+        }
+      }
+    },
+    "startupProbe": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "testConnection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "repository": { "type": "string", "minLength": 1 },
+            "tag": { "type": "string", "minLength": 1 },
+            "pullPolicy": {
+              "type": "string",
+              "enum": ["Always", "IfNotPresent", "Never"]
+            }
+          },
+          "required": ["repository", "tag", "pullPolicy"]
+        }
+      },
+      "required": ["enabled", "image"]
+    }
+  },
+  "allOf": [
+    {
+      "not": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": { "const": true }
+                },
+                "required": ["enabled"]
+              }
+            }
+          },
+          {
+            "properties": {
+              "httpRoute": {
+                "properties": {
+                  "enabled": { "const": true }
+                },
+                "required": ["enabled"]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

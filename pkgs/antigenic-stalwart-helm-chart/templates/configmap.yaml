@@ -1,0 +1,238 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "stalwart.fullname" . }}-config
+  labels:
+    {{- include "stalwart.labels" . | nindent 4 }}
+data:
+  config.toml: |
+    [config]
+    local-keys = [{{- range $i, $v := .Values.config.localKeys }}{{ if $i }}, {{ end }}{{ $v | quote }}{{- end }}]
+
+    [server]
+    hostname = {{ .Values.config.server.hostname | quote }}
+    {{- if .Values.certManager.enabled }}
+    tls.certificate = {{ .Values.certManager.certificate.name | quote }}
+    {{- end }}
+
+    {{- if gt (len .Values.config.server.allowedIPs) 0 }}
+
+    [server.allowed-ip]
+    {{- range .Values.config.server.allowedIPs }}
+    {{ . | quote }} = true
+    {{- end }}
+    {{- end }}
+    {{- if gt (len .Values.config.proxy.trustedNetworks) 0 }}
+
+    [server.proxy]
+    trusted-networks = [{{- range $i, $v := .Values.config.proxy.trustedNetworks }}{{ if $i }}, {{ end }}{{ $v | quote }}{{- end }}]
+    {{- end }}
+
+    {{- $listenerNames := keys .Values.config.listeners | sortAlpha }}
+    {{- $hasHttpGroup := hasKey .Values.config.proxy.byService "http" }}
+    {{- $hasMailGroup := hasKey .Values.config.proxy.byService "mail" }}
+    {{ range $name := $listenerNames }}
+    {{- $includeListener := true }}
+    {{- if and (eq $name "http") (not $.Values.service.http.enabled) }}
+    {{- $includeListener = false }}
+    {{- end }}
+    {{- if and (eq $name "smtp") (not $.Values.service.mail.enabled.smtp) }}
+    {{- $includeListener = false }}
+    {{- end }}
+    {{- if and (eq $name "submission") (not $.Values.service.mail.enabled.submission) }}
+    {{- $includeListener = false }}
+    {{- end }}
+    {{- if and (eq $name "submissions") (not $.Values.service.mail.enabled.smtps) }}
+    {{- $includeListener = false }}
+    {{- end }}
+    {{- if and (eq $name "imap") (not $.Values.service.mail.enabled.imap) }}
+    {{- $includeListener = false }}
+    {{- end }}
+    {{- if and (eq $name "imaps") (not $.Values.service.mail.enabled.imaps) }}
+    {{- $includeListener = false }}
+    {{- end }}
+    {{- if and (eq $name "sieve") (not $.Values.service.mail.enabled.sieve) }}
+    {{- $includeListener = false }}
+    {{- end }}
+    {{- if $includeListener }}
+    {{- $listener := index $.Values.config.listeners $name }}
+    {{- $listenerHasOverride := hasKey $listener "trustedNetworks" }}
+    {{- $listenerTrustedNetworks := default (list) $.Values.config.proxy.trustedNetworks }}
+    {{- $listenerProxyDefined := false }}
+    {{- if and (eq $listener.protocol "http") $hasHttpGroup }}
+    {{- $listenerTrustedNetworks = default (list) $.Values.config.proxy.byService.http }}
+    {{- $listenerProxyDefined = true }}
+    {{- else if and (ne $listener.protocol "http") $hasMailGroup }}
+    {{- $listenerTrustedNetworks = default (list) $.Values.config.proxy.byService.mail }}
+    {{- $listenerProxyDefined = true }}
+    {{- end }}
+    {{- if $listenerHasOverride }}
+    {{- $listenerTrustedNetworks = default (list) $listener.trustedNetworks }}
+    {{- $listenerProxyDefined = true }}
+    {{- end }}
+    [server.listener.{{ $name | quote }}]
+    bind = [{{- range $i, $v := $listener.bind }}{{ if $i }}, {{ end }}{{ $v | quote }}{{- end }}]
+    protocol = {{ $listener.protocol | quote }}
+    {{- if $listener.tlsImplicit }}
+    tls.implicit = true
+    {{- end }}
+    {{- if $listenerProxyDefined }}
+    [server.listener.{{ $name | quote }}.proxy]
+    trusted-networks = [{{- range $i, $v := $listenerTrustedNetworks }}{{ if $i }}, {{ end }}{{ $v | quote }}{{- end }}]
+    {{- end }}
+
+    {{- end }}
+    {{ end }}
+    [http]
+    url = {{ .Values.config.http.url | quote }}
+    headers = [{{- range $i, $v := .Values.config.http.headers }}{{ if $i }}, {{ end }}{{ $v | quote }}{{- end }}]
+    use-x-forwarded = {{ .Values.config.http.useXForwarded }}
+
+    [cluster]
+    node-id = __NODE_ID__
+    coordinator = {{ .Values.config.cluster.coordinator | quote }}
+
+    [storage]
+    data = {{ .Values.config.storage.data | quote }}
+    blob = {{ .Values.config.storage.blob | quote }}
+    fts = {{ .Values.config.storage.fts | quote }}
+    lookup = {{ .Values.config.storage.lookup | quote }}
+    directory = {{ .Values.config.storage.directory | quote }}
+
+    [store."postgresql"]
+    type = "postgresql"
+    host = {{ .Values.config.postgresql.host | quote }}
+    port = {{ .Values.config.postgresql.port }}
+    database = {{ .Values.config.postgresql.database | quote }}
+    user = {{ .Values.config.postgresql.user | quote }}
+    password = "%{env:POSTGRES_PASSWORD}%"
+    timeout = {{ .Values.config.postgresql.timeout | quote }}
+
+    [store."postgresql".purge]
+    frequency = {{ .Values.config.postgresql.purge.frequency | quote }}
+
+    [store."postgresql".tls]
+    enable = {{ .Values.config.postgresql.tls.enable }}
+    allow-invalid-certs = {{ .Values.config.postgresql.tls.allowInvalidCerts }}
+
+    [store."postgresql".pool]
+    max-connections = {{ .Values.config.postgresql.pool.maxConnections }}
+
+    {{- if eq .Values.config.storage.directory "sql" }}
+    [store."postgresql".query]
+    name = {{ .Values.config.postgresql.query.name | quote }}
+    members = {{ .Values.config.postgresql.query.members | quote }}
+    recipients = {{ .Values.config.postgresql.query.recipients | quote }}
+    emails = {{ .Values.config.postgresql.query.emails | quote }}
+    {{- end }}
+
+    [store."s3"]
+    type = "s3"
+    compression = {{ .Values.config.s3.compression | quote }}
+    bucket = {{ .Values.config.s3.bucket | quote }}
+    region = {{ .Values.config.s3.region | quote }}
+    access-key = "%{env:S3_ACCESS_KEY}%"
+    secret-key = "%{env:S3_SECRET_KEY}%"
+    endpoint = {{ .Values.config.s3.endpoint | quote }}
+    max-retries = {{ .Values.config.s3.maxRetries }}
+    timeout = {{ .Values.config.s3.timeout | quote }}
+    key-prefix = {{ .Values.config.s3.keyPrefix | quote }}
+
+    [store."s3".purge]
+    frequency = {{ .Values.config.s3.purge.frequency | quote }}
+
+    [store."meilisearch"]
+    type = "meilisearch"
+    url = {{ .Values.config.meilisearch.url | quote }}
+
+    [store."meilisearch".task]
+    poll-interval = {{ .Values.config.meilisearch.task.pollInterval | quote }}
+    poll-retries = {{ .Values.config.meilisearch.task.pollRetries }}
+
+    [store."meilisearch".auth]
+    token = "%{env:MEILISEARCH_API_KEY}%"
+
+    [store."meilisearch".tls]
+    allow-invalid-certs = {{ .Values.config.meilisearch.tls.allowInvalidCerts }}
+
+    [store."redis"]
+    type = "redis"
+    redis-type = "single"
+    urls = "%{env:REDIS_URL}%"
+    timeout = {{ .Values.config.redis.timeout | quote }}
+
+    {{- if eq .Values.config.storage.directory "internal" }}
+    [directory."internal"]
+    type = "internal"
+    store = "postgresql"
+    {{- else if eq .Values.config.storage.directory "sql" }}
+    [directory."sql"]
+    type = "sql"
+    store = "postgresql"
+    {{- end }}
+
+    [tracer."log"]
+    type = {{ .Values.config.tracer.log.type | quote }}
+    path = {{ .Values.config.tracer.log.path | quote }}
+    prefix = {{ .Values.config.tracer.log.prefix | quote }}
+    rotate = {{ .Values.config.tracer.log.rotate | quote }}
+    level = {{ .Values.config.tracer.log.level | quote }}
+    ansi = {{ .Values.config.tracer.log.ansi }}
+    enable = {{ .Values.config.tracer.log.enable }}
+
+    [tracer."console"]
+    type = {{ .Values.config.tracer.console.type | quote }}
+    level = {{ .Values.config.tracer.console.level | quote }}
+    ansi = {{ .Values.config.tracer.console.ansi }}
+    enable = {{ .Values.config.tracer.console.enable }}
+
+    {{- if .Values.config.tracer.otel.enable }}
+    [tracer."otel"]
+    type = {{ .Values.config.tracer.otel.type | quote }}
+    transport = {{ .Values.config.tracer.otel.transport | quote }}
+    {{- if .Values.config.tracer.otel.endpoint }}
+    endpoint = {{ .Values.config.tracer.otel.endpoint | quote }}
+    {{- end }}
+    {{- if gt (len .Values.config.tracer.otel.headers) 0 }}
+    headers = [{{- range $i, $v := .Values.config.tracer.otel.headers }}{{ if $i }}, {{ end }}{{ $v | quote }}{{- end }}]
+    {{- end }}
+    level = {{ .Values.config.tracer.otel.level | quote }}
+    enable.log-exporter = {{ .Values.config.tracer.otel.enableLogExporter }}
+    enable.span-exporter = {{ .Values.config.tracer.otel.enableSpanExporter }}
+    throttle = {{ .Values.config.tracer.otel.throttle | quote }}
+    lossy = {{ .Values.config.tracer.otel.lossy }}
+    enable = {{ .Values.config.tracer.otel.enable }}
+    {{- end }}
+
+    {{- if .Values.config.metrics.openTelemetry.enable }}
+    [metrics.open-telemetry]
+    transport = {{ .Values.config.metrics.openTelemetry.transport | quote }}
+    endpoint = {{ .Values.config.metrics.openTelemetry.endpoint | quote }}
+    interval = {{ .Values.config.metrics.openTelemetry.interval | quote }}
+    {{- if gt (len .Values.config.metrics.openTelemetry.headers) 0 }}
+    headers = [{{- range $i, $v := .Values.config.metrics.openTelemetry.headers }}{{ if $i }}, {{ end }}{{ $v | quote }}{{- end }}]
+    {{- end }}
+    {{- end }}
+
+    {{- if .Values.config.metrics.prometheus.enable }}
+    [metrics.prometheus]
+    enable = true
+
+    [metrics.prometheus.auth]
+    username = {{ .Values.config.metrics.prometheus.auth.username | quote }}
+    secret = "%{env:PROMETHEUS_SECRET}%"
+    {{- end }}
+
+    [authentication.fallback-admin]
+    user = {{ .Values.config.fallbackAdmin.user | quote }}
+    secret = "%{env:ADMIN_SECRET}%"
+    {{- if .Values.certManager.enabled }}
+
+    [certificate.{{ .Values.certManager.certificate.name | quote }}]
+    cert = "%{file:{{ .Values.certManager.mountPath }}/{{ .Values.certManager.certificate.certFile }}}%"
+    private-key = "%{file:{{ .Values.certManager.mountPath }}/{{ .Values.certManager.certificate.keyFile }}}%"
+    default = {{ .Values.certManager.certificate.default }}
+    {{- if gt (len .Values.certManager.certificate.subjects) 0 }}
+    subjects = [{{- range $i, $v := .Values.certManager.certificate.subjects }}{{ if $i }}, {{ end }}{{ $v | quote }}{{- end }}]
+    {{- end }}
+    {{- end }}

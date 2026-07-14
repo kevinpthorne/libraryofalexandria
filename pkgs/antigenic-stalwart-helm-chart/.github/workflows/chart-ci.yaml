@@ -1,0 +1,68 @@
+name: chart-ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  version-bump-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Enforce chart version bump on chart changes
+        run: |
+          set -euo pipefail
+          BASE_REF="${{ github.base_ref }}"
+          git fetch --no-tags origin "${BASE_REF}:${BASE_REF}"
+
+          CHANGED_FILES="$(git diff --name-only "${BASE_REF}"...HEAD)"
+          echo "Changed files:"
+          echo "${CHANGED_FILES}"
+
+          if ! echo "${CHANGED_FILES}" | grep -Eq '^(Chart\.yaml|values\.yaml|values\.schema\.json|templates/|\.helmignore)'; then
+            echo "No chart-impacting files changed; skipping version bump check."
+            exit 0
+          fi
+
+          BASE_VERSION="$(git show "${BASE_REF}:Chart.yaml" | sed -n 's/^version:[[:space:]]*//p' | head -n1 | tr -d '\"')"
+          HEAD_VERSION="$(sed -n 's/^version:[[:space:]]*//p' Chart.yaml | head -n1 | tr -d '\"')"
+
+          if [ -z "${BASE_VERSION}" ] || [ -z "${HEAD_VERSION}" ]; then
+            echo "Unable to determine chart versions."
+            exit 1
+          fi
+
+          if [ "${BASE_VERSION}" = "${HEAD_VERSION}" ]; then
+            echo "Chart version must be bumped when chart-impacting files change. Base=${BASE_VERSION}, Head=${HEAD_VERSION}"
+            exit 1
+          fi
+
+          HIGHEST_VERSION="$(printf '%s\n%s\n' "${BASE_VERSION}" "${HEAD_VERSION}" | sort -V | tail -n1)"
+          if [ "${HIGHEST_VERSION}" != "${HEAD_VERSION}" ]; then
+            echo "Chart version must increase. Base=${BASE_VERSION}, Head=${HEAD_VERSION}"
+            exit 1
+          fi
+
+          echo "Version bump validated. Base=${BASE_VERSION}, Head=${HEAD_VERSION}"
+
+  lint-and-render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Helm lint
+        run: helm lint .
+
+      - name: Helm template
+        run: helm template stalwart . >/tmp/stalwart-rendered.yaml

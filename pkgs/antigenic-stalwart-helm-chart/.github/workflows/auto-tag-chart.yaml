@@ -1,0 +1,116 @@
+name: auto-tag-chart-version
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  tag-on-version-change:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Create tag when Chart.yaml version changes
+        id: tagger
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          # Initial branch creation can have an empty/zero before SHA.
+          if [ "${BEFORE_SHA}" = "0000000000000000000000000000000000000000" ]; then
+            echo "No valid before SHA; skipping."
+            echo "tag_created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            echo "Before SHA not available locally; skipping."
+            echo "tag_created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          OLD_VERSION="$(git show "${BEFORE_SHA}:Chart.yaml" | sed -n 's/^version:[[:space:]]*//p' | head -n1 | tr -d '\"')"
+          NEW_VERSION="$(git show "${AFTER_SHA}:Chart.yaml" | sed -n 's/^version:[[:space:]]*//p' | head -n1 | tr -d '\"')"
+          CHART_NAME="$(git show "${AFTER_SHA}:Chart.yaml" | sed -n 's/^name:[[:space:]]*//p' | head -n1 | tr -d '\"')"
+
+          if [ -z "${OLD_VERSION}" ] || [ -z "${NEW_VERSION}" ] || [ -z "${CHART_NAME}" ]; then
+            echo "Unable to parse chart versions; skipping."
+            echo "tag_created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "${OLD_VERSION}" = "${NEW_VERSION}" ]; then
+            echo "Chart version unchanged (${NEW_VERSION}); no tag created."
+            echo "tag_created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          TAG="v${NEW_VERSION}"
+          git fetch --tags origin
+
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "Tag ${TAG} already exists; skipping."
+            echo "tag_created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "Release ${TAG}"
+          git push origin "${TAG}"
+
+          echo "tag_created=true" >> "$GITHUB_OUTPUT"
+          echo "chart_name=${CHART_NAME}" >> "$GITHUB_OUTPUT"
+          echo "chart_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Created and pushed ${TAG}"
+
+      - name: Setup Helm
+        if: steps.tagger.outputs.tag_created == 'true'
+        uses: azure/setup-helm@v4
+
+      - name: Set lowercase owner
+        if: steps.tagger.outputs.tag_created == 'true'
+        run: echo "OWNER_LC=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Login to GHCR
+        if: steps.tagger.outputs.tag_created == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "${GITHUB_TOKEN}" | helm registry login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Package chart
+        if: steps.tagger.outputs.tag_created == 'true'
+        run: |
+          mkdir -p .dist
+          helm package . --destination .dist
+
+      - name: Push chart to GHCR (OCI)
+        if: steps.tagger.outputs.tag_created == 'true'
+        run: helm push .dist/*.tgz oci://ghcr.io/${OWNER_LC}/charts
+
+      - name: Setup ORAS
+        if: steps.tagger.outputs.tag_created == 'true'
+        uses: oras-project/setup-oras@v1
+
+      - name: Login to GHCR (ORAS)
+        if: steps.tagger.outputs.tag_created == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "${GITHUB_TOKEN}" | oras login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push Artifact Hub repository metadata
+        if: steps.tagger.outputs.tag_created == 'true'
+        run: |
+          oras push \
+            "ghcr.io/${OWNER_LC}/charts/${{ steps.tagger.outputs.chart_name }}:artifacthub.io" \
+            artifacthub-repo.yml:application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml

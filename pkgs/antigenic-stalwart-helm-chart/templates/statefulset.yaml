@@ -1,0 +1,206 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "stalwart.fullname" . }}
+  labels:
+    {{- include "stalwart.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "stalwart.fullname" . }}-headless
+  replicas: {{ .Values.replicaCount }}
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: {{ .Values.strategy.type }}
+  selector:
+    matchLabels:
+      {{- include "stalwart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "stalwart.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "stalwart.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: render-config
+          image: {{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}
+          imagePullPolicy: {{ .Values.initContainer.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              ordinal="${HOSTNAME##*-}"
+              mkdir -p /opt/stalwart/etc
+              cp /config/config.toml /opt/stalwart/etc/config.toml
+              sed -i "s/__NODE_ID__/${ordinal}/g" /opt/stalwart/etc/config.toml
+              chown -R 1000:1000 /opt/stalwart/etc
+              chmod 0775 /opt/stalwart/etc
+              chmod 0664 /opt/stalwart/etc/config.toml
+              mkdir -p /opt/stalwart/logs
+              chown -R 1000:1000 /opt/stalwart/logs
+              chmod 0775 /opt/stalwart/logs
+          volumeMounts:
+            - name: config-template
+              mountPath: /config
+            - name: data
+              mountPath: /opt/stalwart
+      containers:
+        - name: stalwart
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            {{- if .Values.service.http.enabled }}
+            - name: http
+              containerPort: 8080
+            {{- end }}
+            - name: https
+              containerPort: 443
+            {{- if .Values.service.mail.enabled.smtp }}
+            - name: smtp
+              containerPort: 25
+            {{- end }}
+            {{- if .Values.service.mail.enabled.submission }}
+            - name: submission
+              containerPort: 587
+            {{- end }}
+            {{- if .Values.service.mail.enabled.smtps }}
+            - name: smtps
+              containerPort: 465
+            {{- end }}
+            {{- if .Values.service.mail.enabled.imap }}
+            - name: imap
+              containerPort: 143
+            {{- end }}
+            {{- if .Values.service.mail.enabled.imaps }}
+            - name: imaps
+              containerPort: 993
+            {{- end }}
+            {{- if .Values.service.mail.enabled.sieve }}
+            - name: sieve
+              containerPort: 4190
+            {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secret.name }}
+          {{- with .Values.extraEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- $livenessProbe := mustDeepCopy .Values.livenessProbe }}
+          {{- if and (not .Values.service.http.enabled) (hasKey $livenessProbe "httpGet") }}
+          {{- $_ := set $livenessProbe.httpGet "port" 443 }}
+          {{- $_ := set $livenessProbe.httpGet "scheme" "HTTPS" }}
+          {{- end }}
+          livenessProbe:
+            {{- toYaml $livenessProbe | nindent 12 }}
+          {{- $readinessProbe := mustDeepCopy .Values.readinessProbe }}
+          {{- if and (not .Values.service.http.enabled) (hasKey $readinessProbe "httpGet") }}
+          {{- $_ := set $readinessProbe.httpGet "port" 443 }}
+          {{- $_ := set $readinessProbe.httpGet "scheme" "HTTPS" }}
+          {{- end }}
+          readinessProbe:
+            {{- toYaml $readinessProbe | nindent 12 }}
+          {{- with .Values.startupProbe }}
+          {{- $startupProbe := mustDeepCopy . }}
+          {{- if and (not $.Values.service.http.enabled) (hasKey $startupProbe "httpGet") }}
+          {{- $_ := set $startupProbe.httpGet "port" 443 }}
+          {{- $_ := set $startupProbe.httpGet "scheme" "HTTPS" }}
+          {{- end }}
+          startupProbe:
+            {{- toYaml $startupProbe | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /opt/stalwart
+            {{- if .Values.certManager.enabled }}
+            - name: cert-manager-tls
+              mountPath: {{ .Values.certManager.mountPath }}
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config-template
+          configMap:
+            name: {{ include "stalwart.fullname" . }}-config
+        {{- if .Values.certManager.enabled }}
+        - name: cert-manager-tls
+          secret:
+            secretName: {{ .Values.certManager.secretName }}
+        {{- end }}
+        {{- if not .Values.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - {{ include "stalwart.name" . }}
+                topologyKey: kubernetes.io/hostname
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          {{- toYaml .Values.persistence.accessModes | nindent 10 }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+        {{- if .Values.persistence.storageClass }}
+        storageClassName: {{ .Values.persistence.storageClass }}
+        {{- end }}
+  {{- end }}

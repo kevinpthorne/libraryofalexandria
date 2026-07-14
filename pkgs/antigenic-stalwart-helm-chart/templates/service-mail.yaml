@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "stalwart.mailServiceName" . }}
+  labels:
+    {{- include "stalwart.labels" . | nindent 4 }}
+  {{- with .Values.service.mail.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.mail.type }}
+  {{- if eq .Values.service.mail.type "LoadBalancer" }}
+  externalTrafficPolicy: {{ .Values.service.mail.externalTrafficPolicy }}
+  {{- end }}
+  selector:
+    {{- include "stalwart.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- if .Values.service.mail.enabled.smtp }}
+    - name: smtp
+      port: {{ .Values.service.mail.ports.smtp }}
+      targetPort: smtp
+    {{- end }}
+    {{- if .Values.service.mail.enabled.submission }}
+    - name: submission
+      port: {{ .Values.service.mail.ports.submission }}
+      targetPort: submission
+    {{- end }}
+    {{- if .Values.service.mail.enabled.smtps }}
+    - name: smtps
+      port: {{ .Values.service.mail.ports.smtps }}
+      targetPort: smtps
+    {{- end }}
+    {{- if .Values.service.mail.enabled.imap }}
+    - name: imap
+      port: {{ .Values.service.mail.ports.imap }}
+      targetPort: imap
+    {{- end }}
+    {{- if .Values.service.mail.enabled.imaps }}
+    - name: imaps
+      port: {{ .Values.service.mail.ports.imaps }}
+      targetPort: imaps
+    {{- end }}
+    {{- if .Values.service.mail.enabled.sieve }}
+    - name: sieve
+      port: {{ .Values.service.mail.ports.sieve }}
+      targetPort: sieve
+    {{- end }}
+    {{- if .Values.service.http.enabled }}
+    - name: http
+      port: {{ .Values.service.http.port }}
+      targetPort: {{ .Values.service.http.targetPort }}
+    {{- end }}
+    - name: https
+      port: 443
+      targetPort: 443

@@ -1,0 +1,27 @@
+{{- if .Values.ciliumEgressGatewayPolicy.enabled }}
+apiVersion: cilium.io/v2
+kind: CiliumEgressGatewayPolicy
+metadata:
+  name: {{ default (printf "%s-egress-gateway" (include "stalwart.fullname" .)) .Values.ciliumEgressGatewayPolicy.name }}
+  labels:
+    {{- include "stalwart.labels" . | nindent 4 }}
+spec:
+  selectors:
+    {{- if gt (len .Values.ciliumEgressGatewayPolicy.selectors) 0 }}
+    {{- toYaml .Values.ciliumEgressGatewayPolicy.selectors | nindent 4 }}
+    {{- else }}
+    - podSelector:
+        matchLabels:
+          {{- include "stalwart.selectorLabels" . | nindent 10 }}
+    {{- end }}
+  destinationCIDRs:
+    {{- toYaml .Values.ciliumEgressGatewayPolicy.destinationCIDRs | nindent 4 }}
+  {{- with .Values.ciliumEgressGatewayPolicy.excludedCIDRs }}
+  excludedCIDRs:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  egressGateway:
+    nodeSelector:
+      {{- toYaml .Values.ciliumEgressGatewayPolicy.egressGateway.nodeSelector | nindent 6 }}
+    egressIP: {{ .Values.ciliumEgressGatewayPolicy.egressGateway.egressIP | quote }}
+{{- end }}

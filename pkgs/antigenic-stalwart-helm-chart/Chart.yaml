@@ -1,0 +1,56 @@
+annotations:
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/license: MIT
+  artifacthub.io/links: |
+    - name: Source
+      url: https://github.com/Antigenic-OSS/stalwart-helm-chart
+    - name: Website
+      url: https://antigenic.org
+    - name: Upstream Stalwart
+      url: https://stalw.art
+    - name: Documentation
+      url: https://github.com/Antigenic-OSS/stalwart-helm-chart/blob/main/README.md
+    - name: Support
+      url: https://github.com/Antigenic-OSS/stalwart-helm-chart/blob/main/SUPPORT.md
+apiVersion: v2
+appVersion: v0.15.5
+description: Community-maintained Helm chart for deploying the Stalwart Mail Server
+  on Kubernetes with SMTP, IMAP, JMAP, PostgreSQL, Redis, S3-compatible object storage,
+  and Meilisearch.
+home: https://github.com/Antigenic-OSS/stalwart-helm-chart
+icon: https://github.com/Antigenic-OSS.png
+keywords:
+- mail
+- email
+- email-server
+- stalwart
+- stalwart-mail-server
+- mta
+- msa
+- smtp
+- submission
+- smtps
+- imap
+- imaps
+- sieve
+- managesieve
+- jmap
+- kubernetes
+- helm
+- ingress
+- gateway-api
+- cert-manager
+- postgresql
+- redis
+- s3
+- meilisearch
+maintainers:
+- email: oss@antigenic.org
+  name: Antigenic Technologies Inc.
+  url: https://antigenic.org
+name: antigenic-stalwart-helm-chart
+sources:
+- https://github.com/Antigenic-OSS/stalwart-helm-chart
+- https://github.com/stalwartlabs/mail-server
+type: application
+version: 1.0.5

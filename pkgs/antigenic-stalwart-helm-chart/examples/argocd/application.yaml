@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stalwart
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: stalwart
+  source:
+    repoURL: ghcr.io/antigenic-oss/charts
+    chart: antigenic-stalwart-helm-chart
+    targetRevision: 1.0.5
+    helm:
+      releaseName: stalwart
+      values: |
+        replicaCount: 3
+
+        secret:
+          create: false
+          name: stalwart-secrets
+        certManager:
+          enabled: true
+          issuerName: letsencrypt-dns
+          secretName: stalwart-mail-tls
+        
+        config:
+          server:
+            hostname: mail.example.com
+          http:
+            useXForwarded: false
+          postgresql:
+            host: postgres-rw.database.svc.cluster.local
+            database: stalwart
+            user: stalwart
+          s3:
+            endpoint: https://minio.storage.svc.cluster.local:9000
+            bucket: stalwart
+          meilisearch:
+            url: http://meilisearch.search.svc.cluster.local:7700
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
