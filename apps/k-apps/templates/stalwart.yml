@@ -56,11 +56,11 @@ spec:
           cluster:
             coordinator: redis
           postgresql:
-            host: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc"
+            host: "127.0.0.1"
             database: stalwart
             user: stalwart
             tls:
-              enable: true
+              enable: false
               allowInvalidCerts: false
           redis:
             timeout: 10s
@@ -85,14 +85,6 @@ spec:
           {{- if $hasFederation }}
           - name: REDIS_URL
             value: "redis://127.0.0.1:6379/0"
-          - name: PGSSLCERT
-            value: "/certs/db-client/tls.crt"
-          - name: PGSSLKEY
-            value: "/certs/db-client/tls.key"
-          - name: PGSSLROOTCERT
-            value: "/certs/cas/ca-bundle.crt"
-          - name: PGSSLMODE
-            value: verify-full
           - name: OIDC_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
@@ -113,6 +105,9 @@ spec:
                 readOnly: true
               - name: cas
                 mountPath: /certs/cas
+                readOnly: true
+              - name: db-client-certs
+                mountPath: /certs/db-client
                 readOnly: true
             securityContext:
               allowPrivilegeEscalation: false
@@ -437,4 +432,12 @@ data:
     CAfile = /certs/cas/ca-bundle.crt
     cert = /certs/keydb-client/tls.crt
     key = /certs/keydb-client/tls.key
+    [postgres]
+    client = yes
+    accept = 127.0.0.1:5432
+    connect = {{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc:5432
+    verifyChain = yes
+    CAfile = /certs/cas/ca-bundle.crt
+    cert = /certs/db-client/tls.crt
+    key = /certs/db-client/tls.key
 {{- end }}
