@@ -198,6 +198,7 @@ spec:
           secretName: "stalwart-tls"
           sans:
             - "mail.kevinpthorne.com"
+            - "mail.k.kpt.link"
   destination:
     server: https://kubernetes.default.svc
     namespace: mail
@@ -227,11 +228,12 @@ spec:
             gatewayNamespace: kube-system
             hostnames:
               - "mail.kevinpthorne.com"
+              - "mail.k.kpt.link"
             ports:
               - port: 443
                 protocol: TLS
                 targetPort: 8080
-                targetService: stalwart
+                targetService: stalwart-headless
   destination:
     server: https://kubernetes.default.svc
     namespace: mail
