@@ -37,6 +37,9 @@ spec:
           - gateway-tlsroute
 
         annotationFilter: "external-dns.loa.internal/federate in (true)"
+
+        domainFilters:
+          - kpt.link  # TODO replace with federation domain
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: {{ .Values.externaldns.namespace }}

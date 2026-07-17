@@ -36,3 +36,4 @@ cloudflared:
   domains:
     - "immich.kpt.link"
     - "ident.kpt.link"
+    - "mail.k.kpt.link"  # k-apps
