@@ -54,7 +54,7 @@ spec:
             imap: null
             sieve: null
           server:
-            hostname: "mail.kevinpthorne.com"
+            hostname: "mail.k.kpt.link"
           storage:
             blob: s3
             {{- if $hasFederation }}
