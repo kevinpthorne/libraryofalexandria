@@ -13,6 +13,7 @@ spec:
     targetRevision: HEAD
     helm:
       valuesObject:
+        replicaCount: 1
         fullnameOverride: stalwart
         service:
           mail:
@@ -24,6 +25,21 @@ spec:
               imaps: true
               sieve: false
         config:
+          queue:
+            outbound:
+              next-hop:
+                - if: "is_local_domain('', rcpt_domain)"
+                  then: "'local'"
+                - if: "true"
+                  then: "'smtp2go'"
+          remote:
+            smtp2go:
+              address: "mail.smtp2go.com"
+              port: 587
+              protocol: smtp
+              auth:
+                username: "%{env:SMTP2GO_USERNAME}%"
+                secret: "%{env:SMTP2GO_PASSWORD}%"
           certificate:
             default:
               cert: "%{file:/opt/stalwart/certs/tls.crt}%"
@@ -82,6 +98,16 @@ spec:
               secretKeyRef:
                 name: stalwart-s3-creds
                 key: secretKey
+          - name: SMTP2GO_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: smtp2go-credentials
+                key: username
+          - name: SMTP2GO_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: smtp2go-credentials
+                key: password
           {{- if $hasFederation }}
           - name: REDIS_URL
             value: "redis://127.0.0.1:6379/0"
