@@ -1,0 +1,81 @@
+# Stalwart DNS records for k.kpt.link
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: stalwart-kkptlink-dns
+  namespace: mail
+  annotations:
+    external-dns.loa.internal/expose: "public"
+spec:
+  endpoints:
+    - dnsName: k.kpt.link
+      recordType: MX
+      targets:
+        - "10 mail.k.kpt.link"
+    - dnsName: 202607e._domainkey.k.kpt.link
+      recordType: TXT
+      targets:
+        - "v=DKIM1; k=ed25519; h=sha256; p=6mDplaXi5JsCn9/xVsbAUDjwrtHN3qo2OEV5N4Ogsb0="
+    - dnsName: 202607r._domainkey.k.kpt.link
+      recordType: TXT
+      targets:
+        - "v=DKIM1; k=rsa; h=sha256; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo1yfYpOLVF0MnC8Ld9wokdkUflTmtT8a9ftXup8+lqz3qfTM9ySTZVwpCIGL+J9mXbYrQa6JOI1/KwADA0k/h7e3lhQkeYhbyaFMPnK0rK3J1iCZuQgdrCFBrWDajTpJE7mBEBd9mqf49xaDY0LlUdF32Pjv1buroDn3KjiKWp7K6DykhWc+y+zU1e7OS6FEmdDDnQjdE40nejXREf4GiixUWdFBZjM4QA0u7RfjvdmjfLaSJw2jN62LUNy9LxQh/Et9RDKinLqMcMRTzUdCFW9yBZMCtTSK9MhNuOPhYz+CSmBWDYuitQFTIxyjGalwpZLYzRi+szujOFIWryvDOwIDAQAB"
+    - dnsName: mail.k.kpt.link
+      recordType: TXT
+      targets:
+        - "v=spf1 a ra=postmaster -all"
+    - dnsName: k.kpt.link
+      recordType: TXT
+      targets:
+        - "v=spf1 mx ra=postmaster -all"
+    - dnsName: _jmap._tcp.k.kpt.link
+      recordType: SRV
+      targets:
+        - "0 1 443 mail.k.kpt.link"
+    - dnsName: _caldavs._tcp.k.kpt.link
+      recordType: SRV
+      targets:
+        - "0 1 443 mail.k.kpt.link"
+    - dnsName: _carddavs._tcp.k.kpt.link
+      recordType: SRV
+      targets:
+        - "0 1 443 mail.k.kpt.link"
+    - dnsName: _imaps._tcp.k.kpt.link
+      recordType: SRV
+      targets:
+        - "0 1 993 mail.k.kpt.link"
+    - dnsName: _submissions._tcp.k.kpt.link
+      recordType: SRV
+      targets:
+        - "0 1 465 mail.k.kpt.link"
+    - dnsName: autoconfig.k.kpt.link
+      recordType: CNAME
+      targets:
+        - "mail.k.kpt.link"
+    - dnsName: autodiscover.k.kpt.link
+      recordType: CNAME
+      targets:
+        - "mail.k.kpt.link"
+    - dnsName: mta-sts.k.kpt.link
+      recordType: CNAME
+      targets:
+        - "mail.k.kpt.link"
+    - dnsName: _mta-sts.k.kpt.link
+      recordType: TXT
+      targets:
+        - "v=STSv1; id=8224691313416554982"
+    - dnsName: _dmarc.k.kpt.link
+      recordType: TXT
+      targets:
+        - "v=DMARC1; p=reject; rua=mailto:postmaster@k.kpt.link; ruf=mailto:postmaster@k.kpt.link"
+    - dnsName: _smtp._tls.k.kpt.link
+      recordType: TXT
+      targets:
+        - "v=TLSRPTv1; rua=mailto:postmaster@k.kpt.link"
+    - dnsName: _25._tcp.mail.k.kpt.link
+      recordType: TLSA
+      targets:
+        - "3 0 1 1c81e5c2fec2394bdc487fde89ade6bb2d59afa0fca43937e9744bb11bda0794"
+        - "3 0 2 5d99459f008322b04045957836e25eefa975bb11f54d21504d162f23dc491592f643064cb509c20de200bdc020b19a51270e6153844d5998581180e058bc3787"
+        - "3 1 1 7842e6e0d6f7817d5d08147ee2ed5fdff4eef75c1603bcf7449ab02e0557c362"
+        - "3 1 2 1c67ecaed3d53950053fba54a485b2c41af79fbc5c4e58f62b7b04e7170536f3183ac829cbebfda5dd0d4559005dab8bad1d6b5b046660978feb25095371302f"

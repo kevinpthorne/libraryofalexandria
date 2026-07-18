@@ -1,0 +1,22 @@
+# SMTP2Go DNS records for k.kpt.link
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: smtp2go-kkptlink-dns
+  namespace: mail
+  annotations:
+    external-dns.loa.internal/expose: "public"
+spec:
+  endpoints:
+    - dnsName: em666660.k.kpt.link
+      recordType: CNAME
+      targets:
+        - "return.smtp2go.net"
+    - dnsName: s666660._domainkey.k.kpt.link
+      recordType: CNAME
+      targets:
+        - "dkim.smtp2go.net"
+    - dnsName: link.k.kpt.link
+      recordType: CNAME
+      targets:
+        - "track.smtp2go.net"

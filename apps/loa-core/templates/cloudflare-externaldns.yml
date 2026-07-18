@@ -33,6 +33,7 @@ spec:
           - gateway-tcproute
           - gateway-udproute
           - service
+          - crd
           
           annotationFilter: "external-dns.loa.internal/expose in (public)"
   destination:

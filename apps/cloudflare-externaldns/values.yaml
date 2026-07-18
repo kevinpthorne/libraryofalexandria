@@ -24,4 +24,5 @@ external-dns:
     - gateway-tcproute
     - gateway-udproute
     - service
+    - crd
 
