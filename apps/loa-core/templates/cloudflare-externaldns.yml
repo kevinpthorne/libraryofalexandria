@@ -21,6 +21,12 @@ spec:
           extraArgs:
             - "--default-targets={{ .Values.cluster.externalDomain }}"
             - "--txt-wildcard-replacement=wildcard"
+            - "--managed-record-types=A"
+            - "--managed-record-types=AAAA"
+            - "--managed-record-types=CNAME"
+            - "--managed-record-types=MX"  # mail.k.kpt.link
+            - "--managed-record-types=TXT"
+            - "--managed-record-types=SRV"
           env:
             - name: CF_API_TOKEN
               valueFrom:
