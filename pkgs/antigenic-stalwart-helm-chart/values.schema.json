@@ -171,8 +171,7 @@
           "additionalProperties": true,
           "properties": {
             "directory": {
-              "type": "string",
-              "enum": ["internal", "sql"]
+              "type": "string"
             }
           }
         },
