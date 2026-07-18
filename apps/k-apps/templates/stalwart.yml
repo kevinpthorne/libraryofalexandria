@@ -61,7 +61,7 @@ spec:
             data: postgresql
             fts: postgresql
             lookup: redis
-            directory: sql
+            directory: keycloak
             {{- else }}
             directory: internal
             {{- end }}
@@ -446,7 +446,12 @@ spec:
     name: stalwart-oauth-secret
     key: secret
   redirectUris:
+    - "https://mail.kevinpthorne.com/admin/oauth/callback"
+    - "https://mail.kevinpthorne.com/account/oauth/callback"
     - "https://mail.kevinpthorne.com/oidc/callback"
+    - "https://mail.k.kpt.link/admin/oauth/callback"
+    - "https://mail.k.kpt.link/account/oauth/callback"
+    - "https://mail.k.kpt.link/oidc/callback"
 ---
 apiVersion: v1
 kind: ConfigMap

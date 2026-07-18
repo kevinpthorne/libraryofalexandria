@@ -37,8 +37,8 @@
 {{- if regexMatch "^https?://" .Values.config.http.url -}}
 {{- fail "config.http.url must be a Stalwart expression string (for example: protocol + '://' + config_get('server.hostname') + ':' + local_port), not a plain https URL." -}}
 {{- end -}}
-{{- if and (ne .Values.config.storage.directory "internal") (ne .Values.config.storage.directory "sql") -}}
-{{- fail "config.storage.directory must be either internal (default) or sql." -}}
+{{- if and (ne .Values.config.storage.directory "internal") (ne .Values.config.storage.directory "sql") (not (hasKey (default dict .Values.config.directory) .Values.config.storage.directory)) -}}
+{{- fail "config.storage.directory must be either internal, sql, or a defined custom directory." -}}
 {{- end -}}
 {{- if eq .Values.config.storage.directory "sql" -}}
   {{- if not (default "" .Values.config.postgresql.query.name) -}}

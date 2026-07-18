@@ -173,6 +173,14 @@ data:
     store = "postgresql"
     {{- end }}
 
+    {{- range $name, $dir := .Values.config.directory | default dict }}
+    [directory.{{ $name | quote }}]
+    {{- range $k, $v := $dir }}
+    {{ $k }} = {{ $v | quote }}
+    {{- end }}
+    {{- end }}
+
+
     [tracer."log"]
     type = {{ .Values.config.tracer.log.type | quote }}
     path = {{ .Values.config.tracer.log.path | quote }}
