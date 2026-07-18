@@ -16,6 +16,8 @@ spec:
         replicaCount: 1
         fullnameOverride: stalwart
         service:
+          http:
+            enabled: false
           mail:
             annotations:
               service.cilium.io/global: "true"
