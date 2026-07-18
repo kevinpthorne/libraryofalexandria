@@ -263,7 +263,7 @@ spec:
             ports:
               - port: 443
                 protocol: TLS
-                targetPort: 8080
+                targetPort: 443
                 targetService: stalwart-headless
                 annotations:
                   external-dns.loa.internal/federate: "true"
