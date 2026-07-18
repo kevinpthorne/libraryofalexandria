@@ -250,7 +250,7 @@ data:
     {{- range $name, $cert := .Values.config.certificate | default dict }}
     [certificate.{{ $name | quote }}]
     {{- range $k, $v := $cert }}
-    {{- if or (eq $v true) (eq $v false) }}
+    {{- if typeIs "bool" $v }}
     {{ $k }} = {{ $v }}
     {{- else }}
     {{ $k }} = {{ $v | quote }}
