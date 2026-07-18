@@ -246,3 +246,15 @@ data:
     subjects = [{{- range $i, $v := .Values.certManager.certificate.subjects }}{{ if $i }}, {{ end }}{{ $v | quote }}{{- end }}]
     {{- end }}
     {{- end }}
+
+    {{- range $name, $cert := .Values.config.certificate | default dict }}
+    [certificate.{{ $name | quote }}]
+    {{- range $k, $v := $cert }}
+    {{- if or (eq $v true) (eq $v false) }}
+    {{ $k }} = {{ $v }}
+    {{- else }}
+    {{ $k }} = {{ $v | quote }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+
