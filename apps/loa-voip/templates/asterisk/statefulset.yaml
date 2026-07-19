@@ -20,6 +20,12 @@ spec:
           volumeMounts:
             - name: asterisk-lib
               mountPath: /mnt/asterisk-lib
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
       containers:
         - name: asterisk
           image: {{ .Values.asterisk.image }}
