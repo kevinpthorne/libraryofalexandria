@@ -55,37 +55,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: loa-voip-gateway
-  namespace: {{ .Values.argoNamespace }}
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
-    path: pkgs/gateway-helm
-    targetRevision: HEAD
-    helm:
-      valuesObject:
-        endpoints:
-          - name: loa-voip
-            createGateway: false
-            gatewayName: local-gateway
-            gatewayNamespace: kube-system
-            hostnames:
-              - "voip.{{ .Values.cluster.name | default "k" }}.loa.internal"
-            ports:
-              - port: 443
-                protocol: TLS
-                targetPort: 8080
-                targetService: loa-voip-kamailio-ws
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: voip
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true

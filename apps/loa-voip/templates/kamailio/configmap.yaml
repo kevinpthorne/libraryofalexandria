@@ -89,6 +89,12 @@ data:
             exit;
         }
     
+        if (is_method("REGISTER|OPTIONS|SUBSCRIBE|NOTIFY|MESSAGE")) {
+            $du = "sip:" + ASTERISK_HOST + ":" + ASTERISK_PORT;
+            route(RELAY);
+            exit;
+        }
+    
         sl_send_reply("501", "Not Implemented");
     }
     
