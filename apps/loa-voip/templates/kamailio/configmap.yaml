@@ -30,12 +30,15 @@ data:
     loadmodule "xhttp.so"
     loadmodule "tls.so"
     loadmodule "websocket.so"
+    loadmodule "nathelper.so"
     
     modparam("rtpengine", "rtpengine_sock", RTPENGINE_SOCK)
     modparam("tls", "config", "/etc/kamailio/tls.cfg")
     
     # --- MAIN ROUTING LOGIC ---
     request_route {
+        force_rport();
+
         if (!mf_process_maxfwd_header("10")) {
             sl_send_reply("483", "Too Many Hops");
             exit;
@@ -62,7 +65,7 @@ data:
             # INBOUND FROM TELNYX
             if ($(src_ip) == "192.76.120.10" || $(src_ip) == "192.76.120.11") {
                 rtpengine_manage("replace-origin replace-session-connection");
-                $ru = "sip:" + $(rU) + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT;
+                $ru = "sip:" + $(rU) + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
                 route(RELAY);
                 exit;
             }
@@ -84,13 +87,13 @@ data:
             } else {
                 rtpengine_manage("replace-origin replace-session-connection");
             }
-            $ru = "sip:" + $(rU) + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT;
+            $ru = "sip:" + $(rU) + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
             route(RELAY);
             exit;
         }
     
         if (is_method("REGISTER|OPTIONS|SUBSCRIBE|NOTIFY|MESSAGE")) {
-            $du = "sip:" + ASTERISK_HOST + ":" + ASTERISK_PORT;
+            $du = "sip:" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
             route(RELAY);
             exit;
         }
