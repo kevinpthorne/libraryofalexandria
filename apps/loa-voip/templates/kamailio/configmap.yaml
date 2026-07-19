@@ -11,7 +11,7 @@ data:
     # --- GLOBAL CONFIGURATION ---
     #!define ASTERISK_HOST "{{ .Release.Name }}-asterisk.{{ .Release.Namespace }}.svc.cluster.local"
     #!define ASTERISK_PORT "{{ .Values.asterisk.ports.sip }}"
-    #!define RTPENGINE_SOCK "udp:rtpengine.{{ .Release.Namespace }}-rtpengine.svc.cluster.local:{{ .Values.rtpengine.ports.control }}"
+    #!define RTPENGINE_SOCK "udp:rtpengine.{{ .Release.Name }}-rtpengine.svc.cluster.local:{{ .Values.rtpengine.ports.control }}"
     
     enable_tls=yes
     listen=udp:0.0.0.0:{{ .Values.kamailio.ports.sip }}
