@@ -24,6 +24,7 @@
   libopus,
   libxml2,
   perl,
+  gperf,
   ...
 }:
 
@@ -42,6 +43,7 @@ stdenv.mkDerivation rec {
     pkg-config
     gnumake
     perl
+    gperf
   ];
 
   NIX_CFLAGS_COMPILE = "-Wno-error=incompatible-pointer-types";
