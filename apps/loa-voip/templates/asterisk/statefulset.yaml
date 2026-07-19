@@ -34,6 +34,8 @@ spec:
               mountPath: /var/spool/asterisk
             - name: asterisk-log
               mountPath: /var/log/asterisk
+            - name: asterisk-lib
+              mountPath: /var/lib/asterisk
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -56,4 +58,6 @@ spec:
         - name: asterisk-spool
           emptyDir: {}
         - name: asterisk-log
+          emptyDir: {}
+        - name: asterisk-lib
           emptyDir: {}
