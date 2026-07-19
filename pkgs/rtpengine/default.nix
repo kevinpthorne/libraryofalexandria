@@ -6,7 +6,7 @@
   glib,
   zlib,
   openssl,
-  pcre,
+  pcre2,
   curl,
   xmlrpc_c,
   hiredis,
@@ -19,6 +19,10 @@
   libwebsockets,
   mariadb-connector-c,
   libcap,
+  libnftnl,
+  libmnl,
+  libopus,
+  libxml2,
   ...
 }:
 
@@ -42,7 +46,7 @@ stdenv.mkDerivation rec {
     glib
     zlib
     openssl
-    pcre
+    pcre2
     curl
     xmlrpc_c
     hiredis
@@ -55,6 +59,10 @@ stdenv.mkDerivation rec {
     libwebsockets
     mariadb-connector-c
     libcap
+    libnftnl
+    libmnl
+    libopus
+    libxml2
   ];
 
   # The rtpengine Makefile looks for bencode library, which is included in the source tree.
