@@ -13,6 +13,13 @@ spec:
       labels:
         app: asterisk
     spec:
+      initContainers:
+        - name: init-asterisk-lib
+          image: {{ .Values.asterisk.image }}
+          command: ['sh', '-c', 'cp -R /var/lib/asterisk/* /mnt/asterisk-lib/ 2>/dev/null || true']
+          volumeMounts:
+            - name: asterisk-lib
+              mountPath: /mnt/asterisk-lib
       containers:
         - name: asterisk
           image: {{ .Values.asterisk.image }}
