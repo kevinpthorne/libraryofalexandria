@@ -4,7 +4,10 @@ metadata:
   name: {{ .Release.Name }}-kamailio-sip
   annotations:
     # Optional: Enable Cilium DSR to reduce latency on return packets
-    service.cilium.io/global-service: "true" 
+    service.cilium.io/global-service: "true"
+    {{- if .Values.global.domain }}
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.domain | quote }}
+    {{- end }}
 spec:
   type: LoadBalancer
   externalTrafficPolicy: Local # Preserves the source IP of the caller
