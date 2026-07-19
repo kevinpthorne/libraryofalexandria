@@ -60,18 +60,18 @@ data:
             record_route();
             
             # INBOUND FROM TELNYX
-            if ($si == "192.76.120.10" || $si == "192.76.120.11") {
+            if ($(src_ip) == "192.76.120.10" || $(src_ip) == "192.76.120.11") {
                 rtpengine_manage("replace-origin replace-session-connection");
-                $ru = "sip:" + $rU + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT;
+                $ru = "sip:" + $(rU) + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT;
                 route(RELAY);
                 exit;
             }
             
             # OUTBOUND TO TELNYX (From internal K8s subnets)
-            if ($si =~ "^10\.") {
-                if ($rU =~ "^1[0-9]{10}$") { 
+            if ($(src_ip) =~ "^10\.") {
+                if ($(rU) =~ "^1[0-9]{10}$") { 
                     rtpengine_manage("replace-origin replace-session-connection");
-                    $ru = "sip:" + $rU + "@sip.telnyx.com";
+                    $ru = "sip:" + $(rU) + "@sip.telnyx.com";
                     route(RELAY);
                     exit;
                 }
@@ -84,7 +84,7 @@ data:
             } else {
                 rtpengine_manage("replace-origin replace-session-connection");
             }
-            $ru = "sip:" + $rU + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT;
+            $ru = "sip:" + $(rU) + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT;
             route(RELAY);
             exit;
         }

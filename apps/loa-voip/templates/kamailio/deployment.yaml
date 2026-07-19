@@ -37,6 +37,8 @@ spec:
             - name: kamailio-tls-volume
               mountPath: /etc/kamailio/tls
               readOnly: true
+            - name: kamailio-run
+              mountPath: /run/kamailio
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -56,3 +58,5 @@ spec:
         - name: kamailio-tls-volume
           secret:
             secretName: {{ .Release.Name }}-kamailio-tls
+        - name: kamailio-run
+          emptyDir: {}

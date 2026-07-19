@@ -16,7 +16,7 @@ spec:
       containers:
         - name: asterisk
           image: {{ .Values.asterisk.image }}
-          command: ["/usr/sbin/asterisk", "-f", "-U", "asterisk", "-G", "asterisk", "-vvvddd"]
+          command: ["/usr/sbin/asterisk", "-f", "-vvvddd"]
           ports:
             - name: sip-internal
               containerPort: {{ .Values.asterisk.ports.sip }}
