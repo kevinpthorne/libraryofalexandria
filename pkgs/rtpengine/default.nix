@@ -42,6 +42,8 @@ stdenv.mkDerivation rec {
     gnumake
   ];
 
+  NIX_CFLAGS_COMPILE = "-Wno-error=incompatible-pointer-types";
+
   buildInputs = [
     glib
     zlib

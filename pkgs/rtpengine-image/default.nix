@@ -18,7 +18,7 @@ dockerTools.buildLayeredImage {
   ];
 
   config = {
-    Cmd = [ "rtpengine" "--foreground" ];
+    Cmd = [ "rtpengine" "--foreground" "--config-file=/etc/rtpengine/rtpengine.conf" ];
     ExposedPorts = {
       "22222/udp" = {};
     };
