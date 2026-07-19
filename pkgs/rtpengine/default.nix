@@ -69,6 +69,13 @@ stdenv.mkDerivation rec {
     libxml2
   ];
 
+  postPatch = ''
+    substituteInPlace utils/const_str_hash \
+      --replace-warn "#!/usr/bin/perl" "#!${perl}/bin/perl" \
+      --replace-warn "#! /usr/bin/perl" "#!${perl}/bin/perl"
+    chmod +x utils/const_str_hash
+  '';
+
   # The rtpengine Makefile looks for bencode library, which is included in the source tree.
   buildPhase = ''
     make -C daemon
