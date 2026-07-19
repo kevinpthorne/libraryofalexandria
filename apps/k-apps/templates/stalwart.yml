@@ -71,7 +71,7 @@ spec:
           directory:
             keycloak:
               type: oidc
-              issuer-url: "https://ident.kpt.link/realms/loa"
+              issuerUrl: "https://ident.kpt.link/realms/loa"
               client-id: stalwart
               client-secret: "%{env:OIDC_CLIENT_SECRET}%"
               endpoint.url: "https://ident.kpt.link/realms/loa/protocol/openid-connect/userinfo"
