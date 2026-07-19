@@ -8,8 +8,15 @@ metadata:
     external-dns.loa.internal/expose: "public"
 spec:
   endpoints:
+    - dnsName: mail.k.kpt.link
+      recordType: CNAME
+      targets:
+        - "k.kpt.link"
     - dnsName: k.kpt.link
       recordType: MX
+      providerSpecific:
+        - name: external-dns.alpha.kubernetes.io/cloudflare-proxied
+          value: "false"
       targets:
         - "10 mail.k.kpt.link"
     - dnsName: 202607e._domainkey.k.kpt.link

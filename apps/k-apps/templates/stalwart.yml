@@ -233,9 +233,9 @@ spec:
         cert:
           secretName: "stalwart-tls"
           sans:
-            - "mail.kevinpthorne.com"
-            - "mail.k.kpt.link"
-            - "mail.k.loa.internal"
+            - "webmail.kevinpthorne.com"
+            - "webmail.k.kpt.link"
+            - "webmail.k.loa.internal"
   destination:
     server: https://kubernetes.default.svc
     namespace: mail
@@ -264,9 +264,9 @@ spec:
             gatewayName: local-gateway
             gatewayNamespace: kube-system
             hostnames:
-              - "mail.kevinpthorne.com"
-              - "mail.k.kpt.link"
-              - "mail.k.loa.internal"
+              - "webmail.kevinpthorne.com"
+              - "webmail.k.kpt.link"
+              - "webmail.k.loa.internal"
             ports:
               - port: 443
                 protocol: TLS
