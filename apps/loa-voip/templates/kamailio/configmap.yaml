@@ -22,6 +22,7 @@ data:
     loadmodule "sl.so"
     loadmodule "tm.so"
     loadmodule "rr.so"
+    loadmodule "siputils.so"
     loadmodule "maxfwd.so"
     loadmodule "textops.so"
     loadmodule "rtpengine.so"
