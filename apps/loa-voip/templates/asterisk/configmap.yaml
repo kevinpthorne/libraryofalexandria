@@ -7,6 +7,10 @@ metadata:
 data:
   pjsip.conf: |
     ; --- 1. THE TRANSPORT ---
+    [global]
+    type=global
+    endpoint_identifier_order=username,ip,anonymous
+
     ; This tells Asterisk to listen on port 5060 inside its pod.
     [transport-udp]
     type=transport
@@ -51,6 +55,8 @@ data:
     allow=ulaw
     auth=1001-auth
     aors=1001
+    rewrite_contact=yes
+    force_rport=yes
 
     [1001-auth]
     type=auth
