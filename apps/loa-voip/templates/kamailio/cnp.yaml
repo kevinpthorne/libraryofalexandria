@@ -19,10 +19,12 @@ spec:
             - port: "{{ .Values.kamailio.ports.sip }}"
               protocol: TCP
 
-    # RULE 2: Allow WebRTC traffic from the Ingress Controller
+    # RULE 2: Allow WebRTC traffic from the Cilium Gateway
     - fromEndpoints:
         - matchLabels:
-            app.kubernetes.io/name: ingress-nginx # Adjust if using a different ingress
+            # Note: Adjust this label if your Cilium Gateway pods use a different one
+            # The exact label depends on how you deployed the Cilium Gateway API controller
+            io.cilium.gateway.namespace: {{ .Values.gateway.namespace | default "default" }}
       toPorts:
         - ports:
             - port: "{{ .Values.kamailio.ports.ws }}"

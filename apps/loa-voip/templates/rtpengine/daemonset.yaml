@@ -68,6 +68,9 @@ spec:
             - name: ng-control
               containerPort: {{ .Values.rtpengine.ports.control }} # Kamailio talks to RTPEngine here
               protocol: UDP
+          volumeMounts:
+            - name: rtpengine-config
+              mountPath: /etc/rtpengine
           securityContext:
             runAsUser: 0
             allowPrivilegeEscalation: false
@@ -76,3 +79,6 @@ spec:
                 - ALL
               add: 
                 - NET_ADMIN # Needed for eBPF/kernel packet pushing
+      volumes:
+        - name: rtpengine-config
+          emptyDir: {}

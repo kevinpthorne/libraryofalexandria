@@ -31,6 +31,12 @@ spec:
             - name: kamailio-config-volume
               mountPath: /etc/kamailio/kamailio.cfg
               subPath: kamailio.cfg
+            - name: kamailio-config-volume
+              mountPath: /etc/kamailio/tls.cfg
+              subPath: tls.cfg
+            - name: kamailio-tls-volume
+              mountPath: /etc/kamailio/tls
+              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -41,7 +47,12 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
         - name: kamailio-config-volume
           configMap:
             name: kamailio-config
+        - name: kamailio-tls-volume
+          secret:
+            secretName: {{ .Release.Name }}-kamailio-tls

@@ -1,8 +1,9 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ .Release.Name }}-asterisk
 spec:
+  serviceName: {{ .Release.Name }}-asterisk
   replicas: {{ .Values.asterisk.replicaCount }}
   selector:
     matchLabels:
@@ -19,6 +20,13 @@ spec:
             - name: sip-internal
               containerPort: {{ .Values.asterisk.ports.sip }}
               protocol: UDP
+          volumeMounts:
+            - name: asterisk-config-volume
+              mountPath: /etc/asterisk/pjsip.conf
+              subPath: pjsip.conf
+            - name: asterisk-config-volume
+              mountPath: /etc/asterisk/extensions.conf
+              subPath: extensions.conf
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -30,3 +38,9 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: asterisk-config-volume
+          configMap:
+            name: asterisk-config

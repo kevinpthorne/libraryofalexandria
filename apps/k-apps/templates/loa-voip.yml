@@ -10,7 +10,10 @@ spec:
     path: apps/loa-voip
     targetRevision: HEAD
     helm:
-      valuesObject: {}
+      valuesObject:
+        cluster: {{ .Values.cluster | toYaml | nindent 8 }}
+        global:
+          domain: "voip.{{ .Values.cluster.name | default "k" }}.loa.internal"
   destination:
     server: https://kubernetes.default.svc
     namespace: voip
@@ -23,3 +26,66 @@ spec:
     managedNamespaceMetadata:
       labels:
         zarf.dev/agent: "ignore"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loa-voip-tls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "loa-voip"
+        cluster:
+          name: {{ .Values.cluster.name | default "k" }}
+        cert:
+          secretName: "loa-voip-kamailio-tls"
+          sans:
+            - "voip.{{ .Values.cluster.name | default "k" }}.loa.internal"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: voip
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loa-voip-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: loa-voip
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
+            hostnames:
+              - "voip.{{ .Values.cluster.name | default "k" }}.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 8080
+                targetService: loa-voip-kamailio-ws
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: voip
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
