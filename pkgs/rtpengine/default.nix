@@ -80,7 +80,7 @@ stdenv.mkDerivation rec {
 
   # The rtpengine Makefile looks for bencode library, which is included in the source tree.
   buildPhase = ''
-    make -C daemon
+    make -C daemon rtpengine
   '';
 
   installPhase = ''
