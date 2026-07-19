@@ -19,6 +19,7 @@
   libwebsockets,
   mariadb-connector-c,
   libcap,
+  ...
 }:
 
 stdenv.mkDerivation rec {
