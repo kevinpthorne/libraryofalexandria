@@ -16,6 +16,7 @@ spec:
       containers:
         - name: asterisk
           image: {{ .Values.asterisk.image }}
+          command: ["/usr/sbin/asterisk", "-f", "-U", "asterisk", "-G", "asterisk", "-vvvddd"]
           ports:
             - name: sip-internal
               containerPort: {{ .Values.asterisk.ports.sip }}
@@ -27,6 +28,12 @@ spec:
             - name: asterisk-config-volume
               mountPath: /etc/asterisk/extensions.conf
               subPath: extensions.conf
+            - name: asterisk-run
+              mountPath: /var/run/asterisk
+            - name: asterisk-spool
+              mountPath: /var/spool/asterisk
+            - name: asterisk-log
+              mountPath: /var/log/asterisk
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -44,3 +51,9 @@ spec:
         - name: asterisk-config-volume
           configMap:
             name: asterisk-config
+        - name: asterisk-run
+          emptyDir: {}
+        - name: asterisk-spool
+          emptyDir: {}
+        - name: asterisk-log
+          emptyDir: {}

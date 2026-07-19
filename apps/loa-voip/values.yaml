@@ -17,7 +17,7 @@ kamailio:
 
 rtpengine:
   # Deployed as a DaemonSet to maximize node coverage with hostNetwork
-  image: "drachtio/rtpengine:latest"
+  image: "fonoster/rtpengine:latest"
   ports:
     min: 10000
     max: 20000
