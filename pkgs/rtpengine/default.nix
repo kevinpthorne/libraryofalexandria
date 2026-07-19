@@ -23,6 +23,7 @@
   libmnl,
   libopus,
   libxml2,
+  perl,
   ...
 }:
 
@@ -40,6 +41,7 @@ stdenv.mkDerivation rec {
   nativeBuildInputs = [
     pkg-config
     gnumake
+    perl
   ];
 
   NIX_CFLAGS_COMPILE = "-Wno-error=incompatible-pointer-types";
