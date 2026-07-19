@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         app: kamailio
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/kamailio/configmap.yaml") . | sha256sum }}
     spec:
       containers:
         - name: kamailio

@@ -12,6 +12,8 @@ spec:
     metadata:
       labels:
         app: asterisk
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/asterisk/configmap.yaml") . | sha256sum }}
     spec:
       initContainers:
         - name: init-asterisk-lib
