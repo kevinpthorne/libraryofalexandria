@@ -10,7 +10,7 @@ metadata:
     {{- end }}
 spec:
   type: LoadBalancer
-  externalTrafficPolicy: Local # Preserves the source IP of the caller
+  externalTrafficPolicy: Local
   ports:
     - name: sip-udp
       port: {{ .Values.kamailio.ports.sip }}
