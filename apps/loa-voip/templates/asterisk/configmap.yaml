@@ -50,7 +50,7 @@ data:
     ; If you want a physical desk phone to register through Kamailio to Asterisk
     [1001]
     type=endpoint
-    context=internal-phones
+    context=from-kamailio
     disallow=all
     allow=ulaw
     auth=1001-auth
