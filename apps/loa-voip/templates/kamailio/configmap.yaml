@@ -19,6 +19,7 @@ data:
     listen=tls:0.0.0.0:{{ .Values.kamailio.ports.ws }}
     
     # --- MODULES ---
+    loadmodule "xlog.so"
     loadmodule "sl.so"
     loadmodule "tm.so"
     loadmodule "rr.so"
@@ -62,6 +63,12 @@ data:
         if (is_method("INVITE")) {
             record_route();
             
+            # Check for empty dialed number
+            if ($(rU) == $null) {
+                sl_send_reply("484", "Address Incomplete");
+                exit;
+            }
+
             # INBOUND FROM TELNYX
             if ($(src_ip) == "192.76.120.10" || $(src_ip) == "192.76.120.11") {
                 rtpengine_manage("replace-origin replace-session-connection");
@@ -82,11 +89,16 @@ data:
 
             # STANDARD INTERNAL ROUTING TO ASTERISK
             if (proto == WS || proto == WSS) {
-                rtpengine_manage("trust-address replace-origin replace-session-connection rtcp-mux-demux ICE=remove RTP/AVP");
+                if (!rtpengine_manage("trust-address replace-origin replace-session-connection rtcp-mux-demux ICE=remove RTP/AVP")) {
+                    xlog("L_ERR", "rtpengine_manage failed for WS/WSS\n");
+                }
                 t_on_reply("REPLY_TO_WEBRTC");
             } else {
-                rtpengine_manage("replace-origin replace-session-connection");
+                if (!rtpengine_manage("replace-origin replace-session-connection")) {
+                    xlog("L_ERR", "rtpengine_manage failed for standard routing\n");
+                }
             }
+            
             $ru = "sip:" + $(rU) + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
             route(RELAY);
             exit;
@@ -108,13 +120,17 @@ data:
     
     onreply_route {
         if (has_body("application/sdp")) {
-            rtpengine_manage("replace-origin replace-session-connection");
+            if (!rtpengine_manage("replace-origin replace-session-connection")) {
+                xlog("L_ERR", "rtpengine_manage failed in onreply_route\n");
+            }
         }
     }
     
     onreply_route[REPLY_TO_WEBRTC] {
         if (has_body("application/sdp")) {
-            rtpengine_manage("trust-address replace-origin replace-session-connection rtcp-mux-offer ICE=force UDP/TLS/RTP/SAVPF");
+            if (!rtpengine_manage("trust-address replace-origin replace-session-connection rtcp-mux-offer ICE=force UDP/TLS/RTP/SAVPF")) {
+                xlog("L_ERR", "rtpengine_manage failed for WebRTC reply\n");
+            }
         }
     }
     

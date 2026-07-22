@@ -8,5 +8,6 @@ spec:
     - name: sip
       port: {{ .Values.asterisk.ports.sip }}
       targetPort: sip-internal
+      protocol: UDP
   selector:
     app: asterisk
