@@ -38,6 +38,7 @@ data:
     
     # --- MAIN ROUTING LOGIC ---
     request_route {
+        xlog("L_INFO", "--- START ROUTING: Received $rm from $si ---\n");
         force_rport();
 
         if (!mf_process_maxfwd_header("10")) {
@@ -46,7 +47,17 @@ data:
         }
     
         if (is_method("CANCEL")) {
+            xlog("L_INFO", "Processing CANCEL\n");
             if (t_check_trans()) t_relay();
+            exit;
+        }
+
+        if (is_method("ACK")) {
+            xlog("L_INFO", "Processing ACK\n");
+            if (t_check_trans()) {
+                t_relay();
+                exit;
+            }
             exit;
         }
     
@@ -61,33 +72,38 @@ data:
         }
     
         if (is_method("INVITE")) {
+            xlog("L_INFO", "Processing INVITE for rU=$(rU)\n");
             record_route();
             
             # Check for empty dialed number
-            if ($(rU) == $null) {
+            if ($rU == $null) {
+                xlog("L_ERR", "Address Incomplete (Empty rU)\n");
                 sl_send_reply("484", "Address Incomplete");
                 exit;
             }
 
             # INBOUND FROM TELNYX
             if ($(src_ip) == "192.76.120.10" || $(src_ip) == "192.76.120.11") {
+                xlog("L_INFO", "Routing inbound from Telnyx\n");
                 rtpengine_manage("replace-origin replace-session-connection");
-                $ru = "sip:" + $(rU) + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
+                $ru = "sip:" + $rU + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
                 route(RELAY);
                 exit;
             }
             
             # OUTBOUND TO TELNYX (From internal K8s subnets)
             if ($(src_ip) =~ "^10\.") {
-                if ($(rU) =~ "^1[0-9]{10}$") { 
+                if ($rU =~ "^1[0-9]{10}$") { 
+                    xlog("L_INFO", "Routing outbound to Telnyx\n");
                     rtpengine_manage("replace-origin replace-session-connection");
-                    $ru = "sip:" + $(rU) + "@sip.telnyx.com";
+                    $ru = "sip:" + $rU + "@sip.telnyx.com";
                     route(RELAY);
                     exit;
                 }
             }
 
             # STANDARD INTERNAL ROUTING TO ASTERISK
+            xlog("L_INFO", "Routing standard internal call to Asterisk\n");
             if (proto == WS || proto == WSS) {
                 if (!rtpengine_manage("trust-address replace-origin replace-session-connection rtcp-mux-demux ICE=remove RTP/AVP")) {
                     xlog("L_ERR", "rtpengine_manage failed for WS/WSS\n");
@@ -99,17 +115,22 @@ data:
                 }
             }
             
-            $ru = "sip:" + $(rU) + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
+            xlog("L_INFO", "Assigning RU for Asterisk\n");
+            $ru = "sip:" + $rU + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
+            
+            xlog("L_INFO", "Calling route(RELAY)\n");
             route(RELAY);
             exit;
         }
     
         if (is_method("REGISTER|OPTIONS|SUBSCRIBE|NOTIFY|MESSAGE")) {
+            xlog("L_INFO", "Processing $rm\n");
             $du = "sip:" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
             route(RELAY);
             exit;
         }
     
+        xlog("L_INFO", "Method $rm not implemented\n");
         sl_send_reply("501", "Not Implemented");
     }
     
