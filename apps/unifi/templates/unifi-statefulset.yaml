@@ -107,12 +107,12 @@ spec:
           livenessProbe:
             tcpSocket:
               port: 8443
-            initialDelaySeconds: 120
+            initialDelaySeconds: 360
             periodSeconds: 20
           readinessProbe:
             tcpSocket:
               port: 8443
-            initialDelaySeconds: 60
+            initialDelaySeconds: 120
             periodSeconds: 10
           volumeMounts:
             - name: unifi-config
