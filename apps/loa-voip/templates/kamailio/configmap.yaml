@@ -14,9 +14,9 @@ data:
     #!define RTPENGINE_SOCK "udp:rtpengine.{{ .Release.Name }}-rtpengine.svc.cluster.local:{{ .Values.rtpengine.ports.control }}"
     
     enable_tls=yes
-    listen=udp:0.0.0.0:{{ .Values.kamailio.ports.sip }}
-    listen=tcp:0.0.0.0:{{ .Values.kamailio.ports.sip }}
-    listen=tls:0.0.0.0:{{ .Values.kamailio.ports.ws }}
+    listen=udp:0.0.0.0:{{ .Values.kamailio.ports.sip }} advertise {{ .Values.global.domain }}:{{ .Values.kamailio.ports.sip }}
+    listen=tcp:0.0.0.0:{{ .Values.kamailio.ports.sip }} advertise {{ .Values.global.domain }}:{{ .Values.kamailio.ports.sip }}
+    listen=tls:0.0.0.0:{{ .Values.kamailio.ports.ws }} advertise {{ .Values.global.domain }}:443
     
     # --- MODULES ---
     loadmodule "xlog.so"
