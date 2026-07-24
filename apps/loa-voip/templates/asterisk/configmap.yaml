@@ -84,10 +84,11 @@ data:
     same => n,Echo()
     same => n,Hangup()
 
-    ; --- THE MILLIWATT TEST ---
-    ; Dialing 5555 plays a continuous 1004 Hz tone.
+    ; --- THE RING TONE TEST ---
+    ; Dialing 5555 plays a standard ringing tone.
     ; This tests one-way audio from K8s to your phone without needing sound files.
-    exten => 5555,1,NoOp(Incoming call from Kamailio - Milliwatt Test)
+    exten => 5555,1,NoOp(Incoming call from Kamailio - PlayTones Test)
     same => n,Answer()
-    same => n,Milliwatt()
+    same => n,PlayTones(ring)
+    same => n,Wait(30)
     same => n,Hangup()
