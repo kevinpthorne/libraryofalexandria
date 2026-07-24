@@ -84,10 +84,10 @@ data:
     same => n,Echo()
     same => n,Hangup()
 
-    ; --- THE PLAYBACK TEST ---
-    ; Dialing 5555 plays a default Asterisk sound file.
-    ; This tests one-way audio from K8s to your phone.
-    exten => 5555,1,NoOp(Incoming call from Kamailio - Playback Test)
+    ; --- THE MILLIWATT TEST ---
+    ; Dialing 5555 plays a continuous 1004 Hz tone.
+    ; This tests one-way audio from K8s to your phone without needing sound files.
+    exten => 5555,1,NoOp(Incoming call from Kamailio - Milliwatt Test)
     same => n,Answer()
-    same => n,Playback(demo-congrats) ; A standard Asterisk audio file
+    same => n,Milliwatt()
     same => n,Hangup()
