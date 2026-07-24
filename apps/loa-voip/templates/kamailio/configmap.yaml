@@ -109,7 +109,7 @@ data:
                 }
                 t_on_reply("REPLY_TO_WEBRTC");
             } else {
-                if (!rtpengine_manage("replace-origin replace-session-connection")) {
+                if (!rtpengine_manage("symmetric replace-origin replace-session-connection ICE=remove")) {
                     xlog("L_ERR", "rtpengine_manage failed for standard routing\n");
                 }
                 t_on_reply("MANAGE_REPLY");
@@ -146,7 +146,7 @@ data:
     onreply_route[MANAGE_REPLY] {
         xlog("L_INFO", "Processing standard MANAGE_REPLY\n");
         if (has_body("application/sdp")) {
-            if (!rtpengine_manage("replace-origin replace-session-connection")) {
+            if (!rtpengine_manage("symmetric replace-origin replace-session-connection ICE=remove")) {
                 xlog("L_ERR", "rtpengine_manage failed in MANAGE_REPLY\n");
             }
         }
