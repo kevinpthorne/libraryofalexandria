@@ -28,6 +28,11 @@ spec:
             - name: ws-tcp
               containerPort: {{ .Values.kamailio.ports.ws }}
               protocol: TCP
+          env:
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
           volumeMounts:
             - name: kamailio-config-volume
               mountPath: /etc/kamailio/kamailio.cfg
