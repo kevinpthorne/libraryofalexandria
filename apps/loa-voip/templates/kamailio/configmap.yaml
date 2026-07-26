@@ -13,6 +13,9 @@ data:
     #!define ASTERISK_PORT "{{ .Values.asterisk.ports.sip }}"
     #!define RTPENGINE_SOCK "udp:RTPENGINE_IP_PLACEHOLDER:{{ .Values.rtpengine.ports.control }}"
     
+    alias="POD_IP_PLACEHOLDER"
+    alias="{{ .Values.global.domain }}"
+    
     enable_tls=yes
     listen=udp:0.0.0.0:{{ .Values.kamailio.ports.sip }} advertise {{ .Values.global.domain }}:{{ .Values.kamailio.ports.sip }}
     listen=tcp:0.0.0.0:{{ .Values.kamailio.ports.sip }} advertise {{ .Values.global.domain }}:{{ .Values.kamailio.ports.sip }}

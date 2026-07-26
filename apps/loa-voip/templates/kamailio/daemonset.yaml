@@ -23,6 +23,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           volumeMounts:
             - name: kamailio-template-volume
               mountPath: /etc/kamailio-template
@@ -31,7 +35,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              sed "s/RTPENGINE_IP_PLACEHOLDER/${NODE_IP}/g" /etc/kamailio-template/kamailio.cfg > /etc/kamailio-gen/kamailio.cfg
+              sed -e "s/RTPENGINE_IP_PLACEHOLDER/${NODE_IP}/g" -e "s/POD_IP_PLACEHOLDER/${POD_IP}/g" /etc/kamailio-template/kamailio.cfg > /etc/kamailio-gen/kamailio.cfg
               cp /etc/kamailio-template/tls.cfg /etc/kamailio-gen/tls.cfg
           securityContext:
             allowPrivilegeEscalation: false
