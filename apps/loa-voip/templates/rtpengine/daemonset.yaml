@@ -48,7 +48,8 @@ spec:
               
               cat <<EOF > /etc/rtpengine/rtpengine.conf
               [rtpengine]
-              interface = internal/${INTERNAL_IP}; external/${PUBLIC_IP}!${INTERNAL_IP}
+              interface = internal/${INTERNAL_IP}
+              interface = external/${PUBLIC_IP}!${INTERNAL_IP}
               listen-ng = ${INTERNAL_IP}:{{ .Values.rtpengine.ports.control }}
               port-min = {{ .Values.rtpengine.ports.min }}
               port-max = {{ .Values.rtpengine.ports.max }}
