@@ -15,6 +15,29 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/kamailio/configmap.yaml") . | sha256sum }}
     spec:
+      initContainers:
+        - name: generate-config
+          image: {{ .Values.kamailio.image }}
+          env:
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          volumeMounts:
+            - name: kamailio-template-volume
+              mountPath: /etc/kamailio-template
+            - name: kamailio-generated-config
+              mountPath: /etc/kamailio-gen
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              sed "s/RTPENGINE_IP_PLACEHOLDER/${NODE_IP}/g" /etc/kamailio-template/kamailio.cfg > /etc/kamailio-gen/kamailio.cfg
+              cp /etc/kamailio-template/tls.cfg /etc/kamailio-gen/tls.cfg
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
       containers:
         - name: kamailio
           image: {{ .Values.kamailio.image }}
@@ -34,10 +57,10 @@ spec:
                 fieldRef:
                   fieldPath: status.hostIP
           volumeMounts:
-            - name: kamailio-config-volume
+            - name: kamailio-generated-config
               mountPath: /etc/kamailio/kamailio.cfg
               subPath: kamailio.cfg
-            - name: kamailio-config-volume
+            - name: kamailio-generated-config
               mountPath: /etc/kamailio/tls.cfg
               subPath: tls.cfg
             - name: kamailio-tls-volume
@@ -58,9 +81,11 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       volumes:
-        - name: kamailio-config-volume
+        - name: kamailio-template-volume
           configMap:
             name: kamailio-config
+        - name: kamailio-generated-config
+          emptyDir: {}
         - name: kamailio-tls-volume
           secret:
             secretName: {{ .Release.Name }}-kamailio-tls
