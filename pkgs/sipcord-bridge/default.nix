@@ -35,8 +35,9 @@ rustPlatform.buildRustPackage rec {
   RUSTC_BOOTSTRAP = 1;
 
   env = {
-    CFLAGS = "-std=gnu99 -fpermissive -Wno-error=all -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int";
-    NIX_CFLAGS_COMPILE = "-std=gnu99 -fpermissive -Wno-error=all -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int";
+    SPANDSP_NO_VENDOR = "1";
+    CFLAGS = "-std=gnu99 -Wno-error -Wno-error=all -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int -Wno-error=format-security";
+    NIX_CFLAGS_COMPILE = "-std=gnu99 -Wno-error -Wno-error=all -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int -Wno-error=format-security";
   };
 
   postPatch = ''
