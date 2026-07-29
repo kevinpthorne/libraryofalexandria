@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sipcord.fullname" . | default "sipcord" }}-config
+  labels:
+    app: sipcord
+data:
+  dialplan.toml: |
+    [extensions]
+    {{- range .Values.channels }}
+    {{ .extension }} = { guild = {{ .guild }}, channel = {{ .channel }} }
+    {{- end }}

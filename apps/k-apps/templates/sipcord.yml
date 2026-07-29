@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sipcord
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: apps/sipcord
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        discordBotToken: {{ .Values.sipcord.discordBotToken | default "" | quote }}
+        channels: {{ .Values.sipcord.channels | toYaml | nindent 10 }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: voip
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"

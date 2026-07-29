@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sipcord.fullname" . | default "sipcord" }}
+  labels:
+    app: sipcord
+spec:
+  type: ClusterIP
+  selector:
+    app: sipcord
+  ports:
+    - name: sip-udp
+      port: {{ .Values.config.sipPort | default 5060 }}
+      targetPort: {{ .Values.config.sipPort | default 5060 }}
+      protocol: UDP
+    - name: sip-tcp
+      port: {{ .Values.config.sipPort | default 5060 }}
+      targetPort: {{ .Values.config.sipPort | default 5060 }}
+      protocol: TCP

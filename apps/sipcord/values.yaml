@@ -1,0 +1,33 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/coral/sipcord-bridge
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+discordBotToken: "" # Secret token for Discord bot
+
+config:
+  sipPublicHost: ""   # Optional public IP/hostname if needed
+  sipPort: 5060
+  rtpPortStart: 10000
+  rtpPortEnd: 15000
+
+# Centralized extension-guild-channel mapping
+channels:
+  - extension: 6001
+    guild: "YOUR_DISCORD_GUILD_ID"
+    channel: "YOUR_DISCORD_CHANNEL_ID"
+    name: "General Voice"
+
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

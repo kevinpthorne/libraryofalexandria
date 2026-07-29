@@ -67,6 +67,10 @@ data:
     [1001]
     type=aor
     max_contacts=2
+
+    {{- if .Values.pjsip }}
+    {{- .Values.pjsip | nindent 4 }}
+    {{- end }}
   extensions.conf: |
     ; extensions.conf
     [general]
@@ -92,3 +96,11 @@ data:
     same => n,PlayTones(ring)
     same => n,Wait(30)
     same => n,Hangup()
+
+    {{- if .Values.extensions }}
+    {{- .Values.extensions | nindent 4 -}}
+    {{- end }}
+  confbridge.conf: |
+    {{- if .Values.confbridge }}
+    {{- .Values.confbridge | nindent 4 -}}
+    {{- end }}

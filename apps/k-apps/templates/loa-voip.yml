@@ -13,7 +13,62 @@ spec:
       valuesObject:
         cluster: {{ .Values.cluster | toYaml | nindent 8 }}
         global:
-          domain: "voip.{{ .Values.cluster.name | default "k" }}.loa.internal"
+          domain: "voip.{{ if and .Values.cluster .Values.cluster.name }}{{ .Values.cluster.name }}{{ else }}k{{ end }}.loa.internal"
+        {{- if (index .Values "sipcord" "enabled") }}
+        pjsua: |
+          [sipcord-trunk]
+          type=endpoint
+          transport=transport-udp
+          context=from-sipcord
+          disallow=all
+          allow=ulaw,alaw,g722,opus
+          aors=sipcord-trunk
+          outbound_auth=
+          force_rport=yes
+          rewrite_contact=yes
+
+          [sipcord-trunk]
+          type=aor
+          contact=sip:sipcord.voip.svc.cluster.local:5060
+
+          [sipcord-identify]
+          type=identify
+          endpoint=sipcord-trunk
+          match=10.0.0.0/8
+        extensions: |
+          ; --- DISCORD CONFBRIDGE ROUTING ---
+          exten => _60XX,1,NoOp(Bridging call to Discord ConfBridge ${EXTEN})
+          same => n,Originate(PJSIP/sipcord-trunk/sip:${EXTEN}@sipcord.voip.svc.cluster.local:5060,app,ConfBridge,${EXTEN})
+          same => n,ConfBridge(${EXTEN},default_bridge,default_user)
+          same => n,Hangup()
+
+          exten => 6000,1,NoOp(Discord Channel Selector IVR)
+          same => n,Answer()
+          same => n,Read(DISCORD_EXT,beep,4)
+          same => n,Goto(from-kamailio,${DISCORD_EXT},1)
+
+          [from-sipcord]
+          exten => _X.,1,NoOp(Incoming call from Sipcord to ConfBridge ${EXTEN})
+          same => n,ConfBridge(${EXTEN},default_bridge,bridge_user)
+          same => n,Hangup()
+        confbridge: |
+          [default_bridge]
+          type=bridge
+          sound_join=no
+          sound_leave=no
+
+          [default_user]
+          type=user
+          admin=no
+          marked=no
+          startmuted=no
+
+          [bridge_user]
+          type=user
+          quiet=yes
+          announce_user_count=no
+        {{- end }}
+
   destination:
     server: https://kubernetes.default.svc
     namespace: voip
@@ -32,7 +87,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: loa-voip-tls
-  namespace: {{ .Values.argoNamespace }}
+  namespace: {{ .Values.argoNamespace | default "argo-cd" }}
 spec:
   project: default
   source:
@@ -43,11 +98,11 @@ spec:
       valuesObject:
         svcName: "loa-voip"
         cluster:
-          name: {{ .Values.cluster.name | default "k" }}
+          name: {{ if and .Values.cluster .Values.cluster.name }}{{ .Values.cluster.name }}{{ else }}k{{ end }}
         cert:
           secretName: "loa-voip-kamailio-tls"
           sans:
-            - "voip.{{ .Values.cluster.name | default "k" }}.loa.internal"
+            - "voip.{{ if and .Values.cluster .Values.cluster.name }}{{ .Values.cluster.name }}{{ else }}k{{ end }}.loa.internal"
   destination:
     server: https://kubernetes.default.svc
     namespace: voip

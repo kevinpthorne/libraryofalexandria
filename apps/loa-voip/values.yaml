@@ -28,3 +28,7 @@ asterisk:
   image: "andrius/asterisk:22"
   ports:
     sip: 5060
+
+pjsip: ""
+extensions: ""
+confbridge: ""
