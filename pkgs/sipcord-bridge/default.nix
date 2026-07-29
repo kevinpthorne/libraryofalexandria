@@ -35,19 +35,24 @@ rustPlatform.buildRustPackage rec {
   RUSTC_BOOTSTRAP = 1;
 
   env = {
-    CFLAGS = "-U__STRICT_ANSI__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -Wno-error -Wno-implicit-function-declaration -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-int";
-    NIX_CFLAGS_COMPILE = "-U__STRICT_ANSI__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -Wno-error -Wno-implicit-function-declaration -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-int";
+    SPANDSP_NO_VENDOR = "1";
+    CFLAGS = "-I${spandsp.dev or spandsp}/include -U__STRICT_ANSI__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -Wno-error -Wno-implicit-function-declaration -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-int -std=gnu99";
+    NIX_CFLAGS_COMPILE = "-I${spandsp.dev or spandsp}/include -U__STRICT_ANSI__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -Wno-error -Wno-implicit-function-declaration -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-int -std=gnu99";
   };
 
   postPatch = ''
+    chmod -R +w . 2>/dev/null || true
     find . -name "Cargo.toml" -exec sed -i 's/rust-version = "1.9[2-9]"/rust-version = "1.91"/g' {} +
   '';
 
   preBuild = ''
+    chmod -R +w /build 2>/dev/null || true
     find . -name "Cargo.toml" -exec sed -i 's/rust-version = "1.9[2-9]"/rust-version = "1.91"/g' {} + 2>/dev/null || true
     if [ -d "/build/cargo-vendor-dir" ]; then
+      chmod -R +w /build/cargo-vendor-dir 2>/dev/null || true
       find /build/cargo-vendor-dir -name "Cargo.toml" -exec sed -i 's/rust-version = "1.9[2-9]"/rust-version = "1.91"/g' {} + 2>/dev/null || true
       find /build/cargo-vendor-dir -name "build.rs" -exec sed -i 's/"-std=c99"/"-std=gnu99"/g' {} + 2>/dev/null || true
+      find /build/cargo-vendor-dir -name "build.rs" -exec sed -i 's/\.flag("-std=c99")/\.flag("-std=gnu99")/g' {} + 2>/dev/null || true
     fi
   '';
 
