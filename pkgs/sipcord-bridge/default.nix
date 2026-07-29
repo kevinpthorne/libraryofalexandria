@@ -6,6 +6,7 @@
   openssl,
   libopus,
   libtiff,
+  spandsp,
   cmake,
   ...
 }:
@@ -32,7 +33,11 @@ rustPlatform.buildRustPackage rec {
   };
 
   RUSTC_BOOTSTRAP = 1;
-  NIX_CFLAGS_COMPILE = "-Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int";
+
+  env = {
+    CFLAGS = "-std=gnu99 -fpermissive -Wno-error=all -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int";
+    NIX_CFLAGS_COMPILE = "-std=gnu99 -fpermissive -Wno-error=all -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int";
+  };
 
   postPatch = ''
     find . -name "Cargo.toml" -exec sed -i 's/rust-version = "1.9[2-9]"/rust-version = "1.91"/g' {} +
@@ -51,6 +56,7 @@ rustPlatform.buildRustPackage rec {
     openssl
     libopus
     libtiff
+    spandsp
   ];
 
   meta = with lib; {
