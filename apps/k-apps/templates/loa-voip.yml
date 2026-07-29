@@ -11,7 +11,8 @@ spec:
     targetRevision: HEAD
     helm:
       valuesObject:
-        cluster: {{ .Values.cluster | toYaml | nindent 8 }}
+        cluster:
+          {{- .Values.cluster | toYaml | nindent 10 }}
         global:
           domain: "voip.{{ if and .Values.cluster .Values.cluster.name }}{{ .Values.cluster.name }}{{ else }}k{{ end }}.loa.internal"
         {{- if (index .Values "sipcord" "enabled") }}

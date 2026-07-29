@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/coral/sipcord-bridge
+  repository: ghcr.io/kevinpthorne/sipcord-bridge
   pullPolicy: IfNotPresent
   tag: "latest"
 
