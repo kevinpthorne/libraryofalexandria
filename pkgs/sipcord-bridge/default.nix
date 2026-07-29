@@ -53,6 +53,7 @@ rustPlatform.buildRustPackage rec {
       find /build/cargo-vendor-dir -name "Cargo.toml" -exec sed -i 's/rust-version = "1.9[2-9]"/rust-version = "1.91"/g' {} + 2>/dev/null || true
       find /build/cargo-vendor-dir -name "build.rs" -exec sed -i 's/"-std=c99"/"-std=gnu99"/g' {} + 2>/dev/null || true
       find /build/cargo-vendor-dir -name "build.rs" -exec sed -i 's/\.flag("-std=c99")/\.flag("-std=gnu99")/g' {} + 2>/dev/null || true
+      find /build/cargo-vendor-dir -path "*/spandsp" -type d -exec cp -f ${spandsp.dev or spandsp}/include/spandsp/*.h {}/ \; 2>/dev/null || true
     fi
   '';
 
