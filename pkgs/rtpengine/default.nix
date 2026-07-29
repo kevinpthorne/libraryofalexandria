@@ -14,7 +14,7 @@
   libevent,
   libpcap,
   json-glib,
-  ffmpeg,
+  ffmpeg-headless,
   spandsp,
   libwebsockets,
   mariadb-connector-c,
@@ -60,7 +60,7 @@ stdenv.mkDerivation rec {
     libevent
     libpcap
     json-glib
-    ffmpeg
+    ffmpeg-headless
     spandsp
     libwebsockets
     mariadb-connector-c
