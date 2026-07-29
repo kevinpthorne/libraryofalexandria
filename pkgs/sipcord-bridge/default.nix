@@ -31,6 +31,16 @@ rustPlatform.buildRustPackage rec {
     };
   };
 
+  RUSTC_BOOTSTRAP = 1;
+
+  postPatch = ''
+    find . -name "Cargo.toml" -exec sed -i 's/rust-version = "1.9[2-9]"/rust-version = "1.91"/g' {} +
+  '';
+
+  preBuild = ''
+    find /build -name "Cargo.toml" -exec sed -i 's/rust-version = "1.9[2-9]"/rust-version = "1.91"/g' {} + 2>/dev/null || true
+  '';
+
   nativeBuildInputs = [
     pkg-config
     cmake
