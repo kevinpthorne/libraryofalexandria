@@ -32,8 +32,12 @@ jobs:
             extra-platforms = aarch64-linux
             accept-flake-config = true
 
-      - name: Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v9
+      - name: Cache Nix Store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ github.workflow }}-${{ runner.os }}-${{ hashFiles('**/*.nix', 'flake.lock') }}
+          restore-prefixes-first-match: |
+            nix-${{ github.workflow }}-${{ runner.os }}-
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
