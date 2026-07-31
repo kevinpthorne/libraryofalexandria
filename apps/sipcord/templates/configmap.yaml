@@ -5,6 +5,9 @@ metadata:
   labels:
     app: sipcord
 data:
+  config.toml: |
+    [sounds]
+    
   dialplan.toml: |
     [extensions]
     {{- range .Values.channels }}

@@ -39,6 +39,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "sipcord.fullname" . }}-secret
                   key: DISCORD_BOT_TOKEN
+            - name: CONFIG_PATH
+              value: "/app/config.toml"
             - name: DIALPLAN_PATH
               value: "/app/dialplan.toml"
             - name: SIP_PORT
@@ -59,13 +61,16 @@ spec:
               containerPort: {{ .Values.config.sipPort }}
               protocol: TCP
           volumeMounts:
-            - name: dialplan-volume
+            - name: config-volume
+              mountPath: /app/config.toml
+              subPath: config.toml
+            - name: config-volume
               mountPath: /app/dialplan.toml
               subPath: dialplan.toml
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
-        - name: dialplan-volume
+        - name: config-volume
           configMap:
             name: {{ include "sipcord.fullname" . }}-config
       {{- with .Values.nodeSelector }}

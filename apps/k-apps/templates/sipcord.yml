@@ -13,6 +13,7 @@ spec:
       valuesObject:
         discordBotToken: {{ .Values.sipcord.discordBotToken | default "" | quote }}
         channels: {{ .Values.sipcord.channels | toYaml | nindent 10 }}
+        sipPublicHost: "voip.{{ if and .Values.cluster .Values.cluster.name }}{{ .Values.cluster.name }}{{ else }}k{{ end }}.loa.internal"
   destination:
     server: https://kubernetes.default.svc
     namespace: voip
