@@ -11,5 +11,5 @@ data:
   dialplan.toml: |
     [extensions]
     {{- range .Values.channels }}
-    {{ .extension }} = { guild = {{ .guild }}, channel = {{ .channel }} }
+    {{ .extension }} = { guild = {{ .guild | quote }}, channel = {{ .channel | quote }} }
     {{- end }}
