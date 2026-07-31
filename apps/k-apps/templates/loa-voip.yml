@@ -39,7 +39,9 @@ spec:
         extensions: |
           ; --- DISCORD CONFBRIDGE ROUTING ---
           exten => _60XX,1,NoOp(Bridging call to Discord ConfBridge ${EXTEN})
-          same => n,Originate(PJSIP/sipcord-trunk/sip:${EXTEN}@sipcord.voip.svc.cluster.local:5060,app,ConfBridge,${EXTEN})
+          same => n,Set(DENOISE(rx)=on)
+          same => n,Set(DENOISE(tx)=on)
+          same => n,Originate(PJSIP/sipcord-trunk/sip:${EXTEN}@sipcord.voip.svc.cluster.local:5060,exten,sipcord-out,${EXTEN},1)
           same => n,ConfBridge(${EXTEN},default_bridge,default_user)
           same => n,Hangup()
 
@@ -48,8 +50,15 @@ spec:
           same => n,Read(DISCORD_EXT,beep,4)
           same => n,Goto(from-kamailio,${DISCORD_EXT},1)
 
+          [sipcord-out]
+          exten => _X.,1,NoOp(Outgoing call to Sipcord with denoising ${EXTEN})
+          same => n,Set(DENOISE(tx)=on)
+          same => n,ConfBridge(${EXTEN},default_bridge,bridge_user)
+          same => n,Hangup()
+
           [from-sipcord]
           exten => _X.,1,NoOp(Incoming call from Sipcord to ConfBridge ${EXTEN})
+          same => n,Set(DENOISE(tx)=on)
           same => n,ConfBridge(${EXTEN},default_bridge,bridge_user)
           same => n,Hangup()
         confbridge: |
