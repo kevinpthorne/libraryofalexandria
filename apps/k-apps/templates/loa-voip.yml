@@ -16,7 +16,7 @@ spec:
         global:
           domain: "voip.{{ if and .Values.cluster .Values.cluster.name }}{{ .Values.cluster.name }}{{ else }}k{{ end }}.loa.internal"
         {{- if (index .Values "sipcord" "enabled") }}
-        pjsua: |
+        pjsip: |
           [sipcord-trunk]
           type=endpoint
           transport=transport-udp
@@ -41,7 +41,7 @@ spec:
           exten => _60XX,1,NoOp(Bridging call to Discord ConfBridge ${EXTEN})
           same => n,Set(DENOISE(rx)=on)
           same => n,Set(DENOISE(tx)=on)
-          same => n,Originate(PJSIP/sipcord-trunk/sip:${EXTEN}@sipcord.voip.svc.cluster.local:5060,exten,sipcord-out,${EXTEN},1)
+          same => n,Originate(PJSIP/${EXTEN}@sipcord-trunk,exten,sipcord-out,${EXTEN},1,,a)
           same => n,ConfBridge(${EXTEN},default_bridge,default_user)
           same => n,Hangup()
 
