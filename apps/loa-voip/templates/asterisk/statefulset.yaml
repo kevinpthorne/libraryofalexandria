@@ -43,6 +43,9 @@ spec:
             - name: asterisk-config-volume
               mountPath: /etc/asterisk/extensions.conf
               subPath: extensions.conf
+            - name: asterisk-config-volume
+              mountPath: /etc/asterisk/confbridge.conf
+              subPath: confbridge.conf
             - name: asterisk-run
               mountPath: /var/run/asterisk
             - name: asterisk-spool
