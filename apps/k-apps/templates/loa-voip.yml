@@ -27,6 +27,8 @@ spec:
           outbound_auth=sipcord-auth
           force_rport=yes
           rewrite_contact=yes
+          rtp_timeout=10
+          rtp_keepalive=5
 
           [sipcord-auth]
           type=auth
@@ -37,6 +39,7 @@ spec:
           [sipcord-trunk]
           type=aor
           contact=sip:sipcord.voip.svc.cluster.local:5060
+          qualify_frequency=0
 
           [sipcord-identify]
           type=identify
@@ -48,7 +51,12 @@ spec:
           same => n,Set(VOLUME(rx)=-3)
           same => n,Set(DENOISE(rx)=on)
           same => n,Originate(PJSIP/${EXTEN}@sipcord-trunk,exten,sipcord-out,${EXTEN},1,,a)
+          same => n,GotoIf($["${ORIGINATE_STATUS}" != "SUCCESS"]?unavailable)
           same => n,ConfBridge(${EXTEN},default_bridge,default_user)
+          same => n,Hangup()
+          same => n(unavailable),NoOp(Sipcord bridge unavailable - playing congestion tone)
+          same => n,PlayTones(congestion)
+          same => n,Wait(5)
           same => n,Hangup()
 
           exten => 6000,1,NoOp(Discord Channel Selector IVR)
@@ -77,12 +85,15 @@ spec:
           admin=no
           marked=no
           startmuted=no
+          leave_when_last_marked=yes
+          end_marked=yes
           jitterbuffer=yes
 
           [bridge_user]
           type=user
           quiet=yes
           announce_user_count=no
+          marked=yes
           jitterbuffer=yes
         {{- end }}
 

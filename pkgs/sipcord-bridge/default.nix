@@ -72,8 +72,8 @@ rustPlatform.buildRustPackage rec {
     PJPROJECT_DIR = pjsipLibDir;
     LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
     BINDGEN_EXTRA_CLANG_ARGS = "-isystem ${stdenv.cc.libc.dev}/include -isystem ${llvmPackages.libclang.lib}/lib/clang/${lib.getVersion llvmPackages.clang}/include";
-    CFLAGS = "-DNDEBUG -U__STRICT_ANSI__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -Wno-error -Wno-implicit-function-declaration -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-int -std=gnu99";
-    NIX_CFLAGS_COMPILE = "-DNDEBUG -U__STRICT_ANSI__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -Wno-error -Wno-implicit-function-declaration -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-int -std=gnu99";
+    CFLAGS = "-DNDEBUG -DPJ_HAS_ASSERT=0 -U__STRICT_ANSI__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -Wno-error -Wno-implicit-function-declaration -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-int -std=gnu99";
+    NIX_CFLAGS_COMPILE = "-DNDEBUG -DPJ_HAS_ASSERT=0 -U__STRICT_ANSI__ -D_GNU_SOURCE -D_DEFAULT_SOURCE -Wno-error -Wno-implicit-function-declaration -Wno-incompatible-pointer-types -Wno-int-conversion -Wno-implicit-int -std=gnu99";
     NIX_LDFLAGS = "-L${pjsipLibDir}/lib -lwebrtc -lyuv";
   };
 
