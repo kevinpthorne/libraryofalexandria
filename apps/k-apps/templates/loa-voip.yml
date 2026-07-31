@@ -22,7 +22,7 @@ spec:
           transport=transport-udp
           context=from-sipcord
           disallow=all
-          allow=ulaw,alaw,g722,opus
+          allow=opus,g722,ulaw,alaw
           aors=sipcord-trunk
           outbound_auth=sipcord-auth
           force_rport=yes
@@ -45,8 +45,8 @@ spec:
         extensions: |
           ; --- DISCORD CONFBRIDGE ROUTING ---
           exten => _60XX,1,NoOp(Bridging call to Discord ConfBridge ${EXTEN})
+          same => n,Set(VOLUME(rx)=-3)
           same => n,Set(DENOISE(rx)=on)
-          same => n,Set(DENOISE(tx)=on)
           same => n,Originate(PJSIP/${EXTEN}@sipcord-trunk,exten,sipcord-out,${EXTEN},1,,a)
           same => n,ConfBridge(${EXTEN},default_bridge,default_user)
           same => n,Hangup()
@@ -57,14 +57,12 @@ spec:
           same => n,Goto(from-kamailio,${DISCORD_EXT},1)
 
           [sipcord-out]
-          exten => _X.,1,NoOp(Outgoing call to Sipcord with denoising ${EXTEN})
-          same => n,Set(DENOISE(tx)=on)
+          exten => _X.,1,NoOp(Outgoing call to Sipcord ${EXTEN})
           same => n,ConfBridge(${EXTEN},default_bridge,bridge_user)
           same => n,Hangup()
 
           [from-sipcord]
           exten => _X.,1,NoOp(Incoming call from Sipcord to ConfBridge ${EXTEN})
-          same => n,Set(DENOISE(tx)=on)
           same => n,ConfBridge(${EXTEN},default_bridge,bridge_user)
           same => n,Hangup()
         confbridge: |
@@ -72,17 +70,20 @@ spec:
           type=bridge
           sound_join=no
           sound_leave=no
+          internal_sample_rate=48000
 
           [default_user]
           type=user
           admin=no
           marked=no
           startmuted=no
+          jitterbuffer=yes
 
           [bridge_user]
           type=user
           quiet=yes
           announce_user_count=no
+          jitterbuffer=yes
         {{- end }}
 
   destination:
