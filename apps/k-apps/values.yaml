@@ -163,7 +163,6 @@ pgedge:
 
 sipcord:
   enabled: true
-  discordBotToken: ""
   channels:
     - extension: 6099
       guild: "635672514345041922"
