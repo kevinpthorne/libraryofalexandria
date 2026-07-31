@@ -24,9 +24,15 @@ spec:
           disallow=all
           allow=ulaw,alaw,g722,opus
           aors=sipcord-trunk
-          outbound_auth=
+          outbound_auth=sipcord-auth
           force_rport=yes
           rewrite_contact=yes
+
+          [sipcord-auth]
+          type=auth
+          auth_type=userpass
+          username=asterisk
+          password=sipcord
 
           [sipcord-trunk]
           type=aor
