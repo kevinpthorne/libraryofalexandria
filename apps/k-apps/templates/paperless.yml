@@ -35,7 +35,7 @@ spec:
             value: "https://paperless.{{ $cluster.name | default "k" }}.loa.internal"
           {{- if $hasFederation }}
           - name: PAPERLESS_DBHOST
-            value: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc"
+            value: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}main{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc"
           - name: PAPERLESS_DBPORT
             value: "5432"
           - name: PAPERLESS_DBNAME
@@ -49,7 +49,7 @@ spec:
           - name: PGSSLKEY
             value: "/certs/db-client/tls.key"
           - name: PGSSLROOTCERT
-            value: "/certs/cas/ca-bundle.crt"
+            value: "/certs/db-client/ca.crt"
           - name: PGSSLMODE
             value: "verify-full"
           - name: PAPERLESS_ENABLE_ALLAUTH
@@ -436,7 +436,7 @@ data:
     accept = 127.0.0.1:6379
     connect = keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380
     verifyChain = yes
-    CAfile = /certs/cas/ca-bundle.crt
+    CAfile = /certs/keydb-client/ca.crt
     cert = /certs/keydb-client/tls.crt
     key = /certs/keydb-client/tls.key
 {{- end }}
