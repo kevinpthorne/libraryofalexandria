@@ -1,0 +1,18 @@
+annotations:
+  artifacthub.io/changes: |
+    - kind: added
+      description: 'Added helpers for environment variables.'
+apiVersion: v2
+description: A Helm chart for Kubernetes
+home: https://charts.pascaliske.dev
+keywords:
+- library-chart
+maintainers:
+- email: info@pascaliske.dev
+  name: pascaliske
+  url: https://pascaliske.dev
+name: base
+sources:
+- https://github.com/pascaliske/helm-charts
+type: library
+version: 1.2.0

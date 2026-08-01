@@ -25,6 +25,8 @@ jobs:
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64,amd64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -36,22 +38,72 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/asterisk
-          tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
-            type=sha,format=short
-            type=ref,event=tag
+      # ----------------------------------------------------
+      # Build & Push amd64 (linux/amd64)
+      # ----------------------------------------------------
+      - name: Build and push amd64 image
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/${OWNER}/asterisk"
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          docker buildx build \
+            --platform linux/amd64 \
+            --file pkgs/asterisk-image/Dockerfile \
+            --tag "${IMAGE_NAME}:sha-${SHORT_SHA}-amd64" \
+            --tag "${IMAGE_NAME}:latest-amd64" \
+            --push \
+            pkgs/asterisk-image
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: pkgs/asterisk-image
-          file: pkgs/asterisk-image/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+      # ----------------------------------------------------
+      # Build & Push arm64 (linux/arm64)
+      # ----------------------------------------------------
+      - name: Build and push arm64 image
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/${OWNER}/asterisk"
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          docker buildx build \
+            --platform linux/arm64 \
+            --file pkgs/asterisk-image/Dockerfile \
+            --tag "${IMAGE_NAME}:sha-${SHORT_SHA}-arm64" \
+            --tag "${IMAGE_NAME}:latest-arm64" \
+            --push \
+            pkgs/asterisk-image
+
+      # ----------------------------------------------------
+      # Create & Push Multi-Arch Manifests (amd64 + arm64)
+      # ----------------------------------------------------
+      - name: Create and push multi-arch manifest
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/${OWNER}/asterisk"
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          
+          # 1. Short SHA manifest
+          docker manifest create "${IMAGE_NAME}:sha-${SHORT_SHA}" \
+            --amend "${IMAGE_NAME}:sha-${SHORT_SHA}-amd64" \
+            --amend "${IMAGE_NAME}:sha-${SHORT_SHA}-arm64"
+          docker manifest push "${IMAGE_NAME}:sha-${SHORT_SHA}"
+          
+          # 2. Ref name manifest (tag / master -> latest)
+          REF_NAME=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9._-]/./g')
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            docker manifest create "${IMAGE_NAME}:${REF_NAME}" \
+              --amend "${IMAGE_NAME}:${REF_NAME}-amd64" \
+              --amend "${IMAGE_NAME}:${REF_NAME}-arm64"
+            docker manifest push "${IMAGE_NAME}:${REF_NAME}"
+          elif [[ "${{ github.ref_name }}" == "master" ]]; then
+            docker manifest create "${IMAGE_NAME}:latest" \
+              --amend "${IMAGE_NAME}:latest-amd64" \
+              --amend "${IMAGE_NAME}:latest-arm64"
+            docker manifest push "${IMAGE_NAME}:latest"
+          else
+            docker manifest create "${IMAGE_NAME}:${REF_NAME}" \
+              --amend "${IMAGE_NAME}:${REF_NAME}-amd64" \
+              --amend "${IMAGE_NAME}:${REF_NAME}-arm64"
+            docker manifest push "${IMAGE_NAME}:${REF_NAME}"
+          fi

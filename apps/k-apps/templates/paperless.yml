@@ -8,12 +8,24 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://charts.pascaliske.dev
-    chart: paperless
-    targetRevision: 7.0.0
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/paperless-helm
+    targetRevision: HEAD
     helm:
       valuesObject:
         fullnameOverride: paperless
+        securityContext:
+          fsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         env:
           - name: TZ
             value: UTC

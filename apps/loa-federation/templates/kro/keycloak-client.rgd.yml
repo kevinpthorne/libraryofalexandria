@@ -151,13 +151,15 @@ spec:
                 env:
                 - name: KEYCLOAK_URL
                   value: "https://keycloak.keycloak.svc.cluster.local:8443"
-                - name: KEYCLOAK_USER
-                  value: "admin"
-                - name: KEYCLOAK_PASSWORD
+                - name: KEYCLOAK_CLIENTID
+                  value: "kro-provisioner"
+                - name: KEYCLOAK_CLIENTSECRET
                   valueFrom:
                     secretKeyRef:
-                      name: keycloak
-                      key: admin-password
+                      name: kro-provisioner-credentials
+                      key: clientSecret
+                - name: KEYCLOAK_GRANTTYPE
+                  value: "client_credentials"
                 - name: KEYCLOAK_AVAILABILITYPROBE_TIMEOUT
                   value: "120s"
                 - name: IMPORT_FILES_LOCATIONS

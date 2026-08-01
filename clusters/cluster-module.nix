@@ -147,7 +147,7 @@
           options = {
             bootstrapPeerIdentity = lib.mkOption {
               type = with lib.types; nullOr str;
-              default = null;  # null means not a bootstrap peer
+              default = null; # null means not a bootstrap peer
             };
             isBootstrapPeer = lib.mkOption {
               type = lib.types.bool;
@@ -180,7 +180,7 @@
         # generated
       };
       sync = lib.mkOption {
-        type = lib.types.bool;
+        type = lib.types.nullOr lib.types.bool;
         description = "Force this cluster to either deploy cross-cluster sync jobs or explicitly not deploy them.";
         default = null;
       };
@@ -384,22 +384,29 @@
         ) config.libraryofalexandria.cluster.federateTo
       );
       # bootstrap peers
-      libraryofalexandria.cluster.federationBootstrap.peers = let
-        thisCluster = config.libraryofalexandria.cluster;
-        # for every peer, get their isBootstrapPeer; if so, flatmap their bootstrap proto+ports, should be a list of entries like
-        # /dns4/${externalDomain}/tcp/4001/p2p/${bootstrapPeerIdentity}
-        bootstrapPeerClusters = lib.attrsets.filterAttrs (clusterName: cluster: cluster.federationBootstrap.bootstrapPeerIdentity != null) (
-          config.libraryofalexandria.cluster.federation.peers // { ${thisCluster.name} = thisCluster; }
+      libraryofalexandria.cluster.federationBootstrap.peers =
+        let
+          thisCluster = config.libraryofalexandria.cluster;
+          # for every peer, get their isBootstrapPeer; if so, flatmap their bootstrap proto+ports, should be a list of entries like
+          # /dns4/${externalDomain}/tcp/4001/p2p/${bootstrapPeerIdentity}
+          bootstrapPeerClusters = lib.attrsets.filterAttrs (
+            clusterName: cluster: cluster.federationBootstrap.bootstrapPeerIdentity != null
+          ) (config.libraryofalexandria.cluster.federation.peers // { ${thisCluster.name} = thisCluster; });
+        in
+        lib.flatten (
+          lib.mapAttrsToList (
+            clusterName: cluster:
+            builtins.map (
+              protoPort:
+              "/dns4/${cluster.externalDomain}/${protoPort}/p2p/${cluster.federationBootstrap.bootstrapPeerIdentity}"
+            ) cluster.federationBootstrap.bootstrapPeerProtoPorts
+          ) bootstrapPeerClusters
         );
-      in
-        lib.flatten (lib.mapAttrsToList (clusterName: cluster:
-          builtins.map (protoPort:
-            "/dns4/${cluster.externalDomain}/${protoPort}/p2p/${cluster.federationBootstrap.bootstrapPeerIdentity}"
-          ) cluster.federationBootstrap.bootstrapPeerProtoPorts
-        ) bootstrapPeerClusters);
       # vpn peers
       # for every peer, get their borderRouterIp
-      libraryofalexandria.cluster.vpnPeers = lib.mapAttrsToList (name: cluster: cluster.federationBorderRouterIp) config.libraryofalexandria.cluster.federation.peers;
+      libraryofalexandria.cluster.vpnPeers = lib.mapAttrsToList (
+        name: cluster: cluster.federationBorderRouterIp
+      ) config.libraryofalexandria.cluster.federation.peers;
 
       # masters = collectAll (id: wrapNixosSystem id) masterSystems;
       masters = collectSystems masterSystems;
@@ -484,10 +491,12 @@
           "build-all-${config.libraryofalexandria.cluster.name}" = allSystemsBuilder pkgs; # TODO this technically names the package twice - why not once?
           "chart-index-${config.libraryofalexandria.cluster.name}" =
             (builtins.head masterSystems).config.system.build.chartIndex;
-          "display-cluster-${config.libraryofalexandria.cluster.name}" = pkgs.cluster-module-display.override {
-            clusterName = config.libraryofalexandria.cluster.name;
-            cluster = lib2.getClusterConfig lib config.libraryofalexandria.cluster;
-          };
+          "display-cluster-${config.libraryofalexandria.cluster.name}" =
+            pkgs.cluster-module-display.override
+              {
+                clusterName = config.libraryofalexandria.cluster.name;
+                cluster = lib2.getClusterConfig lib config.libraryofalexandria.cluster;
+              };
           # "go-archs-${config.libraryofalexandria.cluster.name}" = pkgs.go-arch-index.override {
           #     inherit pkgs;
           #     inherit lib;

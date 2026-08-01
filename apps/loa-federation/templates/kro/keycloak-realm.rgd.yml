@@ -123,13 +123,13 @@ spec:
                 env:
                 - name: KEYCLOAK_URL
                   value: "https://keycloak.keycloak.svc.cluster.local:8443"
-                - name: KEYCLOAK_USER
-                  value: "admin"
-                - name: KEYCLOAK_PASSWORD
+                - name: KEYCLOAK_CLIENTID
+                  value: "kro-provisioner"
+                - name: KEYCLOAK_CLIENTSECRET
                   valueFrom:
                     secretKeyRef:
-                      name: keycloak
-                      key: admin-password
+                      name: kro-provisioner-credentials
+                      key: clientSecret
                 - name: REALM_NAME
                   value: ${schema.spec.realm}
                 - name: REALM_DISPLAY_NAME
@@ -154,10 +154,9 @@ spec:
                   done
                   
                   echo "Getting Admin Token..."
-                  TOKEN=$(curl -k -s -d "client_id=admin-cli" \
-                    -d "username=$KEYCLOAK_USER" \
-                    -d "password=$KEYCLOAK_PASSWORD" \
-                    -d "grant_type=password" \
+                  TOKEN=$(curl -k -s -d "client_id=$KEYCLOAK_CLIENTID" \
+                    -d "client_secret=$KEYCLOAK_CLIENTSECRET" \
+                    -d "grant_type=client_credentials" \
                     "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$')
                   
                   if [ -z "$TOKEN" ]; then
@@ -218,13 +217,13 @@ spec:
                 env:
                 - name: KEYCLOAK_URL
                   value: "https://keycloak.keycloak.svc.cluster.local:8443"
-                - name: KEYCLOAK_USER
-                  value: "admin"
-                - name: KEYCLOAK_PASSWORD
+                - name: KEYCLOAK_CLIENTID
+                  value: "kro-provisioner"
+                - name: KEYCLOAK_CLIENTSECRET
                   valueFrom:
                     secretKeyRef:
-                      name: keycloak
-                      key: admin-password
+                      name: kro-provisioner-credentials
+                      key: clientSecret
                 - name: REALM_NAME
                   value: ${schema.spec.realm}
                 - name: REALM_CR_NAME
@@ -257,10 +256,9 @@ spec:
                           echo "Parent KeycloakRealm CR is being deleted (deletionTimestamp: $DELETION_TIMESTAMP). Proceeding with Keycloak realm deletion..."
                           
                           echo "Getting Keycloak Admin Token..."
-                          KC_TOKEN=$(curl -k -s -d "client_id=admin-cli" \
-                            -d "username=$KEYCLOAK_USER" \
-                            -d "password=$KEYCLOAK_PASSWORD" \
-                            -d "grant_type=password" \
+                          KC_TOKEN=$(curl -k -s -d "client_id=$KEYCLOAK_CLIENTID" \
+                            -d "client_secret=$KEYCLOAK_CLIENTSECRET" \
+                            -d "grant_type=client_credentials" \
                             "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$')
                           
                           if [ -n "$KC_TOKEN" ]; then

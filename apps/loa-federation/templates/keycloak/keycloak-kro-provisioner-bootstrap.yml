@@ -1,0 +1,158 @@
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: kro-provisioner-credentials-gen
+  namespace: keycloak
+spec:
+  length: 32
+  digits: 4
+  symbols: 0
+  allowRepeat: true
+  secretKeys:
+    - clientSecret
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: kro-provisioner-credentials
+  namespace: keycloak
+spec:
+  refreshInterval: "0"
+  target:
+    name: kro-provisioner-credentials
+    template:
+      engineVersion: v2
+      data:
+        clientId: "kro-provisioner"
+        clientSecret: "{{ .clientSecret }}"
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: kro-provisioner-credentials-gen
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keycloak-bootstrap-kro-provisioner
+  namespace: keycloak
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: provision
+        image: curlimages/curl:8.2.1
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          readOnlyRootFilesystem: true
+        env:
+        - name: KEYCLOAK_URL
+          value: "https://keycloak.keycloak.svc.cluster.local:8443"
+        - name: KEYCLOAK_USER
+          value: "admin"
+        - name: KEYCLOAK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak
+              key: admin-password
+        - name: PROVISIONER_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: kro-provisioner-credentials
+              key: clientId
+        - name: PROVISIONER_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: kro-provisioner-credentials
+              key: clientSecret
+        command:
+        - "sh"
+        - "-c"
+        - |
+          set -e
+          
+          echo "Waiting for Keycloak at $KEYCLOAK_URL..."
+          until curl -k -s -I "$KEYCLOAK_URL" > /dev/null; do
+            sleep 5
+          done
+          
+          echo "Getting Admin Token..."
+          TOKEN=$(curl -k -s -d "client_id=admin-cli" \
+            -d "username=$KEYCLOAK_USER" \
+            -d "password=$KEYCLOAK_PASSWORD" \
+            -d "grant_type=password" \
+            "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$')
+          
+          if [ -z "$TOKEN" ]; then
+            echo "Failed to get access token."
+            exit 1
+          fi
+          
+          echo "Checking if client $PROVISIONER_CLIENT_ID exists..."
+          CLIENT_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients?clientId=$PROVISIONER_CLIENT_ID" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+          
+          if [ -z "$CLIENT_ID" ]; then
+            echo "Client $PROVISIONER_CLIENT_ID does not exist. Creating..."
+            curl -k -s -o /dev/null -w "%{http_code}" -X POST \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "clientId": "'$PROVISIONER_CLIENT_ID'",
+                "secret": "'$PROVISIONER_CLIENT_SECRET'",
+                "serviceAccountsEnabled": true,
+                "publicClient": false,
+                "standardFlowEnabled": false
+              }' "$KEYCLOAK_URL/admin/realms/master/clients"
+              
+            # get internal ID of newly created client
+            CLIENT_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients?clientId=$PROVISIONER_CLIENT_ID" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+          else
+            echo "Client $PROVISIONER_CLIENT_ID exists. Ensuring secret is updated..."
+            curl -k -s -o /dev/null -w "%{http_code}" -X PUT \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{
+                "clientId": "'$PROVISIONER_CLIENT_ID'",
+                "secret": "'$PROVISIONER_CLIENT_SECRET'",
+                "serviceAccountsEnabled": true
+              }' "$KEYCLOAK_URL/admin/realms/master/clients/$CLIENT_ID"
+          fi
+          
+          echo "Getting Service Account user for client..."
+          SA_USER_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients/$CLIENT_ID/service-account-user" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+          
+          echo "Getting master-realm client ID..."
+          MASTER_REALM_CLIENT_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients?clientId=master-realm" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+          
+          echo "Getting admin role from master-realm client..."
+          ADMIN_ROLE_JSON=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients/$MASTER_REALM_CLIENT_ID/roles/admin")
+          ADMIN_ROLE_ID=$(echo "$ADMIN_ROLE_JSON" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+          ADMIN_ROLE_NAME=$(echo "$ADMIN_ROLE_JSON" | grep -o '"name":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+          
+          echo "Assigning admin role to the service account..."
+          curl -k -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '[{
+              "id": "'$ADMIN_ROLE_ID'",
+              "name": "'$ADMIN_ROLE_NAME'",
+              "clientRole": true,
+              "composite": true,
+              "containerId": "'$MASTER_REALM_CLIENT_ID'"
+            }]' "$KEYCLOAK_URL/admin/realms/master/users/$SA_USER_ID/role-mappings/clients/$MASTER_REALM_CLIENT_ID"
+          
+          echo "Bootstrap complete."

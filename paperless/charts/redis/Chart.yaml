@@ -1,0 +1,32 @@
+annotations:
+  artifacthub.io/changes: |
+    - kind: added
+      description: 'Support affinity, tolerations and node selector fields.'
+    - kind: added
+      description: 'Support extra volumes and extra volume mounts.'
+    - kind: added
+      description: 'Support extra containers.'
+    - kind: added
+      description: 'Support image pull secrets.'
+apiVersion: v2
+appVersion: 8.0.3
+dependencies:
+- name: base
+  repository: https://charts.pascaliske.dev
+  version: 1.2.0
+description: A Helm chart for Redis
+home: https://charts.pascaliske.dev/charts/redis/
+keywords:
+- redis
+maintainers:
+- email: info@pascaliske.dev
+  name: pascaliske
+  url: https://pascaliske.dev
+name: redis
+sources:
+- https://github.com/pascaliske/helm-charts
+- https://github.com/docker-library/redis
+- https://github.com/redis/redis
+- https://redis.io
+type: application
+version: 2.1.0

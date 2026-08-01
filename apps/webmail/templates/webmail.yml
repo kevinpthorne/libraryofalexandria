@@ -1,0 +1,144 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: webmail
+  namespace: {{ .Values.argoNamespace | default "argocd" }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/bulwark-mail
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        replicaCount: 1
+        config:
+          jmapServerUrl: "https://mail.k.kpt.link"
+        settingsSync:
+          enabled: true
+          persistence:
+            enabled: true
+        service:
+          extraPorts:
+            - port: 443
+              targetPort: 443
+              protocol: TCP
+              name: https
+        extraContainers:
+          - name: stunnel
+            image: cgr.dev/chainguard/stunnel:latest
+            command: ["stunnel", "/etc/stunnel/stunnel.conf"]
+            volumeMounts:
+              - name: stunnel-conf
+                mountPath: /etc/stunnel
+                readOnly: true
+              - name: webmail-tls
+                mountPath: /certs/tls
+                readOnly: true
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              capabilities:
+                drop:
+                  - ALL
+        extraVolumes:
+          - name: webmail-tls
+            secret:
+              secretName: webmail-tls
+          - name: stunnel-conf
+            configMap:
+              name: webmail-stunnel-conf
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mail
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: webmail-tls
+  namespace: {{ .Values.argoNamespace | default "argocd" }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "webmail"
+        cluster:
+          name: "k"
+        cert:
+          secretName: "webmail-tls"
+          sans:
+            - "webmail.k.loa.internal"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mail
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: webmail-gateway
+  namespace: {{ .Values.argoNamespace | default "argocd" }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: webmail
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
+            hostnames:
+              - "webmail.k.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 443
+                targetService: webmail-bulwark-mail
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mail
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webmail-stunnel-conf
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+data:
+  stunnel.conf: |
+    foreground = yes
+    pid =
+    [webmail]
+    accept = 443
+    connect = 127.0.0.1:3000
+    cert = /certs/tls/tls.crt
+    key = /certs/tls/tls.key

@@ -1,0 +1,302 @@
+image:
+  # -- The registry to pull the image from.
+  registry: ghcr.io
+  # -- The repository to pull the image from.
+  repository: paperless-ngx/paperless-ngx
+  # -- The docker tag, if left empty chart's appVersion will be used.
+  # @default -- `.Chart.AppVersion`
+  tag: ''
+  # -- The pull policy for the controller.
+  pullPolicy: IfNotPresent
+
+nameOverride: ''
+fullnameOverride: ''
+
+controller:
+  # -- Create a workload for this chart.
+  enabled: true
+  # -- Type of the workload object.
+  kind: Deployment
+  # -- The number of replicas.
+  replicas: 1
+  # -- The controller update strategy. Currently only applies to controllers of kind `Deployment`.
+  updateStrategy: {}
+  # -- Additional annotations for the controller object.
+  annotations: {}
+  # -- Additional labels for the controller object.
+  labels: {}
+
+service:
+  # -- Create a service for exposing this chart.
+  enabled: true
+  # -- The service type used.
+  type: ClusterIP
+  # -- ClusterIP used if service type is `ClusterIP`.
+  clusterIP: ''
+  # -- LoadBalancerIP if service type is `LoadBalancer`.
+  loadBalancerIP: ''
+  # -- Allowed addresses when service type is `LoadBalancer`.
+  loadBalancerSourceRanges: []
+  # -- Additional annotations for the service object.
+  annotations: {}
+  # -- Additional labels for the service object.
+  labels: {}
+
+ingressRoute:
+  # -- Create an IngressRoute object for exposing this chart.
+  create: false
+  # -- List of [entry points](https://doc.traefik.io/traefik/routing/routers/#entrypoints) on which the ingress route will be available.
+  entryPoints: []
+  # -- [Matching rule](https://doc.traefik.io/traefik/routing/routers/#rule) for the underlying router.
+  rule: ''
+  # -- List of [middleware objects](https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-middleware) for the ingress route.
+  middlewares: []
+  # -- Use an existing secret containing the TLS certificate.
+  tlsSecretName: ''
+  # -- Additional annotations for the ingress route object.
+  annotations: {}
+  # -- Additional labels for the ingress route object.
+  labels: {}
+
+certificate:
+  # -- Create an Certificate object for the exposed chart.
+  create: false
+  # -- List of subject alternative names for the certificate.
+  dnsNames: []
+  # -- Name of the secret in which the certificate will be stored. Defaults to the first item in dnsNames.
+  secretName: ''
+  issuerRef:
+    # -- Type of the referenced certificate issuer. Can be "Issuer" or "ClusterIssuer".
+    kind: ClusterIssuer
+    # -- Name of the referenced certificate issuer.
+    name: ''
+  # -- Additional annotations for the certificate object.
+  annotations: {}
+  # -- Additional labels for the certificate object.
+  labels: {}
+
+# -- Allow passing in environment variables to the container - supported are both `value` and `valueFrom`.
+env:
+  # -- Timezone for the container.
+  - name: TZ
+    value: UTC
+
+ports:
+  http:
+    # -- Enable the port inside the `Deployment` and `Service` objects.
+    enabled: true
+    # -- The port used as internal port and cluster-wide port if `.service.type` == `ClusterIP`.
+    port: 8000
+    # -- The external port used if `.service.type` == `NodePort`.
+    nodePort: null
+    # -- The protocol used for the service.
+    protocol: TCP
+
+secret:
+  # -- Create a new secret containing the [secret values](https://docs.paperless-ngx.com/configuration/#hosting-and-security).
+  create: true
+  # -- Use an existing secret to store the [secret values](https://docs.paperless-ngx.com/configuration/#hosting-and-security). Please note: keys inside the existing secret must match the keys from below and still need to be provided with non-empty values!
+  existingSecret: ''
+  # -- Secret values used when not using an existing secret. Helm templates are supported for values. Please note: this values are still required if you use the existing secret option!
+  values:
+    # -- Secret key for session tokens.
+    PAPERLESS_SECRET_KEY: '{{ randAlphaNum 42 | b64enc }}'
+    # -- Optional. Initial admin username.
+    # PAPERLESS_ADMIN_USER: ''
+    # -- Optional. Initial admin password.
+    # PAPERLESS_ADMIN_PASSWORD: ''
+    # -- Optional. Initial admin email.
+    # PAPERLESS_ADMIN_MAIL: ''
+  # -- Additional annotations for the secret object.
+  annotations: {}
+  # -- Additional labels for the secret object.
+  labels: {}
+
+persistentVolumeClaim:
+  # -- Create a new persistent volume claim object.
+  create: true
+  # -- Mount path of the persistent volume claim object.
+  mountPath: /usr/src/paperless
+  # -- Access mode of the persistent volume claim object.
+  accessMode: ReadWriteOnce
+  # -- Volume mode of the persistent volume claim object.
+  volumeMode: Filesystem
+  # -- Storage request size for the persistent volume claim object.
+  size: 1Gi
+  # -- Storage class name for the persistent volume claim object.
+  storageClassName: ''
+  # -- Use an existing persistent volume claim object.
+  existingPersistentVolumeClaim: ''
+  # -- Additional annotations for the persistent volume claim object.
+  annotations: {}
+  # -- Additional labels for the persistent volume claim object.
+  labels: {}
+
+media:
+  # -- Enable the volume mount of a [media directory](https://docs.paperless-ngx.com/configuration/#paths-and-folders).
+  enabled: false
+  # -- Type of the target volume for the media directory. Possible values are: `hostPath`, `pvc`, `csi`, `nfs`, `emptyDir`.
+  type: emptyDir
+  # -- Mount path of the media directory inside the container.
+  mountPath: /media
+  # -- Host path volume for the media directory. Only used if type equals `hostPath`.
+  hostPath: {}
+  # -- PersistentVolumeClaim for the media directory. Only used if type equals `pvc`.
+  persistentVolumeClaim: {}
+  # -- CSI storage volume for the media directory. Only used if type equals `csi`.
+  csi: {}
+  # -- NFS storage volume for the media directory. Only used if type equals `nfs`.
+  nfs: {}
+  # -- Temporary emptyDir volume for the media directory. Only used if type equals `emptyDir` or is unknown.
+  emptyDir: {}
+
+consumption:
+  # -- Enable the volume mount of a [consumption directory](https://docs.paperless-ngx.com/configuration/#paths-and-folders).
+  enabled: true
+  # -- Type of the target volume for the consumption directory. Possible values are: `hostPath`, `pvc`, `csi`, `nfs`, `emptyDir`.
+  type: emptyDir
+  # -- Mount path of the consumption directory inside the container.
+  mountPath: /consumption
+  # -- Host path volume for the consumption directory. Only used if type equals `hostPath`.
+  hostPath: {}
+  # -- PersistentVolumeClaim for the consumption directory. Only used if type equals `pvc`.
+  persistentVolumeClaim: {}
+  # -- CSI storage volume for the consumption directory. Only used if type equals `csi`.
+  csi: {}
+  # -- NFS storage volume for the consumption directory. Only used if type equals `nfs`.
+  nfs: {}
+  # -- Temporary emptyDir volume for the consumption directory. Only used if type equals `emptyDir` or is unknown.
+  emptyDir: {}
+
+export:
+  # -- Enable the volume mount of an export directory for [backups](https://docs.paperless-ngx.com/administration/#backup) using the [document exporter](https://docs.paperless-ngx.com/administration/#exporter).
+  enabled: false
+  # -- Type of the target volume for the export directory. Possible values are: `hostPath`, `pvc`, `csi`, `nfs`, `emptyDir`.
+  type: emptyDir
+  # -- Mount path of the export directory inside the container.
+  mountPath: /export
+  # -- Host path volume for the consumption directory. Only used if type equals `hostPath`.
+  hostPath: {}
+  # -- PersistentVolumeClaim for the consumption directory. Only used if type equals `pvc`.
+  persistentVolumeClaim: {}
+  # -- CSI storage volume for the consumption directory. Only used if type equals `csi`.
+  csi: {}
+  # -- NFS storage volume for the consumption directory. Only used if type equals `nfs`.
+  nfs: {}
+  # -- Temporary emptyDir volume for the consumption directory. Only used if type equals `emptyDir` or is unknown.
+  emptyDir: {}
+  cronJob:
+    # -- Create a `CronJob` object for [automated exports](https://docs.paperless-ngx.com/administration/#backup).
+    enabled: false
+    # -- Schedule for automated exports.
+    schedule: '0 4 * * 1'
+    # -- Enable/disable the cron job schedule quickly.
+    suspend: false
+    # -- The number of successful finished jobs to retain.
+    successfulJobsHistoryLimit: 3
+    # -- The number of failed finished jobs to retain.
+    failedJobsHistoryLimit: 1
+    # -- Additional annotations for the cronjob object.
+    annotations: {}
+    # -- Additional labels for the cronjob object.
+    labels: {}
+
+trash:
+  # -- Enable the volume mount of a [trash directory](https://docs.paperless-ngx.com/configuration/#paths-and-folders).
+  enabled: false
+  # -- Type of the target volume for the trash directory. Possible values are: `hostPath`, `pvc`, `csi`, `nfs`, `emptyDir`.
+  type: emptyDir
+  # -- Mount path of the trash directory inside the container.
+  mountPath: /trash
+  # -- Host path volume for the consumption directory. Only used if type equals `hostPath`.
+  hostPath: {}
+  # -- PersistentVolumeClaim for the consumption directory. Only used if type equals `pvc`.
+  persistentVolumeClaim: {}
+  # -- CSI storage volume for the consumption directory. Only used if type equals `csi`.
+  csi: {}
+  # -- NFS storage volume for the consumption directory. Only used if type equals `nfs`.
+  nfs: {}
+  # -- Temporary emptyDir volume for the consumption directory. Only used if type equals `emptyDir` or is unknown.
+  emptyDir: {}
+
+serviceAccount:
+  # -- Create a `ServiceAccount` object.
+  create: true
+  # -- Specify the service account used for the controller.
+  name: ''
+  # -- Additional annotations for the role and role binding objects.
+  annotations: {}
+  # -- Additional labels for the role and role binding objects.
+  labels: {}
+
+rbac:
+  # -- Create `Role` and `RoleBinding` objects.
+  create: true
+  # -- Additional annotations for the role and role binding objects.
+  annotations: {}
+  # -- Additional labels for the role and role binding objects.
+  labels: {}
+
+# -- Pod-level security attributes. More info [here](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#security-context).
+securityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsGroup: 1000
+  runAsUser: 1000
+
+# -- Compute resources used by the container. More info [here](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/).
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# -- Pod-level affinity. More info [here](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling).
+affinity: {}
+  # nodeAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #     nodeSelectorTerms:
+  #       - matchExpressions:
+  #           - key: kubernetes.io/hostname
+  #             operator: In
+  #             values:
+  #               - my-node-xyz
+
+# -- Pod-level tolerations. More info [here](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling).
+tolerations: []
+  # - key: node-role.kubernetes.io/control-plane
+  #   operator: Exists
+  #   effect: NoSchedule
+
+# -- Pod-level node selector. More info [here](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling).
+nodeSelector: {}
+  # label: value
+
+# -- Specify any extra containers here as dictionary items - each should have its own key.
+extraContainers: {}
+  # container:
+  #   name: my-container
+  #   image: my-org/my-image
+
+# -- Specify extra volume mounts for the default containers.
+extraVolumeMounts: []
+  # - name: my-volume
+  #   mountPath: /path/to/volume
+  #   readOnly: false
+
+# -- Specify extra volumes for the workload.
+extraVolumes: []
+  # - name: my-volume
+  #   secret:
+  #     secretName: my-secret
+
+# -- Specify extra objects.
+extraObjects: []
+
+# -- Configure `redis` subchart under this key. More info [here](https://charts.pascaliske.dev/charts/redis/).
+redis:
+  # -- Enable `redis` subchart.
+  # @default -- `false`
+  enabled: false
