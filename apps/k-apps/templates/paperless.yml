@@ -1,0 +1,424 @@
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: paperless
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://charts.pascaliske.dev
+    chart: paperless
+    targetRevision: 7.0.0
+    helm:
+      valuesObject:
+        fullnameOverride: paperless
+        env:
+          - name: TZ
+            value: UTC
+          - name: PAPERLESS_URL
+            value: "https://paperless.{{ $cluster.name | default "k" }}.loa.internal"
+          {{- if $hasFederation }}
+          - name: PAPERLESS_DBHOST
+            value: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name }}-data-rw.pgedge.svc"
+          - name: PAPERLESS_DBPORT
+            value: "5432"
+          - name: PAPERLESS_DBNAME
+            value: "paperless"
+          - name: PAPERLESS_DBUSER
+            value: "paperless"
+          - name: PAPERLESS_REDIS
+            value: "redis://127.0.0.1:6379/0"
+          - name: PGSSLCERT
+            value: "/certs/db-client/tls.crt"
+          - name: PGSSLKEY
+            value: "/certs/db-client/tls.key"
+          - name: PGSSLROOTCERT
+            value: "/certs/cas/ca-bundle.crt"
+          - name: PGSSLMODE
+            value: "verify-full"
+          - name: PAPERLESS_ENABLE_ALLAUTH
+            value: "true"
+          - name: PAPERLESS_APPS
+            value: "paperless_mail,paperless_storages,allauth.socialaccount.providers.openid_connect"
+          - name: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+            valueFrom:
+              secretKeyRef:
+                name: paperless-oauth-secret
+                key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+          {{- else }}
+          - name: PAPERLESS_APPS
+            value: "paperless_mail,paperless_storages"
+          {{- end }}
+          - name: PAPERLESS_STORAGE_TYPE
+            value: "s3"
+          - name: PAPERLESS_STORAGE_S3_ENDPOINT_URL
+            value: "https://seaweed-cluster-s3-https.seaweedfs-system.svc.cluster.local:8333"
+          - name: PAPERLESS_STORAGE_S3_BUCKET_NAME
+            value: "paperless"
+          - name: PAPERLESS_STORAGE_S3_REGION_NAME
+            value: "us-east-1"
+          - name: PAPERLESS_STORAGE_S3_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: paperless-s3-creds
+                key: accessKey
+          - name: PAPERLESS_STORAGE_S3_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: paperless-s3-creds
+                key: secretKey
+        persistentVolumeClaim:
+          create: true
+          storageClassName: "longhorn"
+          mountPath: /usr/src/paperless/data
+        consumption:
+          enabled: true
+          type: emptyDir
+        media:
+          enabled: false
+        trash:
+          enabled: false
+        export:
+          enabled: false
+        extraVolumeMounts:
+          - name: cas
+            mountPath: /certs/cas
+            readOnly: true
+          - name: cas
+            mountPath: /etc/ssl/certs/ca-certificates.crt
+            subPath: ca-bundle.crt
+            readOnly: true
+          {{- if $hasFederation }}
+          - name: db-client-certs
+            mountPath: /certs/db-client
+            readOnly: true
+          {{- end }}
+        extraVolumes:
+          - name: cas
+            configMap:
+              name: trusted-ca-bundle
+          {{- if $hasFederation }}
+          - name: db-client-certs
+            secret:
+              secretName: pgedge-paperless-client-cert
+              defaultMode: 256
+          - name: keydb-client-cert
+            secret:
+              secretName: keydb-paperless-client-cert
+              defaultMode: 256
+          - name: stunnel-conf
+            configMap:
+              name: paperless-stunnel-conf
+          {{- end }}
+        {{- if $hasFederation }}
+        extraContainers:
+          stunnel:
+            name: stunnel
+            image: cgr.dev/chainguard/stunnel:latest
+            command: ["stunnel", "/etc/stunnel/stunnel.conf"]
+            volumeMounts:
+              - name: stunnel-conf
+                mountPath: /etc/stunnel
+                readOnly: true
+              - name: keydb-client-cert
+                mountPath: /certs/keydb-client
+                readOnly: true
+              - name: cas
+                mountPath: /certs/cas
+                readOnly: true
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              capabilities:
+                drop:
+                  - ALL
+        {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: paperless
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: paperless-tls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "paperless"
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        cert:
+          secretName: "paperless-tls"
+          sans:
+            - "paperless.{{ $cluster.name | default "k" }}.loa.internal"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: paperless
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: paperless-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: paperless
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
+            hostnames:
+              - "paperless.{{ $cluster.name | default "k" }}.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 8000
+                targetService: paperless
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: paperless
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Identity
+metadata:
+  name: paperless
+  namespace: paperless
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Credentials
+metadata:
+  name: paperless-s3-creds
+  namespace: paperless
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  identityRef:
+    name: paperless
+  secretRef:
+    name: paperless-s3-creds
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: Bucket
+metadata:
+  name: paperless
+  namespace: paperless
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  clusterRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  name: paperless
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Policy
+metadata:
+  name: paperless-policy
+  namespace: paperless
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  statements:
+    - effect: Allow
+      actions: [s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket]
+      resources: [
+        "paperless/*", "paperless"
+      ]
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3PolicyBinding
+metadata:
+  name: paperless-policy-binding
+  namespace: paperless
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  policyRef:
+    name: paperless-policy
+  subjects:
+    - kind: S3Identity
+      name: paperless
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: ResourceReferenceGrant
+metadata:
+  name: seaweed-paperless-grant
+  namespace: seaweedfs-system
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  from:
+    - group: seaweed.seaweedfs.com
+      kind: S3Identity
+      namespace: paperless
+    - group: seaweed.seaweedfs.com
+      kind: S3Credentials
+      namespace: paperless
+    - group: seaweed.seaweedfs.com
+      kind: Bucket
+      namespace: paperless
+    - group: seaweed.seaweedfs.com
+      kind: S3Policy
+      namespace: paperless
+    - group: seaweed.seaweedfs.com
+      kind: S3PolicyBinding
+      namespace: paperless
+  to:
+    - group: seaweed.seaweedfs.com
+      kind: Seaweed
+
+{{- if $hasFederation }}
+
+---
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: PrivateDatabase
+metadata:
+  name: paperless
+  namespace: paperless
+spec:
+  databaseName: paperless
+  userName: paperless
+  appNamespace: paperless
+  federate: false
+---
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: KeydbClient
+metadata:
+  name: paperless
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  appName: paperless
+  appNamespace: paperless
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: paperless-oauth-password
+  namespace: paperless
+spec:
+  length: 32
+  digits: 5
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: paperless-oauth-secret
+  namespace: paperless
+spec:
+  refreshInterval: "0"
+  target:
+    name: paperless-oauth-secret
+    template:
+      engineVersion: v2
+      data:
+        secret: "{{ `{{ .password }}` }}"
+        PAPERLESS_SOCIALACCOUNT_PROVIDERS: |
+          {
+            "openid_connect": {
+              "APPS": [
+                {
+                  "provider_id": "keycloak",
+                  "name": "Keycloak",
+                  "client_id": "paperless",
+                  "secret": "{{ `{{ .password }}` }}",
+                  "settings": {
+                    "server_url": "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa/.well-known/openid-configuration"
+                  }
+                }
+              ]
+            }
+          }
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: paperless-oauth-password
+---
+apiVersion: authn.loa.kevinpthorne.com/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: paperless
+  namespace: paperless
+spec:
+  clientId: paperless
+  secretRef:
+    name: paperless-oauth-secret
+    key: secret
+  redirectUris:
+    - "https://paperless.{{ $cluster.name | default "k" }}.loa.internal/accounts/oidc/keycloak/login/callback/"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paperless-stunnel-conf
+  namespace: paperless
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+data:
+  stunnel.conf: |
+    foreground = yes
+    pid =
+    [redis]
+    client = yes
+    accept = 127.0.0.1:6379
+    connect = keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380
+    verifyChain = yes
+    CAfile = /certs/cas/ca-bundle.crt
+    cert = /certs/keydb-client/tls.crt
+    key = /certs/keydb-client/tls.key
+{{- end }}
