@@ -22,7 +22,7 @@ spec:
           transport=transport-udp
           context=from-sipcord
           disallow=all
-          allow=opus,g722,ulaw,alaw
+          allow=g722,ulaw,alaw
           aors=sipcord-trunk
           outbound_auth=sipcord-auth
           force_rport=yes

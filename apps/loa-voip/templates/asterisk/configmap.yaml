@@ -24,7 +24,7 @@ data:
     transport=transport-udp
     context=from-kamailio       ; The dialplan routing context for incoming calls
     disallow=all
-    allow=opus,g722,ulaw,alaw        ; Allow wideband Opus & G.722 first, fallback to G.711
+    allow=g722,ulaw,alaw        ; Allow wideband G.722 first, fallback to G.711
     aors=kamailio-trunk
     ; Disable authentication because Kamailio is inside our secure K8s network
     outbound_auth=
