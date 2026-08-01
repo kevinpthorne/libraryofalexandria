@@ -25,7 +25,7 @@ rtpengine:
 
 asterisk:
   replicaCount: 1
-  image: "andrius/asterisk:22"
+  image: "ghcr.io/kevinpthorne/asterisk:latest"
   ports:
     sip: 5060
 

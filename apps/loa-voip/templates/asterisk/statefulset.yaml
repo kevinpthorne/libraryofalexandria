@@ -1,3 +1,5 @@
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -46,6 +48,26 @@ spec:
             - name: asterisk-config-volume
               mountPath: /etc/asterisk/confbridge.conf
               subPath: confbridge.conf
+            {{- if $hasFederation }}
+            - name: asterisk-config-volume
+              mountPath: /etc/asterisk/sorcery.conf
+              subPath: sorcery.conf
+            - name: asterisk-config-volume
+              mountPath: /etc/asterisk/extconfig.conf
+              subPath: extconfig.conf
+            - name: asterisk-config-volume
+              mountPath: /etc/asterisk/res_odbc.conf
+              subPath: res_odbc.conf
+            - name: asterisk-config-volume
+              mountPath: /etc/odbc.ini
+              subPath: odbc.ini
+            - name: asterisk-config-volume
+              mountPath: /etc/odbcinst.ini
+              subPath: odbcinst.ini
+            - name: cas
+              mountPath: /certs/cas
+              readOnly: true
+            {{- end }}
             - name: asterisk-run
               mountPath: /var/run/asterisk
             - name: asterisk-spool
@@ -60,6 +82,31 @@ spec:
             capabilities:
               drop:
                 - ALL
+        {{- if $hasFederation }}
+        - name: stunnel
+          image: cgr.dev/chainguard/stunnel:latest
+          command: ["stunnel", "/etc/stunnel/stunnel.conf"]
+          volumeMounts:
+            - name: asterisk-config-volume
+              mountPath: /etc/stunnel/stunnel.conf
+              subPath: stunnel.conf
+              readOnly: true
+            - name: db-client-certs
+              mountPath: /certs/db-client
+              readOnly: true
+            - name: cas
+              mountPath: /certs/cas
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+        {{- end }}
       securityContext:
         runAsUser: 999
         runAsGroup: 999
@@ -79,3 +126,26 @@ spec:
           emptyDir: {}
         - name: asterisk-lib
           emptyDir: {}
+        {{- if $hasFederation }}
+        - name: cas
+          configMap:
+            name: trusted-ca-bundle
+        - name: db-client-certs
+          secret:
+            secretName: pgedge-asterisk-client-cert
+            defaultMode: 256
+        {{- end }}
+
+{{- if $hasFederation }}
+---
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: PrivateDatabase
+metadata:
+  name: asterisk
+  namespace: {{ .Release.Namespace }}
+spec:
+  databaseName: asterisk
+  userName: asterisk
+  appNamespace: {{ .Release.Namespace }}
+  federate: false
+{{- end }}

@@ -1,3 +1,5 @@
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -46,7 +48,8 @@ data:
     ; Cilium Network Policies should do heavier lifting here too
     match=10.0.0.0/8 
 
-    ; --- 4. A TEST DESK PHONE (Optional) ---
+{{- if not $hasFederation }}
+    ; --- 4. A TEST DESK PHONE (Fallback when loa-federation is not installed) ---
     ; If you want a physical desk phone to register through Kamailio to Asterisk
     [1001]
     type=endpoint
@@ -67,6 +70,7 @@ data:
     [1001]
     type=aor
     max_contacts=2
+{{- end }}
 
     {{- if .Values.pjsip }}
     {{- .Values.pjsip | nindent 4 }}
@@ -104,3 +108,56 @@ data:
     {{- if .Values.confbridge }}
     {{- .Values.confbridge | nindent 4 -}}
     {{- end }}
+{{- if $hasFederation }}
+  sorcery.conf: |
+    [res_pjsip]
+    endpoint=realtime,ps_endpoints
+    auth=realtime,ps_auths
+    aor=realtime,ps_aors
+
+  extconfig.conf: |
+    [global]
+    ps_endpoints => odbc,keycloak,ps_endpoints
+    ps_auths => odbc,keycloak,ps_auths
+    ps_aors => odbc,keycloak,ps_aors
+
+  res_odbc.conf: |
+    [keycloak]
+    enabled => yes
+    dsn => keycloak
+    pre-connect => yes
+    username => asterisk
+    sanity_check => select 1
+
+  odbc.ini: |
+    [keycloak]
+    Description = Keycloak PostgreSQL Database for PJSIP Realtime
+    Driver = PostgreSQL
+    Servername = 127.0.0.1
+    Port = 5432
+    Database = keycloak
+    UserName = asterisk
+    ReadOnly = Yes
+
+  odbcinst.ini: |
+    [PostgreSQL]
+    Description = PostgreSQL ODBC driver
+    Driver = /usr/lib/x86_64-linux-gnu/odbc/psqlodbcw.so
+    Setup = /usr/lib/x86_64-linux-gnu/odbc/libodbcpsqlS.so
+    Driver64 = /usr/lib/x86_64-linux-gnu/odbc/psqlodbcw.so
+    Setup64 = /usr/lib/x86_64-linux-gnu/odbc/libodbcpsqlS.so
+    FileUsage = 1
+
+  stunnel.conf: |
+    foreground = yes
+    pid =
+    [postgres]
+    client = yes
+    protocol = pgsql
+    accept = 127.0.0.1:5432
+    connect = {{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}pgedge{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc:5432
+    verifyChain = yes
+    CAfile = /certs/cas/ca-bundle.crt
+    cert = /certs/db-client/tls.crt
+    key = /certs/db-client/tls.key
+{{- end }}

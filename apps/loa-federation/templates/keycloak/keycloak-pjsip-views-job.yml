@@ -1,0 +1,112 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pgedge-keycloak-pjsip-views-job
+  namespace: {{ .Values.pgedge.namespace }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: psql-setup-views
+        image: postgres:15-alpine
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+        command:
+          - "sh"
+          - "-c"
+          - |
+            set -e
+
+            echo "Waiting for Keycloak database to be available..."
+            until psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name | default "k" }}-data-rw -U admin -d keycloak -tc "SELECT 1" | grep -q 1; do
+              sleep 5
+            done
+            echo "Keycloak database reachable. Installing PJSIP Realtime views and permissions..."
+
+            psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name | default "k" }}-data-rw -U admin -d keycloak -c "
+            -- 1. PJSIP Endpoints View
+            CREATE OR REPLACE VIEW public.ps_endpoints AS
+            SELECT 
+                ua_ext.value AS id,
+                'from-kamailio' AS context,
+                'ulaw,alaw,opus,g722' AS allow,
+                'all' AS disallow,
+                ua_ext.value || '-auth' AS auth,
+                ua_ext.value AS aors,
+                'yes' AS rewrite_contact,
+                'yes' AS force_rport
+            FROM public.user_entity u
+            JOIN public.user_attribute ua_ext ON u.id = ua_ext.user_id AND ua_ext.name = 'extension'
+            LEFT JOIN public.user_attribute ua_en ON u.id = ua_en.user_id AND ua_en.name = 'sip_enabled'
+            WHERE u.enabled = true AND (ua_en.value IS NULL OR ua_en.value = 'true');
+
+            -- 2. PJSIP Auths View (using sip_ha256 / sha256_cred)
+            CREATE OR REPLACE VIEW public.ps_auths AS
+            SELECT 
+                ua_ext.value || '-auth' AS id,
+                'sha256' AS auth_type,
+                ua_ext.value AS username,
+                ua_ha256.value AS sha256_cred
+            FROM public.user_entity u
+            JOIN public.user_attribute ua_ext ON u.id = ua_ext.user_id AND ua_ext.name = 'extension'
+            JOIN public.user_attribute ua_ha256 ON u.id = ua_ha256.user_id AND ua_ha256.name = 'sip_ha256'
+            LEFT JOIN public.user_attribute ua_en ON u.id = ua_en.user_id AND ua_en.name = 'sip_enabled'
+            WHERE u.enabled = true AND (ua_en.value IS NULL OR ua_en.value = 'true');
+
+            -- 3. PJSIP AORs View
+            CREATE OR REPLACE VIEW public.ps_aors AS
+            SELECT 
+                ua_ext.value AS id,
+                '2' AS max_contacts
+            FROM public.user_entity u
+            JOIN public.user_attribute ua_ext ON u.id = ua_ext.user_id AND ua_ext.name = 'extension'
+            LEFT JOIN public.user_attribute ua_en ON u.id = ua_en.user_id AND ua_en.name = 'sip_enabled'
+            WHERE u.enabled = true AND (ua_en.value IS NULL OR ua_en.value = 'true');
+
+            -- Grants (role 'asterisk' is provisioned via PrivateDatabase CR in loa-voip)
+            DO \$\$
+            BEGIN
+              IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'asterisk') THEN
+                GRANT CONNECT ON DATABASE keycloak TO asterisk;
+                GRANT USAGE ON SCHEMA public TO asterisk;
+                GRANT SELECT ON public.ps_endpoints, public.ps_auths, public.ps_aors TO asterisk;
+              END IF;
+            END
+            \$\$;
+            "
+            echo "PJSIP Realtime views and permissions applied successfully."
+        volumeMounts:
+        - name: certs
+          mountPath: /certs
+        env:
+        - name: PGSSLCERT
+          value: /certs/tls.crt
+        - name: PGSSLKEY
+          value: /certs/tls.key
+        - name: PGSSLROOTCERT
+          value: /certs/ca.crt
+        - name: PGSSLMODE
+          value: verify-full
+      volumes:
+      - name: certs
+        secret:
+          secretName: admin-client-cert
+          defaultMode: 0400
