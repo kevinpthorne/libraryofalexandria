@@ -77,7 +77,7 @@ spec:
               - "allstarlink.{{ .Values.cluster.name | default "k" }}.loa.internal"
             ports:
               - port: 443
-                protocol: HTTPS
+                protocol: TLS
                 targetPort: 443
                 targetService: allstarlink
   destination:

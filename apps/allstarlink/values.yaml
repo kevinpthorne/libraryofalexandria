@@ -2,9 +2,9 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/allstarlink/asl3
+  repository: andrius/asterisk
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "22"
 
 nameOverride: ""
 fullnameOverride: ""

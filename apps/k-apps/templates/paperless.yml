@@ -29,6 +29,8 @@ spec:
         env:
           - name: TZ
             value: UTC
+          - name: S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES
+            value: "1"
           - name: PAPERLESS_URL
             value: "https://paperless.{{ $cluster.name | default "k" }}.loa.internal"
           {{- if $hasFederation }}
@@ -95,6 +97,8 @@ spec:
         export:
           enabled: false
         extraVolumeMounts:
+          - name: run-volume
+            mountPath: /run
           - name: cas
             mountPath: /certs/cas
             readOnly: true
@@ -108,6 +112,8 @@ spec:
             readOnly: true
           {{- end }}
         extraVolumes:
+          - name: run-volume
+            emptyDir: {}
           - name: cas
             configMap:
               name: trusted-ca-bundle

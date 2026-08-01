@@ -29,6 +29,16 @@ spec:
             value: "https://vaultwarden.{{ $cluster.name | default "k" }}.loa.internal"
           - name: TZ
             value: "EDT"
+          - name: ROCKET_TLS
+            value: '{certs="/certs/tls.crt",key="/certs/tls.key"}'
+        extraVolumes:
+          - name: tls
+            secret:
+              secretName: vaultwarden-tls
+        extraVolumeMounts:
+          - name: tls
+            mountPath: /certs
+            readOnly: true
         persistentVolumeClaim:
           create: true
           accessMode: ReadWriteOnce
@@ -99,9 +109,11 @@ spec:
               - "vaultwarden.{{ $cluster.name | default "k" }}.loa.internal"
             ports:
               - port: 443
-                protocol: HTTPS
+                protocol: TLS
                 targetPort: 80
                 targetService: vaultwarden
+                tls:
+                  mode: Passthrough
   destination:
     server: https://kubernetes.default.svc
     namespace: vaultwarden
