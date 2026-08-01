@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "allstarlink.fullname" . }}-config
+  labels:
+    {{- include "allstarlink.labels" . | nindent 4 }}
+data:
+  rpt.conf: |
+    ; AllStarLink rpt.conf template
+    [node]
+    rxchannel = SimpleUSB/usb
+    duplex = 1
+  iax.conf: |
+    ; AllStarLink iax.conf template
+    [general]
+    bindport = {{ .Values.service.iaxPort }}
+    bindaddr = 0.0.0.0
+  http.conf: |
+    ; Asterisk Built-in Web Server (HTTPS / WebSockets)
+    [general]
+    enabled=yes
+    bindaddr=0.0.0.0
+    bindport=80
+    tlsenable=yes
+    tlsbindaddr=0.0.0.0:{{ .Values.service.httpsPort }}
+    tlscertfile=/etc/asterisk/certs/tls.crt
+    tlsprivatekey=/etc/asterisk/certs/tls.key
+  pjsip.conf: |
+    ; SIP (PJSIP) UDP Transport
+    [transport-udp]
+    type=transport
+    protocol=udp
+    bind=0.0.0.0:{{ .Values.service.sipPort }}
+
+    ; SIP (PJSIP) TLS Transport
+    [transport-tls]
+    type=transport
+    protocol=tls
+    bind=0.0.0.0:5061
+    cert_file=/etc/asterisk/certs/tls.crt
+    priv_key_file=/etc/asterisk/certs/tls.key
+    method=tlsv1_2
+  extensions.conf: |
+    ; AllStarLink extensions.conf template
+    [default]

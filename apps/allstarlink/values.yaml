@@ -1,0 +1,33 @@
+# Default values for allstarlink.
+replicaCount: 1
+
+image:
+  repository: ghcr.io/allstarlink/asl3
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  httpsPort: 443
+  iaxPort: 4569
+  sipPort: 5060
+
+tls:
+  enabled: true
+  secretName: allstarlink-tls
+
+persistence:
+  enabled: true
+  storageClass: "longhorn"
+  size: 5Gi
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
