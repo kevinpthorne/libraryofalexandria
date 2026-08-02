@@ -101,6 +101,10 @@ spec:
             - name: cas
               mountPath: /certs/cas
               readOnly: true
+            - name: cas
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+              subPath: ca-bundle.crt
+              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
