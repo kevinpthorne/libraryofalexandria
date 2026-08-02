@@ -7,8 +7,6 @@ metadata:
 data:
   asterisk.conf: |
     [options]
-    runuser = 1000
-    rungroup = 1000
     astetcdir => /etc/asterisk
     astmoddir => /usr/lib/asterisk/modules
     astvarlibdir => /var/lib/asterisk

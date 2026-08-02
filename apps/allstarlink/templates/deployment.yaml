@@ -39,6 +39,12 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/asterisk
+            - name: var-run
+              mountPath: /var/run/asterisk
+            - name: var-spool
+              mountPath: /var/spool/asterisk
+            - name: var-log
+              mountPath: /var/log/asterisk
             {{- if .Values.tls.enabled }}
             - name: tls
               mountPath: /etc/asterisk/certs
@@ -56,6 +62,12 @@ spec:
         - name: config
           configMap:
             name: {{ include "allstarlink.fullname" . }}-config
+        - name: var-run
+          emptyDir: {}
+        - name: var-spool
+          emptyDir: {}
+        - name: var-log
+          emptyDir: {}
         {{- if .Values.tls.enabled }}
         - name: tls
           secret:
