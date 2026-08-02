@@ -19,7 +19,11 @@
 }:
 
 let
-  pjsipInstall = pjsip;
+  pjsipInstall = pjsip.overrideAttrs (old: {
+    preConfigure = (old.preConfigure or "") + ''
+      echo "#define PJSUA_MAX_CALLS 128" >> pjlib/include/pj/config_site.h
+    '';
+  });
 in
 rustPlatform.buildRustPackage rec {
   pname = "sipcord-bridge";

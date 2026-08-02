@@ -158,7 +158,6 @@ data:
 
   stunnel.conf: |
     foreground = yes
-    debug = 5
     pid =
     [postgres]
     client = yes
@@ -166,8 +165,7 @@ data:
     accept = 127.0.0.1:5432
     connect = {{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}main{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc:5432
     verifyChain = yes
-    checkHost = {{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}main{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc
-    CAfile = /certs/combined/ca-bundle.crt
+    CAfile = /certs/cas/ca-bundle.crt
     cert = /certs/db-client/tls.crt
     key = /certs/db-client/tls.key
 {{- end }}

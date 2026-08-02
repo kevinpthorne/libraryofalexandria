@@ -39,7 +39,12 @@ spec:
             until psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name | default "k" }}-data-rw -U admin -d keycloak -tc "SELECT 1" | grep -q 1; do
               sleep 5
             done
-            echo "Keycloak database reachable. Installing PJSIP Realtime views and permissions..."
+
+            echo "Waiting for 'asterisk' role to be created by PrivateDatabase..."
+            until psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name | default "k" }}-data-rw -U admin -d keycloak -tc "SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'asterisk'" | grep -q 1; do
+              sleep 5
+            done
+            echo "Keycloak database reachable and asterisk role exists. Installing PJSIP Realtime views and permissions..."
 
             psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name | default "k" }}-data-rw -U admin -d keycloak -c "
             -- 1. PJSIP Endpoints View
@@ -84,11 +89,9 @@ spec:
             -- Grants (role 'asterisk' is provisioned via PrivateDatabase CR in loa-voip)
             DO \$\$
             BEGIN
-              IF EXISTS (SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'asterisk') THEN
-                GRANT CONNECT ON DATABASE keycloak TO asterisk;
-                GRANT USAGE ON SCHEMA public TO asterisk;
-                GRANT SELECT ON public.ps_endpoints, public.ps_auths, public.ps_aors TO asterisk;
-              END IF;
+              GRANT CONNECT ON DATABASE keycloak TO asterisk;
+              GRANT USAGE ON SCHEMA public TO asterisk;
+              GRANT SELECT ON public.ps_endpoints, public.ps_auths, public.ps_aors TO asterisk;
             END
             \$\$;
             "
