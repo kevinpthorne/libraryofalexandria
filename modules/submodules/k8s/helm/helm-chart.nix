@@ -105,7 +105,21 @@
       inherit isLocalChart;
       chartPackage = helmChartPackage;
       valuesPackage = helmChartValuesPackage;
-      images = lib.mapAttrsToList (_imgString: imgLock: imgLock) (lock.images or { });
+      images = lib.mapAttrsToList (_imgString: imgLock:
+        let
+          arch = lib2.getGoArch { inherit pkgs; };
+          archLock = imgLock.architectures.${arch} or {
+            imageDigest = imgLock.imageDigest or "";
+            hash = imgLock.hash or "";
+          };
+        in
+        {
+          imageName = imgLock.imageName;
+          finalImageTag = imgLock.finalImageTag or "";
+          imageDigest = archLock.imageDigest;
+          hash = archLock.hash;
+        }
+      ) (lock.images or { });
       chartLock = lib2.nullable lock { };
     };
 }

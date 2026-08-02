@@ -26,14 +26,14 @@ echo "Updating charts for cluster: $CLUSTER_NAME"
 echo "========================================"
 
 # 3. Determine system and build the Nix derivation
-SYSTEM=$(nix eval --impure --raw --expr 'builtins.currentSystem')
+SYSTEM=$(nix eval --impure --raw ".#nixosConfigurations.\"master0-${CLUSTER_NAME}\".config.nixpkgs.hostPlatform.system")
 FLAKE_TARGET=".#packages.${SYSTEM}.chart-index-${CLUSTER_NAME}"
 
 echo "[+] Building Nix derivation: $FLAKE_TARGET"
 
 INPUT_FILE=$(nix build "$FLAKE_TARGET" --no-link --print-out-paths)/chart-index.json
-ARCH="arm64"  # FIXME
-OS="linux" # FIXME
+CLUSTER_ARCHS_JSON=$(nix eval --impure --json ".#clusters.by_name.${CLUSTER_NAME}" --apply "cluster: import ./lib/get-cluster-archs.nix { inherit cluster; }")
+OS="linux"
 
 if [ ! -f "$INPUT_FILE" ]; then
     echo "[!] Error: Built derivation output is not a file: $INPUT_FILE"
@@ -140,43 +140,52 @@ jq -c '.[]' "$INPUT_FILE" | while read -r item; do
     fi
 
     # 3. Build the nix-prefetch-docker command dynamically
-    prefetch_cmd=(nix-prefetch-docker --image-name "$img_name" --quiet --json --os "$OS" --arch "$ARCH")
-    
-    if [[ -n "$img_tag" ]]; then
-      prefetch_cmd+=(--image-tag "$img_tag")
-    elif [[ -z "$img_digest" ]]; then
-      # Only assume 'latest' if we have absolutely no tag and no digest
-      echo "  [!] No tag or digest given! Assuming latest - but this may cause build failures when bundling!"
-      prefetch_cmd+=(--image-tag "latest")
-    fi
-    
-    if [[ -n "$img_digest" ]]; then
-      prefetch_cmd+=(--image-digest "$img_digest")
-    fi
-
-    # 4. Fetch the Nix-compatible hash as JSON
-    echo "      Fetching hash via nix-prefetch-docker..."
-    
-    hash_info=$("${prefetch_cmd[@]}")
-    
-    if [[ -z "$hash_info" ]]; then
-        echo "  [!] Error: nix-prefetch-docker failed for $img"
-        continue
-    fi
-
-    # Extract the required fields for Nix
-    digest=$(echo "$hash_info" | jq -r '.imageDigest // empty')
-    hash=$(echo "$hash_info" | jq -r '.hash // .sha256 // empty')
-    finalImageTag=$(echo "$hash_info" | jq -r '.finalImageTag // empty')
-
-    # 5. Append the image under the chart's 'images' key in charts-lock.json
+    # Initialize empty architectures object for this image in the lockfile
     jq --arg chartName "$name" \
        --arg img "$img" \
        --arg name "$img_name" \
-       --arg digest "$digest" \
-       --arg hash "$hash" \
-       --arg finalImageTag "$finalImageTag" \
-       '.[$chartName].images[$img] = { imageName: $name, imageDigest: $digest, hash: $hash, finalImageTag: $finalImageTag }' "$OUTPUT_FILE" > /tmp/lock-tmp.json && mv /tmp/lock-tmp.json "$OUTPUT_FILE"
+       --arg finalImageTag "$img_tag" \
+       '.[$chartName].images[$img] = { imageName: $name, finalImageTag: $finalImageTag, architectures: {} }' "$OUTPUT_FILE" > /tmp/lock-tmp.json && mv /tmp/lock-tmp.json "$OUTPUT_FILE"
+
+    for ARCH in $(echo "$CLUSTER_ARCHS_JSON" | jq -r '.[]'); do
+      prefetch_cmd=(nix-prefetch-docker --image-name "$img_name" --quiet --json --os "$OS" --arch "$ARCH")
+      
+      if [[ -n "$img_tag" ]]; then
+        prefetch_cmd+=(--image-tag "$img_tag")
+      elif [[ -z "$img_digest" ]]; then
+        # Only assume 'latest' if we have absolutely no tag and no digest
+        echo "  [!] No tag or digest given! Assuming latest - but this may cause build failures when bundling!"
+        prefetch_cmd+=(--image-tag "latest")
+      fi
+      
+      if [[ -n "$img_digest" ]]; then
+        prefetch_cmd+=(--image-digest "$img_digest")
+      fi
+
+      # 4. Fetch the Nix-compatible hash as JSON
+      echo "      Fetching hash via nix-prefetch-docker for $ARCH..."
+      
+      hash_info=$("${prefetch_cmd[@]}")
+      
+      if [[ -z "$hash_info" ]]; then
+          echo "  [!] Error: nix-prefetch-docker failed for $img on $ARCH"
+          exit 1
+      fi
+
+      # Extract the required fields for Nix
+      digest=$(echo "$hash_info" | jq -r '.imageDigest // empty')
+      hash=$(echo "$hash_info" | jq -r '.hash // .sha256 // empty')
+      finalImageTag=$(echo "$hash_info" | jq -r '.finalImageTag // empty')
+
+      # 5. Append the image architecture under the chart's 'images' key in charts-lock.json
+      jq --arg chartName "$name" \
+         --arg img "$img" \
+         --arg arch "$ARCH" \
+         --arg digest "$digest" \
+         --arg hash "$hash" \
+         --arg finalImageTag "$finalImageTag" \
+         '.[$chartName].images[$img].architectures[$arch] = { imageDigest: $digest, hash: $hash } | (if $finalImageTag != "" then .[$chartName].images[$img].finalImageTag = $finalImageTag else . end)' "$OUTPUT_FILE" > /tmp/lock-tmp.json && mv /tmp/lock-tmp.json "$OUTPUT_FILE"
+    done
   done
 
   echo "[+] Finished discovering container images"
