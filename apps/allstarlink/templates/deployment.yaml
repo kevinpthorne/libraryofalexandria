@@ -26,6 +26,7 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/usr/sbin/asterisk", "-f", "-vvv"]
           ports:
             - name: https
               containerPort: {{ .Values.service.httpsPort }}
@@ -38,7 +39,26 @@ spec:
               protocol: UDP
           volumeMounts:
             - name: config
-              mountPath: /etc/asterisk
+              mountPath: /etc/asterisk/asterisk.conf
+              subPath: asterisk.conf
+            - name: config
+              mountPath: /etc/asterisk/modules.conf
+              subPath: modules.conf
+            - name: config
+              mountPath: /etc/asterisk/rpt.conf
+              subPath: rpt.conf
+            - name: config
+              mountPath: /etc/asterisk/iax.conf
+              subPath: iax.conf
+            - name: config
+              mountPath: /etc/asterisk/http.conf
+              subPath: http.conf
+            - name: config
+              mountPath: /etc/asterisk/pjsip.conf
+              subPath: pjsip.conf
+            - name: config
+              mountPath: /etc/asterisk/extensions.conf
+              subPath: extensions.conf
             - name: var-run
               mountPath: /var/run/asterisk
             - name: var-spool
