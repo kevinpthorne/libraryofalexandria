@@ -31,6 +31,8 @@ spec:
             value: UTC
           - name: S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES
             value: "1"
+          - name: REQUESTS_CA_BUNDLE
+            value: "/certs/cas/ca-bundle.crt"
           - name: PAPERLESS_URL
             value: "https://paperless.{{ $cluster.name | default "k" }}.loa.internal"
           {{- if $hasFederation }}
@@ -49,7 +51,7 @@ spec:
           - name: PGSSLKEY
             value: "/certs/db-client/tls.key"
           - name: PGSSLROOTCERT
-            value: "/certs/db-client/ca.crt"
+            value: "/certs/cas/ca-bundle.crt"
           - name: PGSSLMODE
             value: "verify-full"
           - name: PAPERLESS_ENABLE_ALLAUTH
@@ -101,10 +103,6 @@ spec:
             mountPath: /run
           - name: cas
             mountPath: /certs/cas
-            readOnly: true
-          - name: cas
-            mountPath: /etc/ssl/certs/ca-certificates.crt
-            subPath: ca-bundle.crt
             readOnly: true
           {{- if $hasFederation }}
           - name: db-client-certs
@@ -436,7 +434,7 @@ data:
     accept = 127.0.0.1:6379
     connect = keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380
     verifyChain = yes
-    CAfile = /certs/keydb-client/ca.crt
+    CAfile = /certs/cas/ca-bundle.crt
     cert = /certs/keydb-client/tls.crt
     key = /certs/keydb-client/tls.key
 {{- end }}
