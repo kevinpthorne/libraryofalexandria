@@ -32,7 +32,7 @@ spec:
                 - ALL
         {{- if $hasFederation }}
         - name: init-ca-bundle
-          image: cgr.dev/chainguard/stunnel:latest
+          image: {{ .Values.asterisk.image }}
           command:
             - "sh"
             - "-c"
