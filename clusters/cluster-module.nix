@@ -463,7 +463,7 @@
               };
             }
             // builtins.mapAttrs (name: value: {
-              nixpkgs.hostPlatform = "aarch64-linux"; # value.config.nixpkgs.hostPlatform.system;
+              nixpkgs.hostPlatform = value.config.nixpkgs.hostPlatform.system;
               imports = [
                 (
                   if value.config.libraryofalexandria.node.type == "master" then
