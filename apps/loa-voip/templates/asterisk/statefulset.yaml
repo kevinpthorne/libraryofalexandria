@@ -36,7 +36,7 @@ spec:
           command:
             - "sh"
             - "-c"
-            - "cat /certs/cas/ca-bundle.crt /certs/db-client/ca.crt > /certs/combined/ca-bundle.crt 2>/dev/null || cat /certs/cas/ca-bundle.crt > /certs/combined/ca-bundle.crt"
+            - "(cat /certs/cas/ca-bundle.crt; echo ''; cat /certs/db-client/ca.crt) > /certs/combined/ca-bundle.crt 2>/dev/null || cat /certs/cas/ca-bundle.crt > /certs/combined/ca-bundle.crt"
           volumeMounts:
             - name: cas
               mountPath: /certs/cas
