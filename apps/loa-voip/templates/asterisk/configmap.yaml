@@ -122,30 +122,36 @@ data:
     ps_aors => odbc,keycloak,ps_aors
 
   res_odbc.conf: |
+    [ENV]
+
     [keycloak]
     enabled => yes
     dsn => keycloak
-    pre-connect => yes
     username => asterisk
-    sanity_check => select 1
+    password => 
+    pre-connect => yes
+    max_connections => 5
+    sanity_check => select 1;
 
   odbc.ini: |
     [keycloak]
     Description = Keycloak PostgreSQL Database for PJSIP Realtime
     Driver = PostgreSQL
-    Servername = 127.0.0.1
+    Server = 127.0.0.1
     Port = 5432
     Database = keycloak
     UserName = asterisk
+    Password = 
     ReadOnly = Yes
+    SSLmode = disable
 
   odbcinst.ini: |
     [PostgreSQL]
     Description = PostgreSQL ODBC driver
-    Driver = /usr/lib/x86_64-linux-gnu/odbc/psqlodbcw.so
-    Setup = /usr/lib/x86_64-linux-gnu/odbc/libodbcpsqlS.so
-    Driver64 = /usr/lib/x86_64-linux-gnu/odbc/psqlodbcw.so
-    Setup64 = /usr/lib/x86_64-linux-gnu/odbc/libodbcpsqlS.so
+    Driver = /usr/lib/odbc/psqlodbcw.so
+    Setup = /usr/lib/odbc/libodbcpsqlS.so
+    Driver64 = /usr/lib/odbc/psqlodbcw.so
+    Setup64 = /usr/lib/odbc/libodbcpsqlS.so
     FileUsage = 1
 
   stunnel.conf: |
