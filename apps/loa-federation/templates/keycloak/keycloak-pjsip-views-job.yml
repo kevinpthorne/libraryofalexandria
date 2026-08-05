@@ -54,7 +54,8 @@ spec:
                 ua_ext.value || '-auth' AS auth,
                 ua_ext.value AS aors,
                 'yes' AS rewrite_contact,
-                'yes' AS force_rport
+                'yes' AS force_rport,
+                NULL AS mailboxes
             FROM public.user_entity u
             JOIN public.user_attribute ua_ext ON u.id = ua_ext.user_id AND ua_ext.name = 'extension'
             LEFT JOIN public.user_attribute ua_en ON u.id = ua_en.user_id AND ua_en.name = 'sip_enabled'
@@ -77,7 +78,8 @@ spec:
             CREATE OR REPLACE VIEW public.ps_aors AS
             SELECT 
                 ua_ext.value AS id,
-                '2' AS max_contacts
+                '2' AS max_contacts,
+                NULL AS mailboxes
             FROM public.user_entity u
             JOIN public.user_attribute ua_ext ON u.id = ua_ext.user_id AND ua_ext.name = 'extension'
             LEFT JOIN public.user_attribute ua_en ON u.id = ua_en.user_id AND ua_en.name = 'sip_enabled'
