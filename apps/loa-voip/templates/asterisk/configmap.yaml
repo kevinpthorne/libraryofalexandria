@@ -138,14 +138,17 @@ data:
     [keycloak]
     Description = Keycloak PostgreSQL Database for PJSIP Realtime
     Driver = PostgreSQL
-    Servername = 127.0.0.1
-    Host = 127.0.0.1
+    Servername = {{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}main{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc
+    Host = {{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}main{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc
     Port = 5432
     Database = keycloak
     Username = asterisk
     Password = 
     ReadOnly = Yes
-    SSLmode = disable
+    SSLmode = verify-full
+    sslcert = /certs/db-client/tls.crt
+    sslkey = /certs/db-client/tls.key
+    sslrootcert = /certs/cas/ca-bundle.crt
 
   odbcinst.ini: |
     [PostgreSQL]
@@ -156,16 +159,4 @@ data:
     Setup64 = /usr/lib/odbc/libodbcpsqlS.so
     FileUsage = 1
 
-  stunnel.conf: |
-    foreground = yes
-    pid =
-    [postgres]
-    client = yes
-    protocol = pgsql
-    accept = 127.0.0.1:5432
-    connect = {{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "main" }}{{ else }}main{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc:5432
-    verifyChain = yes
-    CAfile = /certs/cas/ca-bundle.crt
-    cert = /certs/db-client/tls.crt
-    key = /certs/db-client/tls.key
 {{- end }}

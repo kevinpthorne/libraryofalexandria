@@ -20,10 +20,24 @@ spec:
       initContainers:
         - name: init-asterisk-lib
           image: {{ .Values.asterisk.image }}
-          command: ['sh', '-c', 'cp -R /var/lib/asterisk/* /mnt/asterisk-lib/ 2>/dev/null || true']
+          command: 
+            - sh
+            - -c
+            - |
+              cp -R /var/lib/asterisk/* /mnt/asterisk-lib/ 2>/dev/null || true
+              {{- if $hasFederation }}
+              cp /mnt/db-client-certs/* /certs/db-client/
+              chmod 400 /certs/db-client/tls.key
+              {{- end }}
           volumeMounts:
             - name: asterisk-lib
               mountPath: /mnt/asterisk-lib
+            {{- if $hasFederation }}
+            - name: db-client-certs-secret
+              mountPath: /mnt/db-client-certs
+            - name: db-client-certs
+              mountPath: /certs/db-client
+            {{- end }}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -71,6 +85,9 @@ spec:
             - name: cas
               mountPath: /certs/cas
               readOnly: true
+            - name: db-client-certs
+              mountPath: /certs/db-client
+              readOnly: true
             {{- end }}
             - name: asterisk-run
               mountPath: /var/run/asterisk
@@ -86,33 +103,7 @@ spec:
             capabilities:
               drop:
                 - ALL
-        {{- if $hasFederation }}
-        - name: stunnel
-          image: cgr.dev/chainguard/stunnel:latest
-          command: ["stunnel", "/etc/stunnel/stunnel.conf"]
-          volumeMounts:
-            - name: asterisk-config-volume
-              mountPath: /etc/stunnel/stunnel.conf
-              subPath: stunnel.conf
-              readOnly: true
-            - name: db-client-certs
-              mountPath: /certs/db-client
-              readOnly: true
-            - name: cas
-              mountPath: /certs/cas
-              readOnly: true
-            - name: cas
-              mountPath: /etc/ssl/certs/ca-certificates.crt
-              subPath: ca-bundle.crt
-              readOnly: true
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            capabilities:
-              drop:
-                - ALL
-        {{- end }}
+
       securityContext:
         runAsUser: 999
         runAsGroup: 999
@@ -136,10 +127,12 @@ spec:
         - name: cas
           configMap:
             name: trusted-ca-bundle
-        - name: db-client-certs
+        - name: db-client-certs-secret
           secret:
             secretName: pgedge-asterisk-client-cert
             defaultMode: 256
+        - name: db-client-certs
+          emptyDir: {}
         {{- end }}
 
 {{- if $hasFederation }}
