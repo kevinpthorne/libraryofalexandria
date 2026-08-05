@@ -69,9 +69,10 @@ spec:
             CREATE OR REPLACE VIEW public.ps_auths AS
             SELECT 
                 ua_ext.value || '-auth' AS id,
-                'userpass' AS auth_type,
+                'digest' AS auth_type,
                 ua_ext.value AS username,
-                'SHA-256:' || ua_ha256.value AS password_digest
+                'SHA-256:' || ua_ha256.value AS password_digest,
+                'asterisk' AS realm
             FROM public.user_entity u
             JOIN public.user_attribute ua_ext ON u.id = ua_ext.user_id AND ua_ext.name = 'extension'
             JOIN public.user_attribute ua_ha256 ON u.id = ua_ha256.user_id AND ua_ha256.name = 'sip_ha256'
