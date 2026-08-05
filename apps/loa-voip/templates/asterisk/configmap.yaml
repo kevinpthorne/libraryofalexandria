@@ -116,7 +116,7 @@ data:
     aor=realtime,ps_aors
 
   extconfig.conf: |
-    [global]
+    [settings]
     ps_endpoints => odbc,keycloak,ps_endpoints
     ps_auths => odbc,keycloak,ps_auths
     ps_aors => odbc,keycloak,ps_aors
@@ -146,9 +146,7 @@ data:
     Password = 
     ReadOnly = Yes
     SSLmode = verify-full
-    sslcert = /certs/db-client/tls.crt
-    sslkey = /certs/db-client/tls.key
-    sslrootcert = /certs/cas/ca-bundle.crt
+    pqopt = sslmode=verify-full sslrootcert=/certs/cas/ca-bundle.crt sslcert=/certs/db-client/tls.crt sslkey=/certs/db-client/tls.key
 
   odbcinst.ini: |
     [PostgreSQL]
