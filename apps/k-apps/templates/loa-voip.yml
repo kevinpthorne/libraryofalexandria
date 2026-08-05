@@ -85,7 +85,6 @@ spec:
           admin=no
           marked=no
           startmuted=no
-          leave_when_last_marked=yes
           end_marked=yes
           jitterbuffer=yes
 
