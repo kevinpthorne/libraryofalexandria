@@ -12,6 +12,7 @@ data:
     [global]
     type=global
     endpoint_identifier_order=username,ip,anonymous
+    default_auth_algorithms_uas=SHA-256
 
     ; This tells Asterisk to listen on port 5060 inside its pod.
     [transport-udp]

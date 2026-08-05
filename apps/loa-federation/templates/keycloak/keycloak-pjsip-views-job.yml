@@ -61,13 +61,13 @@ spec:
             LEFT JOIN public.user_attribute ua_en ON u.id = ua_en.user_id AND ua_en.name = 'sip_enabled'
             WHERE u.enabled = true AND (ua_en.value IS NULL OR ua_en.value = 'true');
 
-            -- 2. PJSIP Auths View (using sip_ha256 / sha256_cred)
+            -- 2. PJSIP Auths View (using sip_ha256 / password_digest)
             CREATE OR REPLACE VIEW public.ps_auths AS
             SELECT 
                 ua_ext.value || '-auth' AS id,
-                'sha256' AS auth_type,
+                'userpass' AS auth_type,
                 ua_ext.value AS username,
-                ua_ha256.value AS sha256_cred
+                'SHA-256:' || ua_ha256.value AS password_digest
             FROM public.user_entity u
             JOIN public.user_attribute ua_ext ON u.id = ua_ext.user_id AND ua_ext.name = 'extension'
             JOIN public.user_attribute ua_ha256 ON u.id = ua_ha256.user_id AND ua_ha256.name = 'sip_ha256'
