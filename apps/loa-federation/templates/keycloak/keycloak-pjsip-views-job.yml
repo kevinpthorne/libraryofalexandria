@@ -3,9 +3,6 @@ kind: Job
 metadata:
   name: pgedge-keycloak-pjsip-views-job
   namespace: {{ .Values.pgedge.namespace }}
-  annotations:
-    argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   ttlSecondsAfterFinished: 3600
   template:
@@ -20,7 +17,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: psql-setup-views
-        image: postgres:15-alpine
+        image: ghcr.io/cloudnative-pg/cloudnative-pg:1.28.0
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
