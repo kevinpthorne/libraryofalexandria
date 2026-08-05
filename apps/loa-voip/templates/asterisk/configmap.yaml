@@ -113,9 +113,16 @@ data:
 {{- if $hasFederation }}
   sorcery.conf: |
     [res_pjsip]
+    endpoint=config,pjsip.conf,criteria=type=endpoint
     endpoint=realtime,ps_endpoints
+    auth=config,pjsip.conf,criteria=type=auth
     auth=realtime,ps_auths
+    aor=config,pjsip.conf,criteria=type=aor
     aor=realtime,ps_aors
+    domain_alias=realtime,ps_domain_aliases
+    contact=realtime,ps_contacts
+    endpoint_id_ip=config,pjsip.conf,criteria=type=identify
+    endpoint_id_ip=realtime,ps_endpoint_id_ips
 
   extconfig.conf: |
     [settings]

@@ -6,16 +6,23 @@ Because Asterisk is integrated directly with Keycloak's PostgreSQL database usin
 The user must be enabled in Keycloak (`Enabled: ON`).
 
 ## Required Attributes
-Log into the Keycloak Admin Console, navigate to the **Users** section, select the user you want to enroll, and go to the **Attributes** tab. 
 
-> [!NOTE]
-> **Missing the Attributes tab?** In newer Keycloak versions, the "Attributes" tab is hidden by default due to the new Declarative User Profile system. To bring it back:
-> 1. In the left menu, go to **Realm Settings**.
-> 2. Click on the **User Profile** tab.
-> 3. Find the **Unmanaged Attributes** setting and change it from `Disabled` to `Enabled` (or `Admin can edit`).
-> 4. Click **Save**. The Attributes tab will now appear on all user profiles!
+In newer Keycloak versions, custom user attributes are strictly managed via the Declarative User Profile system. Before you can assign VoIP credentials to a user, you must first define the required attributes at the realm level.
 
-You need to add the following two attributes:
+### Step 1: Define the Managed Attributes (One-time Setup)
+1. In the left sidebar, navigate to **Realm Settings**.
+2. Go to the **User Profile** tab.
+3. Click **Create attribute** for each of the following:
+   * **Name**: `extension` (Permissions: Admin can edit, User can view)
+   * **Name**: `sip_ha256` (Permissions: Admin can edit, User can view)
+   * **Name**: `sip_enabled` (optional)
+4. Save your changes.
+
+### Step 2: Assign Attributes to a User
+Now that the attributes are defined, navigate to the **Users** section and select the user you want to enroll. 
+On their **Details** tab (or **Attributes** tab), scroll down to fill out their custom attributes.
+
+You need to set the following two attributes:
 
 ### 1. `extension`
 This will be the user's phone number / extension (e.g., `1001`, `1002`, `6001`).
