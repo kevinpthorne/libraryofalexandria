@@ -71,7 +71,8 @@ spec:
                 ua_ext.value || '-auth' AS id,
                 'digest' AS auth_type,
                 ua_ext.value AS username,
-                'SHA-256:' || ua_ha256.value AS password_digest,
+                'SHA-256:' || TRIM(ua_ha256.value) AS password_digest,
+                '00000000000000000000000000000000' AS md5_cred,
                 'asterisk' AS realm
             FROM public.user_entity u
             JOIN public.user_attribute ua_ext ON u.id = ua_ext.user_id AND ua_ext.name = 'extension'
