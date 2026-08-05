@@ -44,6 +44,10 @@ spec:
             echo "Keycloak database reachable and asterisk role exists. Installing PJSIP Realtime views and permissions..."
 
             psql -h {{ .Values.pgedge.appName }}-{{ .Values.cluster.name | default "k" }}-data-rw -U admin -d keycloak -c "
+            DROP VIEW IF EXISTS public.ps_endpoints;
+            DROP VIEW IF EXISTS public.ps_auths;
+            DROP VIEW IF EXISTS public.ps_aors;
+
             -- 1. PJSIP Endpoints View
             CREATE OR REPLACE VIEW public.ps_endpoints AS
             SELECT 
