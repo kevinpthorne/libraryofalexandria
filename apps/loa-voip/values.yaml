@@ -13,6 +13,7 @@ kamailio:
   image: "ghcr.io/kamailio/kamailio-ci:6.0-alpine"
   ports:
     sip: 5060
+    tls: 5061
     ws: 8080 # Internal port Kamailio listens on for WebSockets
 
 rtpengine:
@@ -28,6 +29,7 @@ asterisk:
   image: "ghcr.io/kevinpthorne/asterisk:latest"
   ports:
     sip: 5060
+    tls: 5061
 
 pjsip: ""
 extensions: ""

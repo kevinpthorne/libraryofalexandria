@@ -127,9 +127,11 @@ spec:
         cluster:
           name: {{ if and .Values.cluster .Values.cluster.name }}{{ .Values.cluster.name }}{{ else }}k{{ end }}
         cert:
-          secretName: "loa-voip-kamailio-tls"
+          secretName: "loa-voip-tls"
           sans:
             - "voip.{{ if and .Values.cluster .Values.cluster.name }}{{ .Values.cluster.name }}{{ else }}k{{ end }}.loa.internal"
+            - "loa-voip-asterisk.voip.svc.cluster.local"
+            - "loa-voip-kamailio-sip.voip.svc.cluster.local"
   destination:
     server: https://kubernetes.default.svc
     namespace: voip

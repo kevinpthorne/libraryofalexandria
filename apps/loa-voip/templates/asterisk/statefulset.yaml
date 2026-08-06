@@ -56,7 +56,13 @@ spec:
             - name: sip-internal
               containerPort: {{ .Values.asterisk.ports.sip }}
               protocol: UDP
+            - name: sip-tls
+              containerPort: {{ .Values.asterisk.ports.tls }}
+              protocol: TCP
           volumeMounts:
+            - name: asterisk-tls-volume
+              mountPath: /etc/asterisk/tls
+              readOnly: true
             - name: asterisk-config-volume
               mountPath: /etc/asterisk/pjsip.conf
               subPath: pjsip.conf
@@ -112,6 +118,9 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       volumes:
+        - name: asterisk-tls-volume
+          secret:
+            secretName: {{ .Release.Name }}-tls
         - name: asterisk-config-volume
           configMap:
             name: asterisk-config

@@ -11,6 +11,7 @@ data:
     # --- GLOBAL CONFIGURATION ---
     #!define ASTERISK_HOST "{{ .Release.Name }}-asterisk.{{ .Release.Namespace }}.svc.cluster.local"
     #!define ASTERISK_PORT "{{ .Values.asterisk.ports.sip }}"
+    #!define ASTERISK_PORT_TLS "{{ .Values.asterisk.ports.tls }}"
     #!define RTPENGINE_SOCK "udp:RTPENGINE_IP_PLACEHOLDER:{{ .Values.rtpengine.ports.control }}"
     
     alias="POD_IP_PLACEHOLDER"
@@ -19,6 +20,7 @@ data:
     enable_tls=yes
     listen=udp:0.0.0.0:{{ .Values.kamailio.ports.sip }} advertise {{ .Values.global.domain }}:{{ .Values.kamailio.ports.sip }}
     listen=tcp:0.0.0.0:{{ .Values.kamailio.ports.sip }} advertise {{ .Values.global.domain }}:{{ .Values.kamailio.ports.sip }}
+    listen=tls:0.0.0.0:{{ .Values.kamailio.ports.tls }} advertise {{ .Values.global.domain }}:{{ .Values.kamailio.ports.tls }}
     listen=tls:0.0.0.0:{{ .Values.kamailio.ports.ws }} advertise {{ .Values.global.domain }}:443
     
     # --- MODULES ---
@@ -88,7 +90,7 @@ data:
             if ($(src_ip) == "192.76.120.10" || $(src_ip) == "192.76.120.11") {
                 xlog("L_INFO", "Routing inbound from Telnyx\n");
                 rtpengine_manage("replace-origin replace-session-connection");
-                $ru = "sip:" + $rU + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
+                $ru = "sip:" + $rU + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT_TLS + ";transport=tls";
                 route(RELAY);
                 exit;
             }
@@ -119,7 +121,7 @@ data:
             }
             
             xlog("L_INFO", "Assigning RU for Asterisk\n");
-            $ru = "sip:" + $rU + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
+            $ru = "sip:" + $rU + "@" + ASTERISK_HOST + ":" + ASTERISK_PORT_TLS + ";transport=tls";
             
             xlog("L_INFO", "Calling route(RELAY)\n");
             route(RELAY);
@@ -128,7 +130,7 @@ data:
     
         if (is_method("REGISTER|OPTIONS|SUBSCRIBE|NOTIFY|MESSAGE")) {
             xlog("L_INFO", "Processing $rm\n");
-            $du = "sip:" + ASTERISK_HOST + ":" + ASTERISK_PORT + ";transport=udp";
+            $du = "sip:" + ASTERISK_HOST + ":" + ASTERISK_PORT_TLS + ";transport=tls";
             route(RELAY);
             exit;
         }
@@ -177,7 +179,16 @@ data:
   tls.cfg: |
     [server:default]
     method = TLSv1.2+
-    verify_certificate = no
-    require_certificate = no
+    verify_certificate = yes
+    require_certificate = yes
     private_key = /etc/kamailio/tls/tls.key
     certificate = /etc/kamailio/tls/tls.crt
+    ca_list = /etc/kamailio/tls/ca.crt
+
+    [client:default]
+    method = TLSv1.2+
+    verify_certificate = yes
+    require_certificate = yes
+    private_key = /etc/kamailio/tls/tls.key
+    certificate = /etc/kamailio/tls/tls.crt
+    ca_list = /etc/kamailio/tls/ca.crt

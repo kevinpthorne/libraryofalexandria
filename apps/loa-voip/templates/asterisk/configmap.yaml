@@ -21,11 +21,21 @@ data:
     protocol=udp
     bind=0.0.0.0:{{ .Values.asterisk.ports.sip }}
 
+    [transport-tls]
+    type=transport
+    protocol=tls
+    bind=0.0.0.0:{{ .Values.asterisk.ports.tls }}
+    cert_file=/etc/asterisk/tls/tls.crt
+    priv_key_file=/etc/asterisk/tls/tls.key
+    verify_client=yes
+    verify_server=yes
+    ca_list_file=/etc/asterisk/tls/ca.crt
+
     ; --- 2. THE TRUSTED KAMAILIO TRUNK ---
     ; We define Kamailio as an "endpoint" so Asterisk can process its calls.
     [kamailio-trunk]
     type=endpoint
-    transport=transport-udp
+    transport=transport-tls
     context=from-kamailio       ; The dialplan routing context for incoming calls
     disallow=all
     allow=g722,ulaw,alaw        ; Allow wideband G.722 first, fallback to G.711
@@ -37,7 +47,7 @@ data:
 
     [kamailio-trunk]
     type=aor
-    contact=sip:{{ .Release.Name }}-kamailio-sip.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.kamailio.ports.sip }}
+    contact=sip:{{ .Release.Name }}-kamailio-sip.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.kamailio.ports.tls }};transport=tls
 
     ; --- 3. IP IDENTIFICATION (THE SECURITY GATE) ---
     ; This is the most critical part. It tells Asterisk: "If a SIP packet comes 

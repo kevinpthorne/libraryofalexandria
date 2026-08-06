@@ -52,6 +52,9 @@ spec:
             - name: sip-tcp
               containerPort: {{ .Values.kamailio.ports.sip }}
               protocol: TCP
+            - name: sip-tls
+              containerPort: {{ .Values.kamailio.ports.tls }}
+              protocol: TCP
             - name: ws-tcp
               containerPort: {{ .Values.kamailio.ports.ws }}
               protocol: TCP
@@ -92,6 +95,6 @@ spec:
           emptyDir: {}
         - name: kamailio-tls-volume
           secret:
-            secretName: {{ .Release.Name }}-kamailio-tls
+            secretName: {{ .Release.Name }}-tls
         - name: kamailio-run
           emptyDir: {}

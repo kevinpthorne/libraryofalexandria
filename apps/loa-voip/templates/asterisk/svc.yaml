@@ -9,5 +9,9 @@ spec:
       port: {{ .Values.asterisk.ports.sip }}
       targetPort: sip-internal
       protocol: UDP
+    - name: sip-tls
+      port: {{ .Values.asterisk.ports.tls }}
+      targetPort: sip-tls
+      protocol: TCP
   selector:
     app: asterisk

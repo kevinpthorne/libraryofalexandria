@@ -18,6 +18,9 @@ spec:
     - name: sip-tcp
       port: {{ .Values.kamailio.ports.sip }}
       protocol: TCP
+    - name: sip-tls
+      port: {{ .Values.kamailio.ports.tls }}
+      protocol: TCP
     - name: sip-wss
       port: 443
       targetPort: {{ .Values.kamailio.ports.ws }}
