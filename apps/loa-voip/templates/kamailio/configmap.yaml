@@ -178,7 +178,7 @@ data:
     
   tls.cfg: |
     [server:default]
-    method = TLSv1.2+
+    method = TLSv1.3+
     verify_certificate = no
     require_certificate = no
     private_key = /etc/kamailio/tls/tls.key
@@ -186,7 +186,7 @@ data:
     ca_list = /etc/kamailio/tls/ca.crt
 
     [client:default]
-    method = TLSv1.2+
+    method = TLSv1.3+
     verify_certificate = no
     require_certificate = no
     private_key = /etc/kamailio/tls/tls.key

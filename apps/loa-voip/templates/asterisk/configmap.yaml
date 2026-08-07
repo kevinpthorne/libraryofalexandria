@@ -27,6 +27,7 @@ data:
     bind=0.0.0.0:{{ .Values.asterisk.ports.tls }}
     cert_file=/etc/asterisk/tls/tls.crt
     priv_key_file=/etc/asterisk/tls/tls.key
+    method=tlsv1_3
     verify_client=no
     verify_server=no
     ca_list_file=/etc/asterisk/tls/ca.crt
