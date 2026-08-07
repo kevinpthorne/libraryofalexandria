@@ -114,7 +114,7 @@ data:
                 }
                 t_on_reply("REPLY_TO_WEBRTC");
             } else {
-                if (!rtpengine_offer("direction=external direction=internal replace-origin replace-session-connection ICE=remove")) {
+                if (!rtpengine_offer("direction=external direction=internal replace-origin replace-session-connection ICE=remove RTP/AVP")) {
                     xlog("L_ERR", "rtpengine_offer failed for standard routing\n");
                 }
                 t_on_reply("MANAGE_REPLY");
