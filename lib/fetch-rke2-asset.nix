@@ -27,8 +27,8 @@ pkgs.stdenv.mkDerivation {
     mkdir -p $out/asset
 
     # Copy the downloaded file from the store path ($src) to the final output ($out)
-    cp $src $out/asset/${name}
+    cp $src $out/asset/${name}.tar.zst
 
-    echo "File installed to $out/asset/${name}"
+    echo "File installed to $out/asset/${name}.tar.zst"
   '';
 }
