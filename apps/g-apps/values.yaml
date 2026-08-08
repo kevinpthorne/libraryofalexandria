@@ -1,0 +1,2 @@
+argoNamespace: argo-cd
+cluster: {}

@@ -66,6 +66,8 @@ in
         ];
     };
 
+    apps.loa-core.valuesOverrides.seaweedfs.size = "230G";
+    apps.loa-core.valuesOverrides.cloudflareExternaldns.enabled = "false";
     federateTo = [ "k" ];
 
     virtualIps = {
@@ -79,7 +81,6 @@ in
       ];
       reservations = {
         dns = "172.24.2.249";
-        adguard = "172.24.2.248";
       };
       interfaces = [ "enp0s9" ];
     };
