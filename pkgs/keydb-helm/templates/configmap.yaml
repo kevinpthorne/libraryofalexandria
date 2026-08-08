@@ -48,6 +48,7 @@ data:
         {{- if .Values.multiMaster }}
         --multi-master "yes" \
         {{- end }}
+        --repl-backlog-size "{{ .Values.replBacklogSize | default "250mb" }}" \
         --port "${non_tls_port}" \
         {{- if .Values.tls.enabled }}
         --tls-port "{{ .Values.tls.port }}" \

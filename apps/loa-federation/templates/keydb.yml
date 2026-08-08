@@ -16,6 +16,9 @@ spec:
           tag: latest
           pullPolicy: Always
         nodes: {{ .Values.keydb.instances }}
+        {{- if and .Values.keydb (hasKey .Values.keydb "replBacklogSize") }}
+        replBacklogSize: {{ .Values.keydb.replBacklogSize | quote }}
+        {{- end }}
         tls:
           enabled: true
           secretName: keydb-restricted-tls

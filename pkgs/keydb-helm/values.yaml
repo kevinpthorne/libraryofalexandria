@@ -9,6 +9,7 @@ password: ""
 
 multiMaster: true
 activeReplica: true
+replBacklogSize: "200mb"
 
 # List of external KeyDB peer addresses/hostnames (e.g. keydb-peer:6379) for multi-cluster active-active replication
 externalPeers: []

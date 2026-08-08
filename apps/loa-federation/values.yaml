@@ -13,6 +13,7 @@ pgedge:
 keydb:
   instances: 1
   namespace: keydb
+  replBacklogSize: "200mb"
 
 immich:
   namespace: immich
