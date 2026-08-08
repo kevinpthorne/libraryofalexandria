@@ -59,7 +59,16 @@ spec:
               value: "/etc/p2p-vpn/config/{{ .Values.p2pVpn.whitelistConfigMapKey }}"
             {{- end }}
             {{- end }}
+            {{- if .Values.p2pVpn.webUITlsSecretName }}
+            - name: P2P_VPN_GUI_CERT
+              value: "/certs/webui/tls.crt"
+            - name: P2P_VPN_GUI_KEY
+              value: "/certs/webui/tls.key"
+            {{- end }}
           ports:
+            - name: gui
+              containerPort: 4040
+              protocol: TCP
             - name: p2p-tcp
               containerPort: {{ .Values.p2pVpn.p2pPort }}
               protocol: TCP
@@ -81,6 +90,11 @@ spec:
             {{- if .Values.p2pVpn.configMapName }}
             - name: config-volume
               mountPath: /etc/p2p-vpn/config
+              readOnly: true
+            {{- end }}
+            {{- if .Values.p2pVpn.webUITlsSecretName }}
+            - name: webui-tls
+              mountPath: /certs/webui
               readOnly: true
             {{- end }}
             - name: tun
@@ -125,6 +139,11 @@ spec:
         - name: config-volume
           configMap:
             name: {{ .Values.p2pVpn.configMapName }}
+        {{- end }}
+        {{- if .Values.p2pVpn.webUITlsSecretName }}
+        - name: webui-tls
+          secret:
+            secretName: {{ .Values.p2pVpn.webUITlsSecretName }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

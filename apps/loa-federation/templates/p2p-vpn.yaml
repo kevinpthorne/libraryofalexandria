@@ -13,6 +13,7 @@ spec:
       releaseName: federation-p2p-vpn
       valuesObject:
         p2pVpn:
+          webUITlsSecretName: "p2p-vpn-web-tls"
           generateDataKey: false # Delivered via Colmena and installed via p2p-vpn-secret-install
           address: {{ .Values.cluster.p2pVpnAddress }}
           isBootstrapPeer: {{ .Values.cluster.federationBootstrap.isBootstrapPeer }}
@@ -38,6 +39,69 @@ spec:
             {{- else }}
             []
             {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: federation-p2p-vpn-tls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "p2p-vpn-web"
+        cluster:
+          name: {{ .Values.cluster.name }}
+        cert:
+          secretName: "p2p-vpn-web-tls"
+          sans:
+            - "vpn.{{ .Values.cluster.name }}.loa.internal"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: federation-p2p-vpn-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: p2p-vpn-web
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
+            hostnames:
+              - "vpn.{{ .Values.cluster.name }}.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 443
+                targetService: p2p-vpn-web
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system

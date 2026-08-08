@@ -15,6 +15,7 @@ p2pVpn:
   dataKeySecretName: "p2p-vpn"
   dataKeySecretKey: "token"
   generateDataKey: false
+  webUITlsSecretName: ""
   address: "10.255.255.1/24"  # Override per cluster
   p2pPort: 4001 # The internal container port for libp2p traffic
   isBootstrapPeer: false # Set to true to expose the p2pPort via a LoadBalancer Service

@@ -17,7 +17,7 @@ data:
     babeld=no
     sharpd=no
     pbrd=no
-    bfdd=no
+    bfdd=yes
     fabricd=no
     vrrpd=no
     vtysh_enable=yes
@@ -45,6 +45,7 @@ data:
      ! Peer with remote P2P VPN gateways over the VPN interface using eBGP
      neighbor P2P_VPN peer-group
      neighbor P2P_VPN remote-as external
+     neighbor P2P_VPN bfd
      
      {{- range .Values.bgp.vpnPeers }}
      neighbor {{ . }} peer-group P2P_VPN
