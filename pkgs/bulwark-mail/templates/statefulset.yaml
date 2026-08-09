@@ -1,6 +1,6 @@
 {{- $usePvc := eq (include "bulwark-mail.settingsSyncPvc" .) "true" -}}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "bulwark-mail.fullname" . }}
   labels:
@@ -10,6 +10,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
+  serviceName: {{ include "bulwark-mail.fullname" . }}
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
@@ -17,7 +18,7 @@ spec:
     matchLabels:
       {{- include "bulwark-mail.selectorLabels" . | nindent 6 }}
   {{- with .Values.updateStrategy }}
-  strategy:
+  updateStrategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   template:

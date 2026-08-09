@@ -12,6 +12,9 @@ spec:
     targetRevision: 2.0.0
     helm:
       valuesObject:
+        controller:
+          kind: StatefulSet
+          replicas: 1
         podSecurityContext:
           runAsNonRoot: true
           runAsUser: 1000
