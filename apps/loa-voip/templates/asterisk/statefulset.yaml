@@ -48,9 +48,9 @@ spec:
         - name: asterisk
           image: {{ .Values.asterisk.image }}
           {{- if $hasFederation }}
-          command: ["sh", "-c", "sleep 2 && exec /usr/sbin/asterisk -f -vvvddd"]
+          command: ["sh", "-c", "sleep 2 && exec asterisk -f -vvvddd"]
           {{- else }}
-          command: ["/usr/sbin/asterisk", "-f", "-vvvddd"]
+          command: ["asterisk", "-f", "-vvvddd"]
           {{- end }}
           ports:
             - name: sip-internal

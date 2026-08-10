@@ -1,7 +1,14 @@
 {
+  pkgs,
   dockerTools,
   bash,
   coreutils,
+  asterisk,
+  dectalk-asterisk,
+  ffmpeg,
+  unixODBC,
+  unixODBCDrivers,
+  postgresql,
   ...
 }:
 
@@ -13,10 +20,17 @@ dockerTools.buildLayeredImage {
     bash
     coreutils
     dockerTools.binSh
+    asterisk
+    dectalk-asterisk
+    ffmpeg
+    unixODBC
+    unixODBCDrivers.psql
+    postgresql
   ];
 
   config = {
-    Cmd = [ "/usr/sbin/asterisk" "-f" "-vvvddd" ];
+    # Since we are using Nix's asterisk, it will be in the PATH
+    Cmd = [ "asterisk" "-f" "-vvvddd" ];
     ExposedPorts = {
       "5060/udp" = {};
     };

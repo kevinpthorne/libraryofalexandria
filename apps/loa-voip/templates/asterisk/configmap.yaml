@@ -114,6 +114,12 @@ data:
     same => n,Wait(30)
     same => n,Hangup()
 
+    ; --- DECTALK STREAMING TEST ---
+    exten => 5556,1,NoOp(DECtalk Streaming Test)
+    same => n,Answer()
+    same => n,AGI(dectalk_stream.sh, "Hello, this is a real-time streaming test using deck talk on asterisk.")
+    same => n,Hangup()
+
     {{- if .Values.extensions }}
     {{- .Values.extensions | nindent 4 -}}
     {{- end }}
