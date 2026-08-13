@@ -38,7 +38,7 @@ in
     masters = {
       count = 1;
       ips = [
-        "172.24.2.21"
+        "172.24.1.81"
       ];
       modules =
         let
@@ -66,24 +66,23 @@ in
         ];
     };
 
-    apps.loa-core.valuesOverrides.seaweedfs.size = "230G";
     apps.loa-core.valuesOverrides.cloudflareExternaldns.enabled = "false";
     federateTo = [ "k" ];
 
     virtualIps = {
       enable = true;
-      k8sApiVip = "172.24.2.30";
+      k8sApiVip = "172.24.1.84";
       blocks = [
         {
-          start = "172.24.2.31";
-          stop = "172.24.2.250";
+          start = "172.24.1.85";
+          stop = "172.24.1.95";
         }
       ];
       reservations = {
-        dns = "172.24.2.249";
+        dns = "172.24.1.95";
       };
-      interfaces = [ "enp0s9" ];
+      interfaces = [ "ens192" ];
     };
-    externalDomain = "g.kpt.link";
+    externalDomain = "isp2.finepointsolutions.com";
   };
 }
