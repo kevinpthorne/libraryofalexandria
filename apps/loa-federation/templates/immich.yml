@@ -121,6 +121,7 @@ metadata:
   namespace: {{ .Values.argoNamespace }}
   annotations:
     argocd.argoproj.io/sync-wave: "1" # KeydbClient comes in wave 0
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   appName: immich
   appNamespace: {{ .Values.immich.namespace }}
@@ -436,6 +437,8 @@ kind: KeycloakClient
 metadata:
   name: immich
   namespace: {{ .Values.immich.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   clientId: immich
   secretRef:
