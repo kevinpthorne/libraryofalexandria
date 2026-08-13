@@ -98,6 +98,7 @@ in
           htop
           tcptraceroute
           tcpdump
+          bind # nslookup, dig, host
         ];
       };
 

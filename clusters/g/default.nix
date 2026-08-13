@@ -19,7 +19,32 @@ let
         # vmImage.size = "20G";
 
         libraryofalexandria = {
+          node.deployment.colmena.hostName = "172.24.1.81";
           zarf.enable = lib.mkForce false;
+
+          control-plane.longhorn.values.defaultSettings.defaultReplicaCount = "0";
+        };
+
+        networking = {
+          enableIPv6 = true;
+
+          nameservers = [
+            "172.24.1.251"
+            "172.24.1.252"
+          ];
+          defaultGateway = "172.24.1.2";
+
+          interfaces = {
+            ens33 = {
+              useDHCP = false;
+              ipv4.addresses = [
+                {
+                  address = "172.24.1.81";
+                  prefixLength = 24; # Equivalent to subnet mask 255.255.255.0
+                }
+              ];
+            };
+          };
         };
 
         security.pam.u2f.settings = {
@@ -81,7 +106,7 @@ in
       reservations = {
         dns = "172.24.1.95";
       };
-      interfaces = [ "ens192" ];
+      interfaces = [ "ens33" ];
     };
     externalDomain = "isp2.finepointsolutions.com";
   };
