@@ -91,7 +91,7 @@ in
         ];
     };
 
-    apps.loa-core.valuesOverrides.cloudflareExternaldns.enabled = "false";
+    apps.loa-core.valuesOverrides.cloudflareExternaldns.enabled = false;
     federateTo = [ "k" ];
 
     virtualIps = {
