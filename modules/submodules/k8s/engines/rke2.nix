@@ -139,6 +139,7 @@ in
                     namespace = "kube-system";
                   };
                   spec.valuesContent = builtins.toJSON {
+                    operator.replicas = if config.libraryofalexandria.cluster.masters.count == 1 then 1 else 2;
                     cluster = {
                       name = thisCluster.name;
                       id = thisCluster.id;
