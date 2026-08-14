@@ -152,7 +152,10 @@ spec:
                 - name: KEYCLOAK_URL
                   value: "https://keycloak.keycloak.svc.cluster.local:8443"
                 - name: KEYCLOAK_CLIENTID
-                  value: "kro-provisioner"
+                  valueFrom:
+                    secretKeyRef:
+                      name: kro-provisioner-credentials
+                      key: clientId
                 - name: KEYCLOAK_CLIENTSECRET
                   valueFrom:
                     secretKeyRef:
