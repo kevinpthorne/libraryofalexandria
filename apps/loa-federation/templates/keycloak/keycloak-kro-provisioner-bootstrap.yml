@@ -24,7 +24,7 @@ spec:
       engineVersion: v2
       data:
         clientId: "kro-provisioner-{{ .Values.cluster.name }}"
-        clientSecret: "{{ .clientSecret }}"
+        clientSecret: "{{ `{{ .clientSecret }}` }}"
   dataFrom:
   - sourceRef:
       generatorRef:
@@ -92,19 +92,22 @@ spec:
           done
           
           echo "Getting Admin Token..."
-          TOKEN=$(curl -k -s -d "client_id=admin-cli" \
+          RESPONSE=$(curl -k -s -d "client_id=admin-cli" \
             -d "username=$KEYCLOAK_USER" \
             -d "password=$KEYCLOAK_PASSWORD" \
             -d "grant_type=password" \
-            "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$')
+            "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token")
+          
+          TOKEN=$(echo "$RESPONSE" | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$' || true)
           
           if [ -z "$TOKEN" ]; then
-            echo "Failed to get access token."
+            echo "Failed to get access token. Response:"
+            echo "$RESPONSE"
             exit 1
           fi
           
           echo "Checking if client $PROVISIONER_CLIENT_ID exists..."
-          CLIENT_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients?clientId=$PROVISIONER_CLIENT_ID" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+          CLIENT_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients?clientId=$PROVISIONER_CLIENT_ID" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$' || true)
           
           if [ -z "$CLIENT_ID" ]; then
             echo "Client $PROVISIONER_CLIENT_ID does not exist. Creating..."
@@ -120,7 +123,7 @@ spec:
               }' "$KEYCLOAK_URL/admin/realms/master/clients"
               
             # get internal ID of newly created client
-            CLIENT_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients?clientId=$PROVISIONER_CLIENT_ID" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+            CLIENT_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients?clientId=$PROVISIONER_CLIENT_ID" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$' || true)
           else
             echo "Client $PROVISIONER_CLIENT_ID exists. Ensuring secret is updated..."
             curl -k -s -o /dev/null -w "%{http_code}" -X PUT \
@@ -134,15 +137,15 @@ spec:
           fi
           
           echo "Getting Service Account user for client..."
-          SA_USER_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients/$CLIENT_ID/service-account-user" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+          SA_USER_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients/$CLIENT_ID/service-account-user" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$' || true)
           
           echo "Getting master-realm client ID..."
-          MASTER_REALM_CLIENT_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients?clientId=master-realm" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+          MASTER_REALM_CLIENT_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients?clientId=master-realm" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$' || true)
           
           echo "Getting admin role from master-realm client..."
           ADMIN_ROLE_JSON=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients/$MASTER_REALM_CLIENT_ID/roles/admin")
-          ADMIN_ROLE_ID=$(echo "$ADMIN_ROLE_JSON" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$')
-          ADMIN_ROLE_NAME=$(echo "$ADMIN_ROLE_JSON" | grep -o '"name":"[^"]*' | head -n 1 | grep -o '[^"]*$')
+          ADMIN_ROLE_ID=$(echo "$ADMIN_ROLE_JSON" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$' || true)
+          ADMIN_ROLE_NAME=$(echo "$ADMIN_ROLE_JSON" | grep -o '"name":"[^"]*' | head -n 1 | grep -o '[^"]*$' || true)
           
           echo "Assigning admin role to the service account..."
           curl -k -s -o /dev/null -w "%{http_code}" -X POST \

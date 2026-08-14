@@ -157,13 +157,15 @@ spec:
                   done
                   
                   echo "Getting Admin Token..."
-                  TOKEN=$(curl -k -s -d "client_id=$KEYCLOAK_CLIENTID" \
+                  RESPONSE=$(curl -k -s -d "client_id=$KEYCLOAK_CLIENTID" \
                     -d "client_secret=$KEYCLOAK_CLIENTSECRET" \
                     -d "grant_type=client_credentials" \
-                    "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$')
+                    "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token")
+                  TOKEN=$(echo "$RESPONSE" | grep -o '"access_token":"[^"]*' | grep -o '[^"]*$' || true)
                   
                   if [ -z "$TOKEN" ]; then
-                    echo "Failed to get access token."
+                    echo "Failed to get access token. Keycloak response:"
+                    echo "$RESPONSE"
                     exit 1
                   fi
                   
