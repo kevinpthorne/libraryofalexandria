@@ -139,24 +139,14 @@ spec:
           echo "Getting Service Account user for client..."
           SA_USER_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients/$CLIENT_ID/service-account-user" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$' || true)
           
-          echo "Getting master-realm client ID..."
-          MASTER_REALM_CLIENT_ID=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients?clientId=master-realm" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$' || true)
-          
-          echo "Getting admin role from master-realm client..."
-          ADMIN_ROLE_JSON=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/clients/$MASTER_REALM_CLIENT_ID/roles/admin")
-          ADMIN_ROLE_ID=$(echo "$ADMIN_ROLE_JSON" | grep -o '"id":"[^"]*' | head -n 1 | grep -o '[^"]*$' || true)
-          ADMIN_ROLE_NAME=$(echo "$ADMIN_ROLE_JSON" | grep -o '"name":"[^"]*' | head -n 1 | grep -o '[^"]*$' || true)
+          echo "Getting admin realm role..."
+          ADMIN_ROLE_JSON=$(curl -k -s -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/master/roles/admin")
           
           echo "Assigning admin role to the service account..."
           curl -k -s -o /dev/null -w "%{http_code}" -X POST \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/json" \
-            -d '[{
-              "id": "'$ADMIN_ROLE_ID'",
-              "name": "'$ADMIN_ROLE_NAME'",
-              "clientRole": true,
-              "composite": true,
-              "containerId": "'$MASTER_REALM_CLIENT_ID'"
-            }]' "$KEYCLOAK_URL/admin/realms/master/users/$SA_USER_ID/role-mappings/clients/$MASTER_REALM_CLIENT_ID"
+            -d "[$ADMIN_ROLE_JSON]" \
+            "$KEYCLOAK_URL/admin/realms/master/users/$SA_USER_ID/role-mappings/realm"
           
           echo "Bootstrap complete."
