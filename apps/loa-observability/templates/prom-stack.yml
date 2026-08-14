@@ -59,7 +59,11 @@ spec:
             targetPort: 3000
           sidecar:
             datasources:
+              initDatasources: true
+              reloadURL: "https://127.0.0.1:3000/api/admin/provisioning/datasources/reload"
               url: https://prometheus-operated.observability.svc.cluster.local:9090
+            dashboards:
+              reloadURL: "https://127.0.0.1:3000/api/admin/provisioning/dashboards/reload"
           grafana.ini:
             server:
               protocol: https
