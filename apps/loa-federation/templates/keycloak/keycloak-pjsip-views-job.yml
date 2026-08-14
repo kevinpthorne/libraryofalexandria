@@ -3,6 +3,8 @@ kind: Job
 metadata:
   name: pgedge-keycloak-pjsip-views-job
   namespace: {{ .Values.pgedge.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   ttlSecondsAfterFinished: 3600
   template:

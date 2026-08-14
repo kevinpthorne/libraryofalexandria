@@ -23,7 +23,7 @@ spec:
     template:
       engineVersion: v2
       data:
-        clientId: "kro-provisioner"
+        clientId: "kro-provisioner-{{ .Values.cluster.name }}"
         clientSecret: "{{ .clientSecret }}"
   dataFrom:
   - sourceRef:
@@ -38,6 +38,7 @@ metadata:
   name: keycloak-bootstrap-kro-provisioner
   namespace: keycloak
   annotations:
+    argocd.argoproj.io/sync-wave: "2"
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
