@@ -5,25 +5,15 @@ metadata:
   namespace: keycloak
 data:
   jgroups-dns-ping.xml: |
-    <config xmlns="urn:org:jgroups"
+    <?xml version="1.0" encoding="UTF-8"?>
+    <infinispan
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd">
-        <TCP bind_addr="${jgroups.bind.address,jgroups.tcp.address:SITE_LOCAL}"
-             bind_port="${jgroups.bind.port,jgroups.tcp.port:7800}"
-             thread_pool.min_threads="0"
-             thread_pool.max_threads="200"
-             thread_pool.keep_alive_time="30000" />
-        <RED />
-        <dns.DNS_PING dns_query="keycloak.keycloak.svc.cluster.{{ .Values.cluster.name }}{{ range .Values.cluster.federateTo }},keycloak.keycloak.svc.cluster.{{ . }}{{ end }}" dns_record_type="A" />
-        <MERGE3 />
-        <FD_SOCK2 offset="${jgroups.fd.port-offset:50000}"/>
-        <FD_ALL3 />
-        <VERIFY_SUSPECT2 timeout="1000"/>
-        <pbcast.NAKACK2 use_mcast_xmit="false"/>
-        <UNICAST3 />
-        <pbcast.STABLE />
-        <pbcast.GMS />
-        <UFC />
-        <MFC />
-        <FRAG3 />
-    </config>
+            xsi:schemaLocation="urn:infinispan:config:14.0 http://www.infinispan.org/schemas/infinispan-config-14.0.xsd"
+            xmlns="urn:infinispan:config:14.0">
+        <jgroups>
+            <stack name="dns-ping" extends="tcp">
+                <MPING stack.combine="REMOVE" />
+                <dns.DNS_PING dns_query="keycloak.keycloak.svc.cluster.{{ .Values.cluster.name }}{{ range .Values.cluster.federateTo }},keycloak.keycloak.svc.cluster.{{ . }}{{ end }}" dns_record_type="A" stack.combine="INSERT_AFTER" stack.position="PING" />
+            </stack>
+        </jgroups>
+    </infinispan>
