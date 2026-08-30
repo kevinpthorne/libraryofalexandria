@@ -1,4 +1,5 @@
-{{- if .Values.autoscaling.enabled }}
+{{- $usePvc := eq (include "bulwark-mail.settingsSyncPvc" .) "true" -}}
+{{- if and .Values.autoscaling.enabled (not $usePvc) }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
