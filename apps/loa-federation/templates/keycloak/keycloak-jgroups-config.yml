@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-jgroups-config
+  namespace: keycloak
+data:
+  cache-ispn.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <infinispan
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:infinispan:config:14.0 http://www.infinispan.org/schemas/infinispan-config-14.0.xsd"
+            xmlns="urn:infinispan:config:14.0">
+        <jgroups>
+            <stack name="dns-ping" extends="tcp">
+                <dns.DNS_PING dns_query="keycloak.keycloak.svc.cluster.{{ .Values.cluster.name }}{{ range .Values.cluster.federateTo }},keycloak.keycloak.svc.cluster.{{ . }}{{ end }}" dns_record_type="A" stack.combine="REPLACE" stack.position="MPING" />
+            </stack>
+        </jgroups>
+        <cache-container name="keycloak">
+            <transport lock-timeout="60000" stack="dns-ping"/>
+            <local-cache name="realms">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="10000"/>
+            </local-cache>
+            <local-cache name="users">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="10000"/>
+            </local-cache>
+            <local-cache name="sessions">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="10000"/>
+            </local-cache>
+            <local-cache name="authenticationSessions">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="10000"/>
+            </local-cache>
+            <local-cache name="offlineSessions">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="10000"/>
+            </local-cache>
+            <local-cache name="clientSessions">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="10000"/>
+            </local-cache>
+            <local-cache name="offlineClientSessions">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="10000"/>
+            </local-cache>
+            <local-cache name="loginFailures">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="10000"/>
+            </local-cache>
+            <local-cache name="work">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="10000"/>
+            </local-cache>
+            <local-cache name="authorization">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="10000"/>
+            </local-cache>
+            <local-cache name="keys">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="1000"/>
+                <expiration max-idle="3600000"/>
+            </local-cache>
+            <local-cache name="actionTokens">
+                <encoding>
+                    <key media-type="application/x-java-object"/>
+                    <value media-type="application/x-java-object"/>
+                </encoding>
+                <memory max-count="-1"/>
+                <expiration max-idle="-1" interval="300000"/>
+            </local-cache>
+        </cache-container>
+    </infinispan>
