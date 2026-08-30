@@ -7,46 +7,76 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://charts.pascaliske.dev
-    chart: vaultwarden
-    targetRevision: 2.0.0
+    repoURL: https://bjw-s.github.io/helm-charts
+    chart: app-template
+    targetRevision: 3.2.1
     helm:
       valuesObject:
-        controller:
-          kind: StatefulSet
-          replicas: 1
-        podSecurityContext:
-          runAsNonRoot: true
-          runAsUser: 1000
-          runAsGroup: 1000
-          fsGroup: 1000
-          seccompProfile:
-            type: RuntimeDefault
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-        env:
-          - name: DOMAIN
-            value: "https://vaultwarden.{{ $cluster.name | default "k" }}.loa.internal"
-          - name: TZ
-            value: "EDT"
-          - name: ROCKET_TLS
-            value: '{certs="/certs/tls.crt",key="/certs/tls.key"}'
-        extraVolumes:
-          - name: tls
-            secret:
-              secretName: vaultwarden-tls
-        extraVolumeMounts:
-          - name: tls
-            mountPath: /certs
-            readOnly: true
-        persistentVolumeClaim:
-          create: true
-          accessMode: ReadWriteOnce
-          size: 5Gi
-          storageClassName: "longhorn"
+        controllers:
+          vaultwarden:
+            type: statefulset
+            replicas: 1
+            containers:
+              main:
+                image:
+                  repository: ghcr.io/dani-garcia/vaultwarden
+                  tag: 1.35.2
+                env:
+                  DOMAIN: "https://vaultwarden.{{ $cluster.name | default "k" }}.loa.internal"
+                  TZ: "EDT"
+                  ROCKET_TLS: '{certs="/certs/tls.crt",key="/certs/tls.key"}'
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL
+                probes:
+                  liveness:
+                    enabled: true
+                    custom: true
+                    spec:
+                      httpGet:
+                        path: /alive
+                        port: 80
+                        scheme: HTTPS
+                  readiness:
+                    enabled: true
+                    custom: true
+                    spec:
+                      httpGet:
+                        path: /alive
+                        port: 80
+                        scheme: HTTPS
+            pod:
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                fsGroup: 1000
+                seccompProfile:
+                  type: RuntimeDefault
+        service:
+          main:
+            controller: vaultwarden
+            ports:
+              http:
+                port: 80
+        persistence:
+          data:
+            enabled: true
+            type: persistentVolumeClaim
+            accessMode: ReadWriteOnce
+            size: 5Gi
+            storageClass: "longhorn"
+            globalMounts:
+              - path: /data
+          tls:
+            enabled: true
+            type: secret
+            name: vaultwarden-tls
+            globalMounts:
+              - path: /certs
+                readOnly: true
   destination:
     server: https://kubernetes.default.svc
     namespace: vaultwarden
