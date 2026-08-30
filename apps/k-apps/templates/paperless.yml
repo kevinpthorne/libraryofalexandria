@@ -60,15 +60,12 @@ spec:
           - name: PAPERLESS_ENABLE_ALLAUTH
             value: "true"
           - name: PAPERLESS_APPS
-            value: "paperless_mail,paperless_storages,allauth.socialaccount.providers.openid_connect"
+            value: "allauth.socialaccount.providers.openid_connect"
           - name: PAPERLESS_SOCIALACCOUNT_PROVIDERS
             valueFrom:
               secretKeyRef:
                 name: paperless-oauth-secret
                 key: PAPERLESS_SOCIALACCOUNT_PROVIDERS
-          {{- else }}
-          - name: PAPERLESS_APPS
-            value: "paperless_mail,paperless_storages"
           {{- end }}
           - name: PAPERLESS_STORAGE_TYPE
             value: "s3"
