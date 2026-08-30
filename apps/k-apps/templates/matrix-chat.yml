@@ -49,13 +49,6 @@ spec:
           job:
             enabled: true
             podSecurityContext:
-              runAsNonRoot: true
-              runAsUser: 666
-              runAsGroup: 666
-              fsGroup: 666
-              seccompProfile:
-                type: RuntimeDefault
-            securityContext:
               allowPrivilegeEscalation: false
               runAsNonRoot: true
               runAsUser: 666
@@ -64,6 +57,15 @@ spec:
                 drop:
                   - ALL
               readOnlyRootFilesystem: true
+              seccompProfile:
+                type: RuntimeDefault
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 666
+              runAsGroup: 666
+              fsGroup: 666
+              seccompProfile:
+                type: RuntimeDefault
         synapse:
           podSecurityContext:
             runAsNonRoot: true
