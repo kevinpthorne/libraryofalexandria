@@ -58,9 +58,7 @@ spec:
           - name: KC_HOSTNAME_STRICT
             value: "false"  # protected by gateway only accepting certain domains
           - name: KC_CACHE_STACK
-            value: "file"
-          - name: KC_CACHE_CONFIG_FILE
-            value: "cache-ispn.xml"
+            value: "dns-ping"
 
         tls:
           enabled: true
@@ -105,8 +103,8 @@ spec:
             mountPath: /tmp-private
             readOnly: true
           - name: jgroups-config
-            mountPath: /opt/keycloak/conf/cache-ispn.xml
-            subPath: cache-ispn.xml
+            mountPath: /opt/keycloak/conf/jgroups-dns-ping.xml
+            subPath: jgroups-dns-ping.xml
             readOnly: true
             
         extraInitContainers:
