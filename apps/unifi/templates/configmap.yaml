@@ -7,7 +7,7 @@ metadata:
 data:
   init-mongo.sh: |
     #!/bin/bash
-    if which mongosh > /dev/null 2>&1; then mongo_init_bin='mongosh --tls --tlsAllowInvalidCertificates'; else mongo_init_bin='mongo --ssl --sslAllowInvalidCertificates'; fi
+    if which mongosh > /dev/null 2>&1; then mongo_init_bin="mongosh -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD} --tls --tlsAllowInvalidCertificates"; else mongo_init_bin="mongo -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD} --ssl --sslAllowInvalidCertificates"; fi
     ${mongo_init_bin} <<EOF
     use admin
     db.createUser({

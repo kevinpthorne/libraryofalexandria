@@ -40,7 +40,10 @@ spec:
               CACERTS_PATH=$(find /usr /opt /etc -name cacerts | head -n 1)
               if [ -n "$CACERTS_PATH" ]; then
                 cp "$CACERTS_PATH" /unifi/cacerts
-                keytool -importcert -trustcacerts -noprompt -alias cluster-ca -file /certs/cas/ca-bundle.crt -keystore /unifi/cacerts -storepass changeit
+                awk 'BEGIN {c=0;} /BEGIN CERTIFICATE/{c++} { print > "/tmp/cert." c ".pem"}' /certs/cas/ca-bundle.crt
+                for cert in /tmp/cert.*.pem; do
+                  keytool -importcert -trustcacerts -noprompt -alias "cluster-ca-$(basename $cert)" -file "$cert" -keystore /unifi/cacerts -storepass changeit
+                done
               else
                 echo "cacerts not found!"
                 exit 1
