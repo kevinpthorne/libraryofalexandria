@@ -81,6 +81,10 @@ rustPlatform.buildRustPackage rec {
     NIX_LDFLAGS = "-L${pjsipLibDir}/lib -lwebrtc -lyuv";
   };
 
+  prePatch = ''
+    cp -f ${./Cargo.lock} Cargo.lock
+  '';
+
   postPatch = ''
     chmod -R +w . 2>/dev/null || true
     find . -name "Cargo.toml" -exec sed -i 's/rust-version = "1.9[2-9]"/rust-version = "1.91"/g' {} +
