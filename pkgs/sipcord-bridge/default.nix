@@ -113,7 +113,7 @@ rustPlatform.buildRustPackage rec {
     libtiff
     libjpeg
     zlib
-    pjsip
+    pjsipInstall
     opencore-amr
     alsa-lib
     util-linux
