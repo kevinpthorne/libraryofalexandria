@@ -49,6 +49,13 @@ spec:
           job:
             enabled: true
             podSecurityContext:
+              runAsNonRoot: true
+              runAsUser: 666
+              runAsGroup: 666
+              fsGroup: 666
+              seccompProfile:
+                type: RuntimeDefault
+            securityContext:
               allowPrivilegeEscalation: false
               runAsNonRoot: true
               runAsUser: 666
@@ -57,15 +64,6 @@ spec:
                 drop:
                   - ALL
               readOnlyRootFilesystem: true
-              seccompProfile:
-                type: RuntimeDefault
-            securityContext:
-              runAsNonRoot: true
-              runAsUser: 666
-              runAsGroup: 666
-              fsGroup: 666
-              seccompProfile:
-                type: RuntimeDefault
         synapse:
           podSecurityContext:
             runAsNonRoot: true
@@ -108,6 +106,17 @@ spec:
               mountPath: /certs/cas
               readOnly: true
             {{- end }}
+          {{- if $hasFederation }}
+          extraEnv:
+            - name: PGSSLCERT
+              value: "/certs/db-client/tls.crt"
+            - name: PGSSLKEY
+              value: "/certs/db-client/tls.key"
+            - name: PGSSLROOTCERT
+              value: "/certs/cas/ca-bundle.crt"
+            - name: PGSSLMODE
+              value: verify-full
+          {{- end }}
         persistence:
           storageClass: "longhorn"
           size: "10Gi"
@@ -152,16 +161,6 @@ spec:
           username: "matrix"
           database: "app"
           password: "dummy"
-        synapse:
-          extraEnv:
-            - name: PGSSLCERT
-              value: "/certs/db-client/tls.crt"
-            - name: PGSSLKEY
-              value: "/certs/db-client/tls.key"
-            - name: PGSSLROOTCERT
-              value: "/certs/cas/ca-bundle.crt"
-            - name: PGSSLMODE
-              value: verify-full
         {{- else }}
         redis:
           enabled: true
