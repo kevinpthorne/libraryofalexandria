@@ -181,6 +181,18 @@ spec:
                 keySecret:
                   name: prometheus-tls
                   key: tls.key
+            # Forward alerts to Grafana Alertmanager
+            alertingEndpoints:
+              - name: prometheus-stack-grafana
+                namespace: observability
+                port: http-web
+                scheme: https
+                pathPrefix: /api/alertmanager
+                apiVersion: v2
+                tlsConfig:
+                  caFile: /etc/ssl/certs/custom-ca/ca-bundle.crt
+                  serverName: grafana.observability.svc
+                  insecureSkipVerify: false
             volumes:
               - name: ca-bundle
                 configMap:
