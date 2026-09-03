@@ -57,8 +57,10 @@ spec:
             value: "xforwarded"
           - name: KC_HOSTNAME_STRICT
             value: "false"  # protected by gateway only accepting certain domains
-          - name: KC_CACHE_CONFIG_FILE
-            value: "cache-ispn.xml"
+          - name: KC_CACHE_STACK
+            value: "kubernetes"
+          - name: JAVA_OPTS_APPEND
+            value: "-Djgroups.dns.query=keycloak.keycloak.svc.cluster.{{ .Values.cluster.name }}{{ range .Values.cluster.federateTo }},keycloak.keycloak.svc.cluster.{{ . }}{{ end }}"
 
         tls:
           enabled: true
@@ -88,9 +90,7 @@ spec:
               name: trusted-ca-bundle
           - name: tls-fixed
             emptyDir: {}
-          - name: jgroups-config
-            configMap:
-              name: keycloak-jgroups-config
+
 
         extraVolumeMounts:
           - name: db-client-certs
@@ -102,10 +102,7 @@ spec:
           - name: tls-fixed
             mountPath: /tmp-private
             readOnly: true
-          - name: jgroups-config
-            mountPath: /opt/keycloak/conf/cache-ispn.xml
-            subPath: cache-ispn.xml
-            readOnly: true
+
             
         extraInitContainers:
           - name: pkcs1-to-pkcs8
