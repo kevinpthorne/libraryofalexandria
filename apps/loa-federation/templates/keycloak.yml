@@ -58,9 +58,7 @@ spec:
           - name: KC_HOSTNAME_STRICT
             value: "false"  # protected by gateway only accepting certain domains
           - name: KC_CACHE_STACK
-            value: "kubernetes"
-          - name: JAVA_OPTS_APPEND
-            value: "-Djgroups.dns.query=keycloak.keycloak.svc.cluster.{{ .Values.cluster.name }}{{ range .Values.cluster.federateTo }},keycloak.keycloak.svc.cluster.{{ . }}{{ end }}"
+            value: "jdbc-ping"
 
         tls:
           enabled: true
