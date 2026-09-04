@@ -1,22 +1,22 @@
 {
   "gateway-api-crds": {
-    "url": "file:///nix/store/qjqf8g1nkmh68mxxz7miqrlw1nrnni5d-gateway-api-crds-helm/gateway-api-crds-helm-0.1.0.tgz",
+    "url": "file:///nix/store/kvjm0iaxiyi42d2ncs7wcc6jqgf7f3m7-gateway-api-crds-helm/gateway-api-crds-helm-0.1.0.tgz",
     "images": {}
   },
   "cilium-keys-gen-helm": {
-    "url": "file:///nix/store/k7rywnhlc0kr82svghs2ybcjb8xywj2a-cilium-keys-gen-helm/cilium-keys-gen-helm-0.1.0.tgz",
+    "url": "file:///nix/store/daim0d2m4vcbivd2qii6kll2hr9in2wl-cilium-keys-gen-helm/cilium-keys-gen-helm-0.1.0.tgz",
     "images": {}
   },
   "cilium-virtual-ips": {
-    "url": "file:///nix/store/vakar5q5wxhy3j8i5jqr0wkhfmgijfdz-cilium-virtual-ips/cilium-virtual-ips-0.1.0.tgz",
+    "url": "file:///nix/store/vifdj2zqkifk5i1m22casvbs390n8crs-cilium-virtual-ips/cilium-virtual-ips-0.1.0.tgz",
     "images": {}
   },
   "cilium-bgp-config": {
-    "url": "file:///nix/store/c3xszhx1r7zlnp3vgw9ynx8z07cv0pnk-cilium-bgp-config/cilium-bgp-config-0.1.0.tgz",
+    "url": "file:///nix/store/g1la0y4xk4i78l8fjxvsj2wpblwkgvfg-cilium-bgp-config/cilium-bgp-config-0.1.0.tgz",
     "images": {}
   },
   "p2p-vpn-config": {
-    "url": "file:///nix/store/v93751jfa4ikr2s4npqqpi4fzm97ry45-p2p-vpn-config-helm/p2p-vpn-config-helm-0.1.0.tgz",
+    "url": "file:///nix/store/l3vymzpnqsdlf20lvf615gsxwq5ssp15-p2p-vpn-config-helm/p2p-vpn-config-helm-0.1.0.tgz",
     "images": {}
   },
   "kured": {
@@ -82,7 +82,7 @@
     }
   },
   "cert-manager-system-namespace": {
-    "url": "file:///nix/store/ih28ds4v4vn0y6jzwqsy2azr7jyv7w94-namespace-helm/namespace-helm-0.1.0.tgz",
+    "url": "file:///nix/store/rvccq6hpbvc74cjw4g8x1d5j9vikkril-namespace-helm/namespace-helm-0.1.0.tgz",
     "images": {}
   },
   "cert-manager-csi-driver": {
@@ -148,11 +148,11 @@
     }
   },
   "pki-bootstrap": {
-    "url": "file:///nix/store/cvarvhbzlz68g7qkqyym9rm4nxn39l6c-pki-bootstrap-helm/pki-bootstrap-helm-0.1.0.tgz",
+    "url": "file:///nix/store/km2dyjilcf3qbp7icv06gzw0kpmmyv4l-pki-bootstrap-helm/pki-bootstrap-helm-0.1.0.tgz",
     "images": {}
   },
   "longhorn-namespace": {
-    "url": "file:///nix/store/ih28ds4v4vn0y6jzwqsy2azr7jyv7w94-namespace-helm/namespace-helm-0.1.0.tgz",
+    "url": "file:///nix/store/rvccq6hpbvc74cjw4g8x1d5j9vikkril-namespace-helm/namespace-helm-0.1.0.tgz",
     "images": {}
   },
   "longhorn": {
@@ -208,11 +208,11 @@
     }
   },
   "local-gateway": {
-    "url": "file:///nix/store/79xjrr5f4mzphvmpc7v72hcdnc1xxf97-gateway-helm/gateway-helm-0.1.0.tgz",
+    "url": "file:///nix/store/n6w90wjmmmlnsk1by4hzc5729wn65g8z-gateway-helm/gateway-helm-0.1.0.tgz",
     "images": {}
   },
   "argo-tls": {
-    "url": "file:///nix/store/6al3b42d74i2cwsmv6g6pdby8qr9y1ns-service-tls-helm/service-tls-helm-0.1.0.tgz",
+    "url": "file:///nix/store/2wm8qg4ra5b1sjwrq8jlgh7xmi5flp78-service-tls-helm/service-tls-helm-0.1.0.tgz",
     "images": {}
   },
   "argo": {
@@ -252,23 +252,47 @@
     }
   },
   "argocd-gateway": {
-    "url": "file:///nix/store/79xjrr5f4mzphvmpc7v72hcdnc1xxf97-gateway-helm/gateway-helm-0.1.0.tgz",
+    "url": "file:///nix/store/n6w90wjmmmlnsk1by4hzc5729wn65g8z-gateway-helm/gateway-helm-0.1.0.tgz",
+    "images": {}
+  },
+  "radar-tls": {
+    "url": "file:///nix/store/2wm8qg4ra5b1sjwrq8jlgh7xmi5flp78-service-tls-helm/service-tls-helm-0.1.0.tgz",
+    "images": {}
+  },
+  "radar": {
+    "url": "https://github.com/skyhook-io/helm-charts/releases/download/radar-1.12.2/radar-1.12.2.tgz",
+    "hash": "sha256-n7dZgZC9IsrEVMB5TjGSF83+dXRjKmwhkl0IDCRWqt0=",
+    "images": {
+      "ghcr.io/skyhook-io/radar:1.12.2": {
+        "imageName": "ghcr.io/skyhook-io/radar",
+        "finalImageTag": "1.12.2",
+        "architectures": {
+          "arm64": {
+            "imageDigest": "sha256:4a52eebcf6a6168b7c86689b3b6fbbbe475c2d5b6dcc5ad2ad7a7dd073ed7c42",
+            "hash": "sha256-jugoqJQAIndqGznUL6vpAQic7zxO3xnCDoxHziVsfZ4="
+          }
+        }
+      }
+    }
+  },
+  "radar-gateway": {
+    "url": "file:///nix/store/n6w90wjmmmlnsk1by4hzc5729wn65g8z-gateway-helm/gateway-helm-0.1.0.gz",
     "images": {}
   },
   "k-apps": {
-    "url": "file:///nix/store/lyifbrzyiay86c00bi4fcx113b64sqbm-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
+    "url": "file:///nix/store/k9820nh4n54bb2im7sv51idmna57bf6y-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   },
   "loa-core": {
-    "url": "file:///nix/store/lyifbrzyiay86c00bi4fcx113b64sqbm-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
+    "url": "file:///nix/store/k9820nh4n54bb2im7sv51idmna57bf6y-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   },
   "loa-federation": {
-    "url": "file:///nix/store/lyifbrzyiay86c00bi4fcx113b64sqbm-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
+    "url": "file:///nix/store/k9820nh4n54bb2im7sv51idmna57bf6y-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   },
   "loa-observability": {
-    "url": "file:///nix/store/lyifbrzyiay86c00bi4fcx113b64sqbm-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
+    "url": "file:///nix/store/k9820nh4n54bb2im7sv51idmna57bf6y-argocd-app-helm/argocd-app-helm-0.1.0.tgz",
     "images": {}
   }
 }
