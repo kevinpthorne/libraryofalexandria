@@ -35,3 +35,9 @@ spec:
       port: 443
       targetPort: gui
       protocol: TCP
+    {{- if eq (include "p2p-vpn-bgp.metricsEnabled" .) "true" }}
+    - name: metrics
+      port: 9342
+      targetPort: metrics
+      protocol: TCP
+    {{- end }}

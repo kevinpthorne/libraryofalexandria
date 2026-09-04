@@ -109,7 +109,24 @@ spec:
           volumeMounts:
             - name: frr-config
               mountPath: /etc/frr
+            - name: frr-sockets
+              mountPath: /var/run/frr
+        {{- if eq (include "p2p-vpn-bgp.metricsEnabled" .) "true" }}
+        - name: frr-exporter
+          image: "{{ .Values.metrics.image.repository }}:{{ .Values.metrics.image.tag }}"
+          imagePullPolicy: {{ .Values.metrics.image.pullPolicy }}
+          ports:
+            - name: metrics
+              containerPort: 9342
+              protocol: TCP
+          volumeMounts:
+            - name: frr-sockets
+              mountPath: /var/run/frr
+              readOnly: true
+        {{- end }}
       volumes:
+        - name: frr-sockets
+          emptyDir: {}
         - name: frr-config
           configMap:
             name: p2p-vpn-frr-config

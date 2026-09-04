@@ -1,0 +1,15 @@
+{{- if and (eq (include "p2p-vpn-bgp.metricsEnabled" .) "true") .Values.metrics.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: p2p-vpn-bgp
+  labels:
+    app: p2p-vpn
+spec:
+  selector:
+    matchLabels:
+      app: p2p-vpn
+  endpoints:
+    - port: metrics
+      interval: 30s
+{{- end }}

@@ -1,0 +1,20 @@
+{{- if and (eq (include "p2p-vpn-bgp.metricsEnabled" .) "true") .Values.metrics.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: p2p-vpn-bgp
+  labels:
+    app: p2p-vpn
+spec:
+  groups:
+    - name: p2p-vpn-bgp.rules
+      rules:
+        - alert: P2PVpnNodeDown
+          expr: frr_bgp_peer_state != 6
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "P2P VPN BGP Peer is down"
+            description: "The BGP session with peer {{ "{{" }} $labels.peer {{ "}}" }} is down for more than 2 minutes."
+{{- end }}

@@ -57,3 +57,13 @@ networkPolicy:
   # e.g., to allow access to specific databases or internal services like Keycloak, KeyDB, etc.
   extraEgress: []
 
+metrics:
+  enabled: true
+  image:
+    repository: quay.io/prometheus/frr-exporter
+    pullPolicy: IfNotPresent
+    tag: "v1.3.1"
+  serviceMonitor:
+    enabled: true
+  prometheusRule:
+    enabled: true
