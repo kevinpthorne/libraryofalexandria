@@ -23,10 +23,10 @@ spec:
             key: url
           title: '[{{ "{{" }} .Status | toUpper {{ "}}" }}{{ "{{" }} if eq .Status "firing" {{ "}}" }}:{{ "{{" }} .Alerts.Firing | len {{ "}}" }}{{ "{{" }} end {{ "}}" }}] {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
           message: |-
-            {{ "{{" }} range .Alerts {{ "}}" }}
-            **Alert:** {{ "{{" }} .Annotations.summary {{ "}}" }}
-            **Description:** {{ "{{" }} .Annotations.description {{ "}}" }}
-            **Severity:** {{ "{{" }} .Labels.severity {{ "}}" }}
-            **Runbook:** {{ "{{" }} .Annotations.runbook_url {{ "}}" }}
+            **{{ "{{" }} (index .Alerts 0).Annotations.summary {{ "}}" }}**
             ---
+            {{ "{{" }} range .Alerts {{ "}}" }}
+            {{ "{{" }} .Labels.severity | toUpper {{ "}}" }}: {{ "{{" }} .Annotations.description {{ "}}" }}
             {{ "{{" }} end {{ "}}" }}
+            ---
+            __{{ "{{" }} (index .Alerts 0).Annotations.runbook_url {{ "}}" }}__
