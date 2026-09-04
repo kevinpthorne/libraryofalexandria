@@ -93,7 +93,13 @@ in
         ];
     };
 
-    apps.loa-federation.valuesOverrides.keydb.tls.disableNonTls = false;
+    apps.loa-federation.valuesOverrides = {
+      keydb = {
+        instances = 2;
+        tls.disableNonTls = false;
+      };
+      pgedge.instances = 3;
+    };
     federateTo = [ "test" ];
     federationBootstrap.bootstrapPeerIdentity = "uEiDskfF0c4uQseF797Mp47GF3QH_eD0JiobavG9qszK4WA";
 
