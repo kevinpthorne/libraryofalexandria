@@ -1,30 +1,30 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: homeassistant
-  namespace: {{ .Values.argoNamespace }}
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
-    path: apps/homeassistant
-    targetRevision: HEAD
-    helm:
-      valuesObject:
-        replicaCount: 0
-        otbr:
-          enabled: true
-          resources:
-            limits:
-              akri.sh/homeassistant-connection-zb1: 1
-            requests:
-              akri.sh/homeassistant-connection-zb1: 1
-        matter:
-          enabled: true
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: homeassistant
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: homeassistant
+#   namespace: {{ .Values.argoNamespace }}
+# spec:
+#   project: default
+#   source:
+#     repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+#     path: apps/homeassistant
+#     targetRevision: HEAD
+#     helm:
+#       valuesObject:
+#         replicaCount: 0
+#         otbr:
+#           enabled: true
+#           resources:
+#             limits:
+#               akri.sh/homeassistant-connection-zb1: 1
+#             requests:
+#               akri.sh/homeassistant-connection-zb1: 1
+#         matter:
+#           enabled: true
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: homeassistant
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
