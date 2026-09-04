@@ -115,6 +115,10 @@ spec:
         - name: frr-exporter
           image: "{{ .Values.metrics.image.repository }}:{{ .Values.metrics.image.tag }}"
           imagePullPolicy: {{ .Values.metrics.image.pullPolicy }}
+          {{- if .Values.metrics.tls.enabled }}
+          args:
+            - "--web.config.file=/etc/frr-exporter/web-config.yml"
+          {{- end }}
           ports:
             - name: metrics
               containerPort: 9342
@@ -123,10 +127,26 @@ spec:
             - name: frr-sockets
               mountPath: /var/run/frr
               readOnly: true
+            {{- if .Values.metrics.tls.enabled }}
+            - name: metrics-tls
+              mountPath: /certs/metrics
+              readOnly: true
+            - name: metrics-web-config
+              mountPath: /etc/frr-exporter
+              readOnly: true
+            {{- end }}
         {{- end }}
       volumes:
         - name: frr-sockets
           emptyDir: {}
+        {{- if and (eq (include "p2p-vpn-bgp.metricsEnabled" .) "true") .Values.metrics.tls.enabled }}
+        - name: metrics-tls
+          secret:
+            secretName: {{ .Values.metrics.tls.secretName }}
+        - name: metrics-web-config
+          configMap:
+            name: p2p-vpn-bgp-exporter-web-config
+        {{- end }}
         - name: frr-config
           configMap:
             name: p2p-vpn-frr-config

@@ -12,4 +12,12 @@ spec:
   endpoints:
     - port: metrics
       interval: 30s
+      {{- if .Values.metrics.tls.enabled }}
+      scheme: https
+      tlsConfig:
+        ca:
+          configMap:
+            name: trusted-ca-bundle
+            key: ca-bundle.crt
+      {{- end }}
 {{- end }}

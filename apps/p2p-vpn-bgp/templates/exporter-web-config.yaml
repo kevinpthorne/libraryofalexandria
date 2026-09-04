@@ -1,0 +1,13 @@
+{{- if and (eq (include "p2p-vpn-bgp.metricsEnabled" .) "true") .Values.metrics.tls.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: p2p-vpn-bgp-exporter-web-config
+  labels:
+    app: p2p-vpn
+data:
+  web-config.yml: |
+    tls_server_config:
+      cert_file: /certs/metrics/tls.crt
+      key_file: /certs/metrics/tls.key
+{{- end }}
