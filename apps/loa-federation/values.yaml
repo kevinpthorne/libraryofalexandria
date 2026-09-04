@@ -9,6 +9,8 @@ pgedge:
   instances: 1
   appName: main
   namespace: pgedge
+  pjsipViewsJob:
+    enabled: false
 
 keydb:
   instances: 1
@@ -37,7 +39,3 @@ cloudflared:
   domains:
     - "immich.kpt.link"
     - "ident.kpt.link"
-
-pgedge:
-  pjsipViewsJob:
-    enabled: false
