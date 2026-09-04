@@ -167,7 +167,10 @@ spec:
         # ---------------------------------------------------------
         alertmanager:
           enabled: true
-          # Default kube-prometheus-stack configuration relies on AlertmanagerConfig CRDs
+          # Disable namespace restriction on AlertmanagerConfig so it can catch cluster-wide alerts
+          alertmanagerSpec:
+            alertmanagerConfigMatcherStrategy:
+              type: None
 
         # Add native AlertmanagerConfig to cleanly route alerts to Discord
         extraManifests:
