@@ -60,9 +60,9 @@ networkPolicy:
 metrics:
   enabled: true
   image:
-    repository: quay.io/prometheus/frr-exporter
+    repository: ghcr.io/tynany/frr_exporter
     pullPolicy: IfNotPresent
-    tag: "v1.3.1"
+    tag: "v1.12.0"
   serviceMonitor:
     enabled: true
   prometheusRule:
