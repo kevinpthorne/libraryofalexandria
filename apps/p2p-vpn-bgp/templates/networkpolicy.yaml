@@ -93,4 +93,9 @@ spec:
               protocol: UDP
     {{- end }}
 
+    {{- if .Values.networkPolicy.extraEgress }}
+    # 5. Extra Egress rules for dynamic service access
+    {{- toYaml .Values.networkPolicy.extraEgress | nindent 4 }}
+    {{- end }}
+
 {{- end }}

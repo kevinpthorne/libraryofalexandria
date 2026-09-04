@@ -53,4 +53,7 @@ affinity: {}
 
 networkPolicy:
   enabled: true
+  # extraEgress allows adding custom egress rules to the CiliumNetworkPolicy
+  # e.g., to allow access to specific databases or internal services like Keycloak, KeyDB, etc.
+  extraEgress: []
 

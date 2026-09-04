@@ -12,6 +12,20 @@ spec:
     helm:
       releaseName: federation-p2p-vpn
       valuesObject:
+        networkPolicy:
+          extraEgress:
+            - toEndpoints:
+                - matchLabels:
+                    k8s:io.kubernetes.pod.namespace: keycloak
+            - toEndpoints:
+                - matchLabels:
+                    k8s:io.kubernetes.pod.namespace: {{ .Values.keydb.namespace }}
+            - toEndpoints:
+                - matchLabels:
+                    k8s:io.kubernetes.pod.namespace: {{ .Values.pgedge.namespace }}
+            - toEndpoints:
+                - matchLabels:
+                    k8s:io.kubernetes.pod.namespace: seaweedfs-system
         p2pVpn:
           webUITlsSecretName: "p2p-vpn-web-tls"
           generateDataKey: false # Delivered via Colmena and installed via p2p-vpn-secret-install
