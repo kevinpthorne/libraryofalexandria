@@ -53,6 +53,9 @@ spec:
             {{- else }}
             []
             {{- end }}
+        metrics:
+          tls:
+            secretName: "p2p-vpn-web-tls"
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system

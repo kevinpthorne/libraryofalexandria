@@ -61,7 +61,7 @@ metrics:
   enabled: true
   tls:
     enabled: true
-    secretName: "p2p-vpn-metrics-tls"
+    secretName: ""
   image:
     repository: ghcr.io/tynany/frr_exporter
     pullPolicy: IfNotPresent
