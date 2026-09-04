@@ -203,15 +203,15 @@ spec:
                     - apiURL:
                         name: discord-webhook
                         key: url
-                      title: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.alertname }}'
+                      title: '[{{ "{{" }} .Status | toUpper {{ "}}" }}{{ "{{" }} if eq .Status "firing" {{ "}}" }}:{{ "{{" }} .Alerts.Firing | len {{ "}}" }}{{ "{{" }} end {{ "}}" }}] {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
                       message: |-
-                        {{ range .Alerts }}
-                        **Alert:** {{ .Annotations.summary }}
-                        **Description:** {{ .Annotations.description }}
-                        **Severity:** {{ .Labels.severity }}
-                        **Runbook:** {{ .Annotations.runbook_url }}
+                        {{ "{{" }} range .Alerts {{ "}}" }}
+                        **Alert:** {{ "{{" }} .Annotations.summary {{ "}}" }}
+                        **Description:** {{ "{{" }} .Annotations.description {{ "}}" }}
+                        **Severity:** {{ "{{" }} .Labels.severity {{ "}}" }}
+                        **Runbook:** {{ "{{" }} .Annotations.runbook_url {{ "}}" }}
                         ---
-                        {{ end }}
+                        {{ "{{" }} end {{ "}}" }}
 
         # ---------------------------------------------------------
         # PROMETHEUS
