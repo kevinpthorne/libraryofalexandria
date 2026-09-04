@@ -9,6 +9,7 @@ pgedge:
   instances: 1
   appName: main
   namespace: pgedge
+  storageSize: "50Gi"
   pjsipViewsJob:
     enabled: false
 
