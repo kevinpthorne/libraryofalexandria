@@ -8,7 +8,7 @@
 {
   imports = [
     # top installs last
-    ./headlamp.nix
+    ./radar.nix
     ./argocd.nix
     ./gateway.nix
     ./eso.nix
@@ -48,9 +48,9 @@
   };
 
   config.libraryofalexandria.control-plane = {
-    headlamp = {
-      enable = lib.mkDefault false;
-      version = lib.mkDefault "0.40.0";
+    radar = {
+      enable = lib.mkDefault true;
+      version = lib.mkDefault "1.12.2";
     };
     local-gateway = {
       enable = lib.mkDefault true;

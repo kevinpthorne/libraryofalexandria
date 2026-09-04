@@ -1,0 +1,47 @@
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: radar-oauth-password
+  namespace: radar
+spec:
+  length: 32
+  digits: 5
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: radar-oauth-secret
+  namespace: radar
+spec:
+  refreshInterval: "0"
+  target:
+    name: radar-oauth-secret
+    template:
+      engineVersion: v2
+      data:
+        client-secret: "{{ `{{ .password }}` }}"
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: radar-oauth-password
+---
+apiVersion: authn.loa.kevinpthorne.com/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: radar
+  namespace: radar
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  clientId: radar
+  secretRef:
+    name: radar-oauth-secret
+    key: client-secret
+  redirectUris:
+    # Use standard wildcards for the redirect URI
+    - "https://cluster.*.loa.internal/auth/callback"
+    - "https://cluster.*.loa.internal/*"
