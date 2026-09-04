@@ -55,6 +55,7 @@
               rebootSentinel = "/run/kured/reboot-required";
 
               forceReboot = true;
+              drainTimeout = "15m";
               drainGracePeriod = 60;
 
               # Ensure Kured only reboots 1 node at a time
