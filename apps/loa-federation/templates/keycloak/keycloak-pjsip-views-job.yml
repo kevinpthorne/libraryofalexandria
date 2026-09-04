@@ -1,3 +1,4 @@
+{{- if .Values.pgedge.pjsipViewsJob.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -120,3 +121,4 @@ spec:
         secret:
           secretName: admin-client-cert
           defaultMode: 0400
+{{- end }}

@@ -99,6 +99,7 @@ in
         tls.disableNonTls = false;
       };
       pgedge.instances = 3;
+      pgedge.pjsipViewsJob.enabled = true;
     };
     federateTo = [ "test" ];
     federationBootstrap.bootstrapPeerIdentity = "uEiDskfF0c4uQseF797Mp47GF3QH_eD0JiobavG9qszK4WA";

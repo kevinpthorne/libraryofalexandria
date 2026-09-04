@@ -37,3 +37,7 @@ cloudflared:
   domains:
     - "immich.kpt.link"
     - "ident.kpt.link"
+
+pgedge:
+  pjsipViewsJob:
+    enabled: false
