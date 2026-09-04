@@ -188,7 +188,7 @@ spec:
               receivers:
                 - name: 'discord'
                   discordConfigs:
-                    - webhookURL:
+                    - apiURL:
                         name: discord-webhook
                         key: url
 
