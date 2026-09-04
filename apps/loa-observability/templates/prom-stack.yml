@@ -193,6 +193,13 @@ spec:
                   caFile: /etc/ssl/certs/custom-ca/ca-bundle.crt
                   serverName: grafana.observability.svc
                   insecureSkipVerify: false
+                basicAuth:
+                  username:
+                    name: prometheus-stack-grafana
+                    key: admin-user
+                  password:
+                    name: prometheus-stack-grafana
+                    key: admin-password
             volumes:
               - name: ca-bundle
                 configMap:
