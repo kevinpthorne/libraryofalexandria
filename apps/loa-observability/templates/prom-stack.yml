@@ -181,38 +181,6 @@ spec:
             alertmanagerConfigMatcherStrategy:
               type: None
 
-        # Add native AlertmanagerConfig to cleanly route alerts to Discord
-        extraManifests:
-          - apiVersion: monitoring.coreos.com/v1alpha1
-            kind: AlertmanagerConfig
-            metadata:
-              name: discord-route
-              namespace: observability
-              labels:
-                release: prometheus-stack
-            spec:
-              route:
-                groupBy: ['alertname', 'job']
-                groupWait: 30s
-                groupInterval: 5m
-                repeatInterval: 12h
-                receiver: 'discord'
-              receivers:
-                - name: 'discord'
-                  discordConfigs:
-                    - apiURL:
-                        name: discord-webhook
-                        key: url
-                      title: '[{{ "{{" }} .Status | toUpper {{ "}}" }}{{ "{{" }} if eq .Status "firing" {{ "}}" }}:{{ "{{" }} .Alerts.Firing | len {{ "}}" }}{{ "{{" }} end {{ "}}" }}] {{ "{{" }} .GroupLabels.alertname {{ "}}" }}'
-                      message: |-
-                        {{ "{{" }} range .Alerts {{ "}}" }}
-                        **Alert:** {{ "{{" }} .Annotations.summary {{ "}}" }}
-                        **Description:** {{ "{{" }} .Annotations.description {{ "}}" }}
-                        **Severity:** {{ "{{" }} .Labels.severity {{ "}}" }}
-                        **Runbook:** {{ "{{" }} .Annotations.runbook_url {{ "}}" }}
-                        ---
-                        {{ "{{" }} end {{ "}}" }}
-
         # ---------------------------------------------------------
         # PROMETHEUS
         # ---------------------------------------------------------
