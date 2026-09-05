@@ -27,9 +27,9 @@
       }
       {
         name = "radar";
-        chart = "skyhook/radar";
+        chart = "radar/radar";
         version = config.libraryofalexandria.control-plane.radar.version;
-        values = lib2.deepMerge [
+        values = lib2.deepMerge ([
           {
             extraVolumes = [
               {
@@ -87,19 +87,19 @@
               };
             };
           }
-          (lib.mkIf (config.libraryofalexandria.cluster.apps ? loa-federation) {
-            auth = {
-              mode = "oidc";
-              oidc = {
-                issuerURL = "https://ident.${config.libraryofalexandria.cluster.externalDomain}/realms/loa";
-                clientID = "radar";
-                existingSecret = "radar-oauth-secret";
-                clientSecretKey = "client-secret";
-              };
+        ] ++ lib.optional (config.libraryofalexandria.cluster.apps ? loa-federation) {
+          auth = {
+            mode = "oidc";
+            oidc = {
+              issuerURL = "https://ident.${config.libraryofalexandria.cluster.name}.loa.internal/realms/loa";
+              clientID = "radar";
+              existingSecret = "radar-oauth-secret";
+              clientSecretKey = "client-secret";
             };
-          })
+          };
+        } ++ [
           config.libraryofalexandria.control-plane.radar.values
-        ];
+        ]);
         namespace = "radar";
         repo = "https://skyhook-io.github.io/helm-charts";
       }
