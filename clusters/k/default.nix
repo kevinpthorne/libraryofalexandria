@@ -101,7 +101,7 @@ in
       pgedge.instances = 3;
       pgedge.pjsipViewsJob.enabled = true;
     };
-    federateTo = [ "test" ];
+    federateTo = [ "g" ];
     federationBootstrap.bootstrapPeerIdentity = "uEiDskfF0c4uQseF797Mp47GF3QH_eD0JiobavG9qszK4WA";
 
     virtualIps = {

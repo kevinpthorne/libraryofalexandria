@@ -1,0 +1,350 @@
+{{- if and .Values.persistence.enabled (eq .Values.timeline.storage "sqlite") (gt (int .Values.replicaCount) 1) }}
+{{- fail "replicaCount must be 1 when persistence.enabled=true and timeline.storage=sqlite: a single PVC cannot be safely shared across pods (RWO volumes won't attach to a second pod, RWX volumes risk SQLite corruption)" }}
+{{- end }}
+{{- $basePath := "" -}}
+{{- $trimmedBasePath := trimAll "/" (default "" .Values.basePath) -}}
+{{- if $trimmedBasePath -}}
+{{- $basePath = printf "/%s" $trimmedBasePath -}}
+{{- end -}}
+{{- if and $basePath .Values.cloud.enabled }}
+{{- fail "basePath is not supported with cloud.enabled=true: Radar Cloud owns the URL path, and the binary refuses the combination at startup — unset one of them" }}
+{{- end }}
+{{- /* URLs registered at the IdP have to carry the prefix: Radar's OIDC routes
+       move under it, and an unprefixed URI is not routed here, so login fails
+       after the callback rather than at install time. */}}
+{{- if $basePath }}
+{{- range $key := list "redirectURL" "postLogoutRedirectURL" }}
+{{- $val := get $.Values.auth.oidc $key }}
+{{- /* Match on whole path segments of the URL's path. Comparing the whole URL
+       string lets the authority satisfy the prefix (basePath /radar against
+       https://radar.example.com/auth/callback), and a bare string prefix on the
+       path lets a different segment satisfy it (/radartools/auth/callback). Same
+       rule the server applies when routing: equal, or followed by a slash. */}}
+{{- $p := (urlParse $val).path }}
+{{- if and $val (not (or (eq $p $basePath) (hasPrefix (printf "%s/" $basePath) $p))) }}
+{{- fail (printf "auth.oidc.%s (%s) must be under basePath %q — Radar serves /auth/* below the prefix, so the IdP would send the browser to a path that is not routed to Radar" $key $val $basePath) }}
+{{- end }}
+{{- end }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "radar.fullname" . }}
+  labels:
+    {{- include "radar.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  {{- if and .Values.persistence.enabled (eq .Values.timeline.storage "sqlite") }}
+  strategy:
+    type: Recreate
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "radar.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "radar.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "radar.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --port={{ .Values.service.port }}
+            - --listen-address=0.0.0.0
+            - --no-browser
+            {{- if $basePath }}
+            - {{ printf "--base-path=%s" $basePath | quote }}
+            {{- end }}
+            - --timeline-storage={{ .Values.timeline.storage }}
+            {{- if eq .Values.timeline.storage "sqlite" }}
+            - --timeline-db={{ .Values.timeline.dbPath }}
+            {{- if .Values.timeline.retention }}
+            - --timeline-retention={{ .Values.timeline.retention }}
+            {{- end }}
+            {{- if .Values.timeline.maxSize }}
+            - --timeline-max-size={{ .Values.timeline.maxSize }}
+            {{- end }}
+            {{- end }}
+            - --history-limit={{ .Values.timeline.historyLimit }}
+            {{- if .Values.traffic.prometheusUrl }}
+            - --prometheus-url={{ .Values.traffic.prometheusUrl }}
+            {{- end }}
+            {{- if .Values.cost.currency }}
+            - --opencost-currency={{ .Values.cost.currency }}
+            {{- end }}
+            {{- range $k, $v := .Values.traffic.prometheusHeaders }}
+            - {{ printf "--prometheus-header=%s=%s" $k $v | quote }}
+            {{- end }}
+            {{- range $k, $v := .Values.traffic.prometheusHeadersFromEnv }}
+            - {{ printf "--prometheus-header-from-env=%s=%s" $k $v | quote }}
+            {{- end }}
+            {{- if not .Values.mcp.enabled }}
+            - --no-mcp
+            {{- end }}
+            {{- if .Values.debug.image }}
+            - --debug-image={{ .Values.debug.image }}
+            {{- end }}
+            {{- if .Values.listPageSize }}
+            - --list-page-size={{ .Values.listPageSize }}
+            {{- end }}
+            {{- if ne .Values.auth.mode "none" }}
+            - {{ printf "--auth-mode=%s" .Values.auth.mode | quote }}
+            - {{ printf "--auth-cookie-ttl=%s" .Values.auth.cookieTTL | quote }}
+            {{- if .Values.auth.proxy.userHeader }}
+            - {{ printf "--auth-user-header=%s" .Values.auth.proxy.userHeader | quote }}
+            {{- end }}
+            {{- if .Values.auth.proxy.groupsHeader }}
+            - {{ printf "--auth-groups-header=%s" .Values.auth.proxy.groupsHeader | quote }}
+            {{- end }}
+            {{- if .Values.auth.proxy.logoutURL }}
+            - {{ printf "--auth-proxy-logout-url=%s" .Values.auth.proxy.logoutURL | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.issuerURL }}
+            - {{ printf "--auth-oidc-issuer=%s" .Values.auth.oidc.issuerURL | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.internalIssuerURL }}
+            - {{ printf "--auth-oidc-internal-issuer=%s" .Values.auth.oidc.internalIssuerURL | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.authorizationURL }}
+            - {{ printf "--auth-oidc-authorization-url=%s" .Values.auth.oidc.authorizationURL | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.tokenURL }}
+            - {{ printf "--auth-oidc-token-url=%s" .Values.auth.oidc.tokenURL | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.userInfoURL }}
+            - {{ printf "--auth-oidc-userinfo-url=%s" .Values.auth.oidc.userInfoURL | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.jwksURL }}
+            - {{ printf "--auth-oidc-jwks-url=%s" .Values.auth.oidc.jwksURL | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.clientID }}
+            - {{ printf "--auth-oidc-client-id=%s" .Values.auth.oidc.clientID | quote }}
+            {{- end }}
+            {{- /* clientSecret is injected via RADAR_OIDC_CLIENT_SECRET env var below */}}
+            {{- if .Values.auth.oidc.redirectURL }}
+            - {{ printf "--auth-oidc-redirect-url=%s" .Values.auth.oidc.redirectURL | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.groupsClaim }}
+            - {{ printf "--auth-oidc-groups-claim=%s" .Values.auth.oidc.groupsClaim | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.scopes }}
+            - {{ printf "--auth-oidc-scopes=%s" (join "," .Values.auth.oidc.scopes) | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.postLogoutRedirectURL }}
+            - {{ printf "--auth-oidc-post-logout-redirect-url=%s" .Values.auth.oidc.postLogoutRedirectURL | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.usernamePrefix }}
+            - {{ printf "--auth-oidc-username-prefix=%s" .Values.auth.oidc.usernamePrefix | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.groupsPrefix }}
+            - {{ printf "--auth-oidc-groups-prefix=%s" .Values.auth.oidc.groupsPrefix | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.caCert }}
+            - {{ printf "--auth-oidc-ca-cert=%s" .Values.auth.oidc.caCert | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidc.insecureSkipVerify }}
+            - --auth-oidc-insecure-skip-verify
+            {{- end }}
+            {{- if .Values.auth.oidc.backchannelLogout }}
+            - --auth-oidc-backchannel-logout
+            {{- end }}
+            {{- if .Values.auth.oidc.enablePKCE }}
+            - --auth-oidc-enable-pkce
+            {{- end }}
+            {{- end }}
+            {{- if .Values.cloud.enabled }}
+            {{- if not (or .Values.cloud.token .Values.cloud.existingSecret) }}
+            {{- fail "cloud.token or cloud.existingSecret must be set when cloud.enabled=true" }}
+            {{- end }}
+            - --cloud-url={{ required "cloud.url is required when cloud.enabled=true" .Values.cloud.url }}
+            - --cluster-name={{ required "cloud.clusterName is required when cloud.enabled=true" .Values.cloud.clusterName }}
+            {{- if .Values.cloud.insecureSkipVerify }}
+            - --cloud-insecure-skip-verify
+            {{- end }}
+            {{- /* cloud.token is injected via RADAR_CLOUD_TOKEN env var below, not the command line */}}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            {{- if and (ne .Values.auth.mode "none") (or .Values.auth.secret .Values.auth.existingSecret) }}
+            - name: RADAR_AUTH_SECRET
+              {{- if .Values.auth.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.existingSecret }}
+                  key: {{ .Values.auth.existingSecretKey }}
+              {{- else }}
+              value: {{ .Values.auth.secret | quote }}
+              {{- end }}
+            {{- end }}
+            {{- if and (eq .Values.auth.mode "oidc") (or .Values.auth.oidc.clientSecret .Values.auth.oidc.existingSecret) }}
+            - name: RADAR_OIDC_CLIENT_SECRET
+              {{- if .Values.auth.oidc.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.oidc.existingSecret }}
+                  key: {{ .Values.auth.oidc.clientSecretKey }}
+              {{- else }}
+              value: {{ .Values.auth.oidc.clientSecret | quote }}
+              {{- end }}
+            {{- end }}
+            - name: HELM_CACHE_HOME
+              value: "/tmp/helm/cache"
+            - name: HELM_CONFIG_HOME
+              value: "/tmp/helm/config"
+            - name: HELM_DATA_HOME
+              value: "/tmp/helm/data"
+            {{- if .Values.cloud.enabled }}
+            # Signals cloud-mode to the Radar binary: forces --auth-mode=proxy,
+            # accepts forwarded identity headers from the tunnel, disables
+            # startup-config fields that don't apply under hosted Radar Cloud.
+            - name: RADAR_CLOUD_MODE
+              value: "true"
+            {{- if or .Values.cloud.token .Values.cloud.existingSecret }}
+            - name: RADAR_CLOUD_TOKEN
+              {{- if .Values.cloud.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.cloud.existingSecret }}
+                  key: {{ .Values.cloud.existingSecretKey }}
+              {{- else }}
+              value: {{ .Values.cloud.token | quote }}
+              {{- end }}
+            {{- end }}
+            {{- end }}
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- /* Argo CD deep-diff: env-provisioned token (independent of cloud
+                   mode — works for plain in-cluster too). URL/TLS ride along only
+                   when a token is set; a URL without a token can't authenticate. */}}
+            {{- if and .Values.argocd.token .Values.argocd.existingSecret }}
+            {{- fail "argocd.token and argocd.existingSecret are mutually exclusive: set only one (prefer existingSecret so the token stays out of the Helm release)" }}
+            {{- end }}
+            {{- if or .Values.argocd.token .Values.argocd.existingSecret }}
+            - name: RADAR_ARGOCD_TOKEN
+              {{- if .Values.argocd.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.argocd.existingSecret }}
+                  key: {{ .Values.argocd.existingSecretKey }}
+              {{- else }}
+              value: {{ .Values.argocd.token | quote }}
+              {{- end }}
+            {{- if .Values.argocd.url }}
+            - name: RADAR_ARGOCD_URL
+              value: {{ .Values.argocd.url | quote }}
+            {{- end }}
+            {{- if .Values.argocd.insecureTls }}
+            - name: RADAR_ARGOCD_INSECURE_TLS
+              value: "true"
+            {{- end }}
+            {{- end }}
+            # Downward-API identity. Always emitted: Radar needs to know which
+            # object it is for read-only self-description (Cloud connect
+            # handoff), which carries no RBAC implication. Whether it may
+            # actually patch itself is decided by the apiserver against
+            # rbac.selfUpgrade's Role — never by an env marker, which a
+            # Hub image-only self-upgrade would leave stale.
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            # Pin the in-cluster reachability probe to radar's own deployed image.
+            # This is the no-RBAC fallback for when the runtime self-read of radar's
+            # pod can't run; an explicit --reachability-image / config still wins,
+            # and the self-read (radar's live pod image) is preferred when available.
+            - name: RADAR_IMAGE
+              value: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            - name: MY_DEPLOYMENT_NAME
+              value: {{ include "radar.fullname" . }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ printf "%s/api/health" $basePath | quote }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ printf "%s/api/health" $basePath | quote }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: home
+              mountPath: /home/nonroot
+            {{- if and .Values.persistence.enabled (eq .Values.timeline.storage "sqlite") }}
+            - name: data
+              mountPath: /data
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- with .Values.extraContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: home
+          emptyDir: {}
+        {{- if and .Values.persistence.enabled (eq .Values.timeline.storage "sqlite") }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "radar.fullname" . }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

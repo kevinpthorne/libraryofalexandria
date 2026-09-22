@@ -1,0 +1,19 @@
+{{- if .Values.stunnel.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "radar.fullname" . }}-stunnel
+  labels:
+    {{- include "radar.labels" . | nindent 4 }}
+data:
+  stunnel.conf: |-
+    pid = /tmp/stunnel.pid
+    foreground = yes
+    debug = info
+    
+    [radar]
+    accept = 0.0.0.0:443
+    connect = 127.0.0.1:{{ .Values.service.port }}
+    cert = /run/secrets/certs/tls.crt
+    key = /run/secrets/certs/tls.key
+{{- end }}

@@ -16,92 +16,105 @@
         chart = "${pkgs.service-tls-helm}/service-tls-helm-0.1.0.tgz";
         values = {
           svcName = "radar";
-          ca = {
-            name = "app-pki-bootstrap-issuer";
-          };
-          cluster = {
-            name = config.libraryofalexandria.cluster.name;
-          };
         };
         namespace = "radar";
       }
       {
         name = "radar";
-        chart = "radar/radar";
-        version = config.libraryofalexandria.control-plane.radar.version;
-        values = lib2.deepMerge ([
-          {
-            extraVolumes = [
-              {
-                name = "radar-cert";
-                secret = {
-                  secretName = "radar-tls";
-                  items = [
+        chart = "${pkgs.radar-helm}/radar-helm-1.12.2.tgz";
+        values = lib2.deepMerge (
+          [
+            {
+              extraVolumes = [
+                {
+                  name = "radar-cert";
+                  secret = {
+                    secretName = "radar-tls";
+                    items = [
+                      {
+                        key = "tls.crt";
+                        path = "tls.crt";
+                      }
+                      {
+                        key = "tls.key";
+                        path = "tls.key";
+                      }
+                    ];
+                  };
+                }
+                {
+                  name = "stunnel-config";
+                  configMap = {
+                    name = "radar-stunnel";
+                  };
+                }
+              ];
+              stunnel = {
+                enabled = true;
+              };
+              extraContainers = [
+                {
+                  name = "stunnel";
+                  image = "dweomer/stunnel:latest";
+                  volumeMounts = [
                     {
-                      key = "tls.crt";
-                      path = "tls.crt";
+                      name = "radar-cert";
+                      mountPath = "/run/secrets/certs";
+                      readOnly = true;
                     }
                     {
-                      key = "tls.key";
-                      path = "tls.key";
+                      name = "stunnel-config";
+                      mountPath = "/etc/stunnel";
+                      readOnly = true;
                     }
                   ];
+                }
+              ];
+              service = {
+                port = 443;
+                targetPort = 443;
+              };
+              podSecurityContext = {
+                runAsNonRoot = true;
+                runAsUser = 1000;
+                runAsGroup = 1000;
+                fsGroup = 1000;
+                seccompProfile = {
+                  type = "RuntimeDefault";
                 };
-              }
-            ];
-            extraVolumeMounts = [
-              {
-                name = "radar-cert";
-                mountPath = "/run/secrets/certs";
-                readOnly = true;
-              }
-            ];
-            extraArgs = [
-              "--tls-cert-file=/run/secrets/certs/tls.crt"
-              "--tls-key-file=/run/secrets/certs/tls.key"
-            ];
-            service = {
-              port = 443;
-              targetPort = 443;
-            };
-            podSecurityContext = {
-              runAsNonRoot = true;
-              runAsUser = 1000;
-              runAsGroup = 1000;
-              fsGroup = 1000;
-              seccompProfile = {
-                type = "RuntimeDefault";
               };
-            };
-            securityContext = {
-              allowPrivilegeEscalation = false;
-              readOnlyRootFilesystem = true;
-              runAsNonRoot = true;
-              runAsUser = 1000;
-              runAsGroup = 1000;
-              seccompProfile = {
-                type = "RuntimeDefault";
+              securityContext = {
+                allowPrivilegeEscalation = false;
+                readOnlyRootFilesystem = true;
+                runAsNonRoot = true;
+                runAsUser = 1000;
+                runAsGroup = 1000;
+                seccompProfile = {
+                  type = "RuntimeDefault";
+                };
+                capabilities = {
+                  drop = [ "ALL" ];
+                };
               };
-              capabilities = {
-                drop = [ "ALL" ];
+            }
+          ]
+          ++ lib.optional (config.libraryofalexandria.cluster.apps ? loa-federation && false) {
+            auth = {
+              mode = "oidc";
+              oidc = {
+                issuerURL = "https://ident.${config.libraryofalexandria.cluster.name}.loa.internal/realms/loa";
+                clientID = "radar";
+                existingSecret = "radar-oauth-secret";
+                clientSecretKey = "client-secret";
+                redirectURL = "https://cluster.${config.libraryofalexandria.cluster.name}.loa.internal/auth/callback";
               };
             };
           }
-        ] ++ lib.optional (config.libraryofalexandria.cluster.apps ? loa-federation) {
-          auth = {
-            mode = "oidc";
-            oidc = {
-              issuerURL = "https://ident.${config.libraryofalexandria.cluster.name}.loa.internal/realms/loa";
-              clientID = "radar";
-              existingSecret = "radar-oauth-secret";
-              clientSecretKey = "client-secret";
-            };
-          };
-        } ++ [
-          config.libraryofalexandria.control-plane.radar.values
-        ]);
+          ++ [
+            config.libraryofalexandria.control-plane.radar.values
+          ]
+        );
         namespace = "radar";
-        repo = "https://skyhook-io.github.io/helm-charts";
       }
       {
         name = "radar-gateway";
