@@ -262,6 +262,7 @@ in
                   chartToAttrs = chart: {
                     name = chart.name;
                     value = {
+                      enable = true;
                       package = chart.chartPackage;
                       values = chart.values;
                       targetNamespace = if chart.namespace == null then "default" else chart.namespace;
