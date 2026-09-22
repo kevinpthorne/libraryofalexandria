@@ -74,7 +74,7 @@ spec:
         apiVersion: batch/v1
         kind: Job
         metadata:
-          name: keycloak-client-sync-${schema.metadata.name}-v8
+          name: keycloak-client-sync-${schema.metadata.name}-v9
           namespace: keycloak
           labels: >-
             ${has(schema.metadata.labels) && "argocd.argoproj.io/instance" in schema.metadata.labels ? {"argocd.argoproj.io/instance": schema.metadata.labels["argocd.argoproj.io/instance"]} : {}}
@@ -117,9 +117,19 @@ spec:
                     fi
 
                     # Create a Java Truststore from the mounted CA bundle
+                    # The bundle may contain multiple certs; keytool only imports one per call,
+                    # so we split the bundle and import each cert with a unique alias.
                     if [ -f /etc/x509/cas/ca-bundle.crt ]; then
                       echo "Generating truststore from ca-bundle.crt..."
-                      keytool -importcert -noprompt -file /etc/x509/cas/ca-bundle.crt -keystore /tmp/truststore.p12 -storetype PKCS12 -alias custom-ca -storepass changeit
+                      mkdir -p /tmp/cas
+                      cd /tmp/cas
+                      csplit -z -q /etc/x509/cas/ca-bundle.crt '/-----BEGIN CERTIFICATE-----/' '{*}'
+                      i=0
+                      for cert in /tmp/cas/xx*; do
+                        keytool -importcert -noprompt -file "$cert" -keystore /tmp/truststore.p12 -storetype PKCS12 -alias "custom-ca-$i" -storepass changeit
+                        i=$((i+1))
+                      done
+                      cd /
                     fi
 
                     cat << 'EOF' > /tmp/client.json
