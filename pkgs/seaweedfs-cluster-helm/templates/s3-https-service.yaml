@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: seaweed-cluster-s3-https
-  namespace: seaweedfs-system
+  namespace: {{ .Release.Namespace }}
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:

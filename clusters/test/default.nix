@@ -23,6 +23,7 @@ let
           node.deployment.deploy-rs.hostName = "127.0.0.1";
           zarf.enable = lib.mkForce false;
           helmCharts.installerEnabled = true;
+          control-plane.seaweedfs.extraOptions.size = "1G";
         };
 
         security.pam.u2f.settings = {
@@ -71,7 +72,6 @@ in
         ];
     };
 
-    apps.loa-core.valuesOverrides.seaweedfs.size = "1G";
     federateTo = [ "k" ];
     # apps.loa-voip.enable = lib.mkForce true;
 

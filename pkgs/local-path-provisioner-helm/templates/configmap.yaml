@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-path-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: local-path-provisioner
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  config.json: |-
+    {
+      "nodePathMap": {{ toJson .Values.nodePathMap }},
+      "sharedFileSystemPath": {{ quote .Values.sharedFileSystemPath }}
+    }
+  setup: |-
+    #!/bin/sh
+    set -eu
+    mkdir -m 0777 -p "$VOL_DIR"
+  teardown: |-
+    #!/bin/sh
+    set -eu
+    rm -rf "$VOL_DIR"
+  helperPod.yaml: |-
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      priorityClassName: system-node-critical
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: helper-pod
+          image: {{ .Values.helperImage.repository }}:{{ .Values.helperImage.tag }}
+          imagePullPolicy: IfNotPresent

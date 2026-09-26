@@ -1,0 +1,6 @@
+apiVersion: v2
+name: local-path-provisioner-helm
+description: Dynamic local volume provisioner for Kubernetes using local hostPath storage
+type: application
+version: 0.1.0
+appVersion: "v0.0.31"

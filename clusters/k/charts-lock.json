@@ -151,6 +151,86 @@
     "url": "file:///nix/store/61riydpp5fna8bix588kak6miiyfscqq-pki-bootstrap-helm/pki-bootstrap-helm-0.1.0.tgz",
     "images": {}
   },
+  "local-path-provisioner": {
+    "url": "file:///nix/store/swjb4rnyb70id7jppp8djp0w4qfh853r-local-path-provisioner-helm/local-path-provisioner-helm-0.1.0.tgz",
+    "images": {
+      "busybox:1.36.1": {
+        "imageName": "busybox",
+        "finalImageTag": "1.36.1",
+        "architectures": {
+          "arm64": {
+            "imageDigest": "sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+            "hash": "sha256-hFeJ/vlbt/FVFT8zE99Swpa8rqVra+4V941rNGbLL6Y="
+          }
+        }
+      },
+      "rancher/local-path-provisioner:v0.0.31": {
+        "imageName": "rancher/local-path-provisioner",
+        "finalImageTag": "v0.0.31",
+        "architectures": {
+          "arm64": {
+            "imageDigest": "sha256:80496fdeb307541007621959aa13aed41d31db9cd2dc4167c19833e0bfa3878c",
+            "hash": "sha256-d5oq+kF3RGEKks82ZhwUA1PzjEbb/2ehfYa7x9h8ihI="
+          }
+        }
+      }
+    }
+  },
+  "seaweedfs-system-namespace": {
+    "url": "file:///nix/store/v2kbvnq1i9ji5ak4y85mfnx4hmpz28cw-namespace-helm/namespace-helm-0.1.0.tgz",
+    "images": {}
+  },
+  "seaweedfs-operator": {
+    "url": "https://github.com/seaweedfs/seaweedfs-operator/releases/download/seaweedfs-operator-0.1.42/seaweedfs-operator-0.1.42.tgz",
+    "hash": "sha256-HWVTU7ICstLmtRQ6i3Ger27R1sr7mnxUB+dq3CIrRPI=",
+    "images": {
+      "chrislusf/seaweedfs-operator:1.0.39": {
+        "imageName": "chrislusf/seaweedfs-operator",
+        "finalImageTag": "1.0.39",
+        "architectures": {
+          "arm64": {
+            "imageDigest": "sha256:301f49b8bdde8c5f510db080e0543c61e1fad5087bea54afb7e3cc21166068a8",
+            "hash": "sha256-jOexN9nroEteEs7uy5zLoU6cbdXJkyD4QYmLFBDeMwU="
+          }
+        }
+      },
+      "curlimages/curl:8.8.0": {
+        "imageName": "curlimages/curl",
+        "finalImageTag": "8.8.0",
+        "architectures": {
+          "arm64": {
+            "imageDigest": "sha256:73e4d532ea62d7505c5865b517d3704966ffe916609bedc22af6833dc9969bcd",
+            "hash": "sha256-UvhSliY8dsyIil5ovkMEAngdoL9s5sHi8is/Sgyh4fk="
+          }
+        }
+      },
+      "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20231011-8b53cabe0": {
+        "imageName": "registry.k8s.io/ingress-nginx/kube-webhook-certgen",
+        "finalImageTag": "v20231011-8b53cabe0",
+        "architectures": {
+          "arm64": {
+            "imageDigest": "sha256:a7943503b45d552785aa3b5e457f169a5661fb94d82b8a3373bcd9ebaf9aac80",
+            "hash": "sha256-k+4kXLButqe6mQ/5tfsinJMGn+aGp2zJYO0sjdL5suE="
+          }
+        }
+      }
+    }
+  },
+  "seaweedfs-cluster": {
+    "url": "file:///nix/store/524znm8a62xf3yg72831k6i2b7c2jlng-seaweedfs-cluster-helm/seaweedfs-cluster-helm-0.1.0.tgz",
+    "images": {
+      "chrislusf/seaweedfs:4.33": {
+        "imageName": "chrislusf/seaweedfs",
+        "finalImageTag": "4.33",
+        "architectures": {
+          "arm64": {
+            "imageDigest": "sha256:f0b358973e81f884304737645dd3b278c590c2c9d47d60089729d46324f70495",
+            "hash": "sha256-FTJn/WDRGpaOixWE4O5ES008J4Z+oJE2SSkB4scamww="
+          }
+        }
+      }
+    }
+  },
   "longhorn-namespace": {
     "url": "file:///nix/store/v2kbvnq1i9ji5ak4y85mfnx4hmpz28cw-namespace-helm/namespace-helm-0.1.0.tgz",
     "images": {}

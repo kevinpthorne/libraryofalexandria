@@ -13,6 +13,7 @@
     ./gateway.nix
     ./eso.nix
     ./longhorn.nix
+    ./seaweedfs.nix
     ./trust-manager.nix
     ./cert-manager.nix
     ./kured.nix
@@ -36,11 +37,19 @@
 
           # used by some helm charts
           crdsVersion = lib.mkOption {
-            type = lib.types.str;
+            type = lib.types.nullOr lib.types.str;
+            default = null;
           };
 
           csiVersion = lib.mkOption {
-            type = lib.types.str;
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+          };
+
+          extraOptions = lib.mkOption {
+            default = { };
+            type = lib.types.attrs;
+            description = "Extra component-specific options not part of the primary helm chart values";
           };
         };
       }
@@ -72,6 +81,10 @@
       enable = lib.mkDefault true;
       version = lib.mkDefault "v1.20.0";
       csiVersion = lib.mkDefault "v0.13.0";
+    };
+    seaweedfs = {
+      enable = lib.mkDefault true;
+      version = lib.mkDefault "0.1.42";
     };
     longhorn = {
       enable = lib.mkDefault true;

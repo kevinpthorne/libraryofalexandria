@@ -347,6 +347,11 @@
         loa-core = {
           repo = lib.mkDefault "https://github.com/kevinpthorne/libraryofalexandria.git";
           subPath = lib.mkDefault "apps/loa-core";
+          valuesOverrides.seaweedfs.replication = lib.mkDefault (
+            if (config.libraryofalexandria.cluster.masters.count + config.libraryofalexandria.cluster.workers.count) <= 1
+            then "000"
+            else "001"
+          );
         };
         loa-federation = {
           repo = lib.mkDefault "https://github.com/kevinpthorne/libraryofalexandria.git";

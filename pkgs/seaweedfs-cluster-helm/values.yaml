@@ -1,0 +1,10 @@
+image: "chrislusf/seaweedfs:4.33"
+storageClass: "local-path"
+size: "600G"
+replication: "000"
+volumeReplicas: 1
+masterReplicas: 1
+filerReplicas: 1
+s3Replicas: 1
+volumeExtraArgs:
+  - "-max=100"

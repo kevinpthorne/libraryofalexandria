@@ -2,7 +2,7 @@ apiVersion: seaweed.seaweedfs.com/v1
 kind: Seaweed
 metadata:
   name: seaweed-cluster
-  namespace: seaweedfs-system
+  namespace: {{ .Release.Namespace }}
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
@@ -11,14 +11,32 @@ spec:
     issuerRef:
       name: app-pki-bootstrap-issuer
       kind: ClusterIssuer
-  image: chrislusf/seaweedfs:4.33
+  image: {{ .Values.image | quote }}
   volume:
-    replicas: 1
+    replicas: {{ .Values.volumeReplicas }}
+    {{- if gt (int .Values.volumeReplicas) 1 }}
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - seaweedfs
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                      - volume
+              topologyKey: kubernetes.io/hostname
+    {{- end }}
     extraArgs:
-      - "-max=100"  # let longhorn monitor capacity, otherwise we hit 7 volumes (30Gi per) quickly
-    storageClassName: {{ .Values.seaweedfs.storageClass | quote }}
+      {{- toYaml .Values.volumeExtraArgs | nindent 6 }}
+    storageClassName: {{ .Values.storageClass | quote }}
     requests:
-      storage: {{ .Values.seaweedfs.size | quote }}
+      storage: {{ .Values.size | quote }}
     volumes:
       - name: trusted-ca
         configMap:
@@ -45,10 +63,28 @@ spec:
       runAsNonRoot: true
       runAsUser: 1000
   filer:
-    replicas: 1
+    replicas: {{ .Values.filerReplicas }}
+    {{- if gt (int .Values.filerReplicas) 1 }}
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - seaweedfs
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                      - filer
+              topologyKey: kubernetes.io/hostname
+    {{- end }}
     persistence:
       enabled: true
-      storageClassName: {{ .Values.seaweedfs.storageClass | quote }}
+      storageClassName: {{ .Values.storageClass | quote }}
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
@@ -79,7 +115,34 @@ spec:
       runAsNonRoot: true
       runAsUser: 1000
   master:
-    replicas: 1
+    replicas: {{ .Values.masterReplicas }}
+    {{- if gt (int .Values.masterReplicas) 1 }}
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                      - seaweedfs
+                  - key: app.kubernetes.io/component
+                    operator: In
+                    values:
+                      - master
+              topologyKey: kubernetes.io/hostname
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: Exists
+    {{- end }}
+    extraArgs:
+      - "-defaultReplication={{ .Values.replication }}"
     volumes:
       - name: trusted-ca
         configMap:
@@ -106,7 +169,7 @@ spec:
       runAsNonRoot: true
       runAsUser: 1000
   s3:
-    replicas: 1
+    replicas: {{ .Values.s3Replicas }}
     extraArgs:
       - "-cert.file=/certs/s3/tls.crt"
       - "-key.file=/certs/s3/tls.key"

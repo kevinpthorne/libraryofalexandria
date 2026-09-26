@@ -18,6 +18,8 @@ spec:
         storageClassName: seaweedfs-csi
         storageClassVolumeBindingMode: Immediate
         isDefaultStorageClass: false
+        storageClassParameters:
+          replication: {{ .Values.seaweedfs.replication | default "000" | quote }}
   destination:
     server: https://kubernetes.default.svc
     namespace: seaweedfs-system
