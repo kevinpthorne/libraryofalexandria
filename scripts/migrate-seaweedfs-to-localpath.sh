@@ -41,8 +41,13 @@ fi
 
 echo "[*] Found SeaweedFS PVCs on Longhorn storage:$LONGHORN_PVCS"
 
-# 3. Decouple ArgoCD ownership to prevent operator fighting / cascading deletion
-echo "[+] Decoupling ArgoCD ownership from SeaweedFS components..."
+# 3. Decouple ArgoCD ownership and adopt resources for Helm
+echo "[+] Decoupling ArgoCD ownership and adopting resources for Helm..."
+if "$KUBECTL" get app loa-core -n "$ARGO_NAMESPACE" >/dev/null 2>&1; then
+  echo "    Disabling Auto-Sync on parent ArgoCD application 'loa-core'..."
+  "$KUBECTL" patch app loa-core -n "$ARGO_NAMESPACE" -p '{"spec":{"syncPolicy":{"automated":null}}}' --type=merge || true
+fi
+
 if "$KUBECTL" get app seaweedfs-operator -n "$ARGO_NAMESPACE" >/dev/null 2>&1; then
   echo "    Removing finalizers from ArgoCD application 'seaweedfs-operator'..."
   "$KUBECTL" patch app seaweedfs-operator -n "$ARGO_NAMESPACE" -p '{"metadata":{"finalizers":[]}}' --type=merge || true
@@ -50,10 +55,57 @@ if "$KUBECTL" get app seaweedfs-operator -n "$ARGO_NAMESPACE" >/dev/null 2>&1; t
   "$KUBECTL" delete app seaweedfs-operator -n "$ARGO_NAMESPACE" --cascade=orphan || true
 fi
 
+# Adopt CRDs for seaweedfs-operator
+for crd in $("$KUBECTL" get crd -o name 2>/dev/null | grep -i seaweed || true); do
+  echo "    Adopting $crd for Helm release seaweedfs-operator..."
+  "$KUBECTL" annotate "$crd" meta.helm.sh/release-name=seaweedfs-operator meta.helm.sh/release-namespace="$NAMESPACE" --overwrite 2>/dev/null || true
+  "$KUBECTL" label "$crd" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+done
+
+# Adopt ClusterRoles and ClusterRoleBindings for seaweedfs-operator
+for cr in $("$KUBECTL" get clusterrole -o name 2>/dev/null | grep -i seaweed || true); do
+  echo "    Adopting $cr for Helm release seaweedfs-operator..."
+  "$KUBECTL" annotate "$cr" meta.helm.sh/release-name=seaweedfs-operator meta.helm.sh/release-namespace="$NAMESPACE" --overwrite 2>/dev/null || true
+  "$KUBECTL" label "$cr" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+done
+
+for crb in $("$KUBECTL" get clusterrolebinding -o name 2>/dev/null | grep -i seaweed || true); do
+  echo "    Adopting $crb for Helm release seaweedfs-operator..."
+  "$KUBECTL" annotate "$crb" meta.helm.sh/release-name=seaweedfs-operator meta.helm.sh/release-namespace="$NAMESPACE" --overwrite 2>/dev/null || true
+  "$KUBECTL" label "$crb" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+done
+
+# Adopt Webhooks for seaweedfs-operator
+for wh in $("$KUBECTL" get validatingwebhookconfigurations,mutatingwebhookconfigurations -o name 2>/dev/null | grep -i seaweed || true); do
+  echo "    Adopting $wh for Helm release seaweedfs-operator..."
+  "$KUBECTL" annotate "$wh" meta.helm.sh/release-name=seaweedfs-operator meta.helm.sh/release-namespace="$NAMESPACE" --overwrite 2>/dev/null || true
+  "$KUBECTL" label "$wh" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+done
+
+# Adopt namespace seaweedfs-system
+if "$KUBECTL" get namespace "$NAMESPACE" >/dev/null 2>&1; then
+  echo "    Adopting namespace '$NAMESPACE' for Helm release seaweedfs-system-namespace..."
+  "$KUBECTL" annotate namespace "$NAMESPACE" meta.helm.sh/release-name=seaweedfs-system-namespace meta.helm.sh/release-namespace=default --overwrite 2>/dev/null || true
+  "$KUBECTL" label namespace "$NAMESPACE" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+fi
+
+# Adopt namespaced resources in seaweedfs-system
+for item in $("$KUBECTL" get all,sa,secret,configmap,role,rolebinding -n "$NAMESPACE" -o name 2>/dev/null || true); do
+  if echo "$item" | grep -q "s3-https"; then
+    rel="seaweedfs-cluster"
+  else
+    rel="seaweedfs-operator"
+  fi
+  "$KUBECTL" annotate "$item" -n "$NAMESPACE" meta.helm.sh/release-name="$rel" meta.helm.sh/release-namespace="$NAMESPACE" --overwrite 2>/dev/null || true
+  "$KUBECTL" label "$item" -n "$NAMESPACE" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+done
+
+# Adopt Seaweed CR
 if "$KUBECTL" get seaweed seaweed-cluster -n "$NAMESPACE" >/dev/null 2>&1; then
-  echo "    Removing ArgoCD tracking annotations from 'seaweed-cluster' CR..."
+  echo "    Adopting 'seaweed-cluster' CR for Helm release seaweedfs-cluster..."
   "$KUBECTL" annotate seaweed seaweed-cluster -n "$NAMESPACE" argocd.argoproj.io/tracking-id- 2>/dev/null || true
-  "$KUBECTL" label seaweed seaweed-cluster -n "$NAMESPACE" app.kubernetes.io/instance- 2>/dev/null || true
+  "$KUBECTL" annotate seaweed seaweed-cluster -n "$NAMESPACE" meta.helm.sh/release-name=seaweedfs-cluster meta.helm.sh/release-namespace="$NAMESPACE" --overwrite 2>/dev/null || true
+  "$KUBECTL" label seaweed seaweed-cluster -n "$NAMESPACE" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
 fi
 
 # 4. Quiesce Immich and other CSI clients to cleanly unmount FUSE filesystems
@@ -89,19 +141,20 @@ for pod in $VOLUME_PODS; do
   echo "    Volume data saved to $BACKUP_DIR/${pod}.tar"
 done
 
-# 7. Backup SeaweedFS filer metadata via weed filer.meta.backup
-BACKUP_FILE="$BACKUP_DIR/filer.meta"
+# 7. Backup SeaweedFS filer metadata
 FILER_POD=$("$KUBECTL" get pods -n "$NAMESPACE" -l "app.kubernetes.io/name=seaweedfs,app.kubernetes.io/component=filer" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
 if [ -n "$FILER_POD" ]; then
-  echo "[+] Backing up SeaweedFS filer metadata from pod $FILER_POD..."
-  "$KUBECTL" exec -n "$NAMESPACE" "$FILER_POD" -c filer -- weed filer.meta.backup -output=/tmp/filer_backup.meta || true
-  "$KUBECTL" cp "$NAMESPACE/$FILER_POD:/tmp/filer_backup.meta" "$BACKUP_FILE" -c filer || true
-  echo "    Metadata backup saved to $BACKUP_FILE"
+  echo "[+] Backing up SeaweedFS filer data and metadata from pod $FILER_POD..."
+  "$KUBECTL" exec -n "$NAMESPACE" "$FILER_POD" -c filer -- tar -cf - -C /data . > "$BACKUP_DIR/filer_data.tar" 2>/dev/null || true
+  "$KUBECTL" exec -n "$NAMESPACE" "$FILER_POD" -c filer -- sh -c 'echo "fs.meta.save" | weed shell && mv *.meta /tmp/filer_backup.meta' 2>/dev/null || true
+  "$KUBECTL" cp "$NAMESPACE/$FILER_POD:/tmp/filer_backup.meta" "$BACKUP_DIR/filer.meta" -c filer 2>/dev/null || true
 fi
 
-# 8. Pause SeaweedFS Operator to avoid reconciliation races during StatefulSet swap
-echo "[+] Scaling down seaweedfs-operator during migration..."
-"$KUBECTL" scale deployment seaweedfs-operator -n "$NAMESPACE" --replicas=0 --timeout=60s || true
+# 8. Pause SeaweedFS Operator if running
+if "$KUBECTL" get deployment seaweedfs-operator -n "$NAMESPACE" >/dev/null 2>&1; then
+  echo "[+] Scaling down seaweedfs-operator during migration..."
+  "$KUBECTL" scale deployment seaweedfs-operator -n "$NAMESPACE" --replicas=0 --timeout=60s || true
+fi
 
 # 9. Delete old StatefulSets with --cascade=orphan
 echo "[+] Deleting existing SeaweedFS volume, filer & master StatefulSets (--cascade=orphan)..."
@@ -113,9 +166,14 @@ for pvc in $LONGHORN_PVCS; do
   "$KUBECTL" delete pvc "$pvc" -n "$NAMESPACE" --wait=false --ignore-not-found
 done
 
-# 11. Resume SeaweedFS Operator so it creates new StatefulSets backed by local-path
-echo "[+] Scaling seaweedfs-operator back up..."
-"$KUBECTL" scale deployment seaweedfs-operator -n "$NAMESPACE" --replicas=1
+# 11. Resume / trigger SeaweedFS Operator
+if "$KUBECTL" get deployment seaweedfs-operator -n "$NAMESPACE" >/dev/null 2>&1; then
+  echo "[+] Scaling seaweedfs-operator back up..."
+  "$KUBECTL" scale deployment seaweedfs-operator -n "$NAMESPACE" --replicas=1 || true
+elif command -v systemctl >/dev/null 2>&1; then
+  echo "[+] Restarting helm-chart-installer.service to deploy seaweedfs-operator..."
+  systemctl restart helm-chart-installer.service || true
+fi
 
 echo "[+] Waiting for SeaweedFS cluster to spin up with local-path storage..."
 "$KUBECTL" rollout status sts/seaweed-cluster-volume -n "$NAMESPACE" --timeout=300s || true
@@ -135,12 +193,19 @@ done
 echo "[+] Waiting for volume pods to finish restart..."
 "$KUBECTL" rollout status sts/seaweed-cluster-volume -n "$NAMESPACE" --timeout=300s || true
 
-# 13. Restore filer metadata if backup exists
+# 13. Restore filer data & metadata if backup exists
 NEW_FILER_POD=$("$KUBECTL" get pods -n "$NAMESPACE" -l "app.kubernetes.io/name=seaweedfs,app.kubernetes.io/component=filer" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
-if [ -f "$BACKUP_FILE" ] && [ -n "$NEW_FILER_POD" ]; then
-  echo "[+] Restoring SeaweedFS filer metadata to new filer pod $NEW_FILER_POD..."
-  "$KUBECTL" cp "$BACKUP_FILE" "$NAMESPACE/$NEW_FILER_POD:/tmp/filer_restore.meta" -c filer
-  "$KUBECTL" exec -n "$NAMESPACE" "$NEW_FILER_POD" -c filer -- weed filer.meta.restore -input=/tmp/filer_restore.meta || true
+if [ -n "$NEW_FILER_POD" ]; then
+  "$KUBECTL" wait --for=condition=Ready "pod/$NEW_FILER_POD" -n "$NAMESPACE" --timeout=180s || true
+  if [ -f "$BACKUP_DIR/filer_data.tar" ]; then
+    echo "[+] Restoring filer LevelDB data to new filer pod $NEW_FILER_POD..."
+    cat "$BACKUP_DIR/filer_data.tar" | "$KUBECTL" exec -i -n "$NAMESPACE" "$NEW_FILER_POD" -c filer -- tar -xf - -C /data
+    "$KUBECTL" delete pod "$NEW_FILER_POD" -n "$NAMESPACE"
+  elif [ -f "$BACKUP_DIR/filer.meta" ]; then
+    echo "[+] Restoring filer metadata via weed shell to $NEW_FILER_POD..."
+    "$KUBECTL" cp "$BACKUP_DIR/filer.meta" "$NAMESPACE/$NEW_FILER_POD:/tmp/filer_restore.meta" -c filer
+    "$KUBECTL" exec -n "$NAMESPACE" "$NEW_FILER_POD" -c filer -- sh -c 'echo "fs.meta.load /tmp/filer_restore.meta" | weed shell' || true
+  fi
 fi
 
 # 14. Restart Immich workloads

@@ -43,7 +43,7 @@ in
       {
         name = "local-path-provisioner";
         chart = "${pkgs.local-path-provisioner-helm}/local-path-provisioner-helm-0.1.0.tgz";
-        namespace = "local-path-storage";
+        namespace = "kube-system";
         values = {
           nodePathMap = [
             {

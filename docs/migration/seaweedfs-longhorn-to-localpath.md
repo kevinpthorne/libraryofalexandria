@@ -107,22 +107,59 @@ The correct operational sequence is:
 
 ### Detailed Walkthrough
 
-#### Step 0: Pre-Colmena Handover (Prevent Operator Collision)
-Before running Colmena, decouple ArgoCD from the existing operator and delete the old operator deployment. This prevents Helm from failing on an existing unmanaged resource and stops ArgoCD's `selfHeal` from fighting Helm's upgrade:
+#### Step 0: Pre-Colmena Handover (Prevent Operator Collision & Resync)
+Because `loa-core` is the parent ArgoCD application that defines `seaweedfs-operator.yml`, its auto-sync/self-heal will immediately recreate `seaweedfs-operator` if deleted while Git still has the old templates.
+
+**First, disable Auto-Sync on `loa-core`**:
+- **Via ArgoCD UI**: Go to Applications → **`loa-core`** → **App Details** (top bar) → under **Sync Policy**, click **Disable Auto-Sync** (or toggle off Self-Heal).
+- **Or via CLI**:
+  ```bash
+  kubectl patch app loa-core -n argo-cd -p '{"spec":{"syncPolicy":{"automated":null}}}' --type=merge
+  ```
+
+**Next, adopt all existing resources into Helm so the Helm installer succeeds without ownership errors**:
 ```bash
-# 1. Remove finalizers and orphan the ArgoCD application
-kubectl patch app seaweedfs-operator -n argo-cd -p '{"metadata":{"finalizers":[]}}' --type=merge
-kubectl delete app seaweedfs-operator -n argo-cd --cascade=orphan
+# 1. Remove finalizers and orphan the ArgoCD seaweedfs-operator application
+kubectl patch app seaweedfs-operator -n argo-cd -p '{"metadata":{"finalizers":[]}}' --type=merge || true
+kubectl delete app seaweedfs-operator -n argo-cd --cascade=orphan || true
 
-# 2. Strip ArgoCD tracking annotations from the Seaweed CR
-kubectl annotate seaweed seaweed-cluster -n seaweedfs-system argocd.argoproj.io/tracking-id- 2>/dev/null || true
-kubectl label seaweed seaweed-cluster -n seaweedfs-system app.kubernetes.io/instance- 2>/dev/null || true
+# 2. Adopt all SeaweedFS CRDs for Helm release seaweedfs-operator
+for crd in $(kubectl get crd -o name 2>/dev/null | grep -i seaweed || true); do
+  kubectl annotate "$crd" meta.helm.sh/release-name=seaweedfs-operator meta.helm.sh/release-namespace=seaweedfs-system --overwrite 2>/dev/null || true
+  kubectl label "$crd" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+done
 
-# 3. Delete the old operator deployment
-kubectl delete deployment seaweedfs-operator -n seaweedfs-system
+# 3. Adopt all ClusterRoles and ClusterRoleBindings
+for cr in $(kubectl get clusterrole -o name 2>/dev/null | grep -i seaweed || true); do
+  kubectl annotate "$cr" meta.helm.sh/release-name=seaweedfs-operator meta.helm.sh/release-namespace=seaweedfs-system --overwrite 2>/dev/null || true
+  kubectl label "$cr" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+done
+
+for crb in $(kubectl get clusterrolebinding -o name 2>/dev/null | grep -i seaweed || true); do
+  kubectl annotate "$crb" meta.helm.sh/release-name=seaweedfs-operator meta.helm.sh/release-namespace=seaweedfs-system --overwrite 2>/dev/null || true
+  kubectl label "$crb" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+done
+
+# 4. Adopt namespaced resources in seaweedfs-system
+for item in $(kubectl get all,sa,secret,configmap,role,rolebinding -n seaweedfs-system -o name 2>/dev/null || true); do
+  if echo "$item" | grep -q -E "seaweed-cluster|s3"; then
+    rel="seaweedfs-cluster"
+  else
+    rel="seaweedfs-operator"
+  fi
+  kubectl annotate "$item" -n seaweedfs-system meta.helm.sh/release-name="$rel" meta.helm.sh/release-namespace=seaweedfs-system --overwrite 2>/dev/null || true
+  kubectl label "$item" -n seaweedfs-system app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+done
+
+# 5. Adopt Seaweed CR and strip ArgoCD annotations
+if kubectl get seaweed seaweed-cluster -n seaweedfs-system >/dev/null 2>&1; then
+  kubectl annotate seaweed seaweed-cluster -n seaweedfs-system argocd.argoproj.io/tracking-id- 2>/dev/null || true
+  kubectl annotate seaweed seaweed-cluster -n seaweedfs-system meta.helm.sh/release-name=seaweedfs-cluster meta.helm.sh/release-namespace=seaweedfs-system --overwrite 2>/dev/null || true
+  kubectl label seaweed seaweed-cluster -n seaweedfs-system app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
+fi
 ```
 > [!NOTE]
-> Deleting the operator deployment does **not** stop SeaweedFS master, volume, filer, or S3 services. The storage cluster runs under independent StatefulSets and continues serving files and Immich without interruption.
+> Adopting these resources into Helm prevents `INSTALLATION FAILED: ... invalid ownership metadata` errors. SeaweedFS storage continues serving files and Immich without interruption. Because Auto-Sync is disabled on `loa-core`, ArgoCD will not re-add the operator.
 
 #### Step 1: Deploy NixOS Infrastructure via Colmena (Do Not Push Git)
 From your workstation containing the modified files, deploy the NixOS configuration using Colmena:
@@ -161,8 +198,15 @@ git commit -m "feat: migrate seaweedfs to control plane on local-path"
 git push origin master
 ```
 *What this does*:
-- ArgoCD syncs `loa-core`.
-- Because `app/seaweedfs-operator` was already orphaned and `seaweed-cluster` has no tracking annotations, ArgoCD's prune is a **complete no-op**. It does not touch your running cluster or operator.
+- Pushes the removal of `seaweedfs-operator.yml` and `seaweedfs/` to Git.
+
+**Finally, re-enable Auto-Sync and sync `loa-core`**:
+- **Via ArgoCD UI**: Go to Applications → **`loa-core`** → click **Sync** (with Prune enabled), then in **App Details** → under **Sync Policy**, click **Enable Auto-Sync**.
+- **Or via CLI**:
+  ```bash
+  kubectl patch app loa-core -n argo-cd -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}' --type=merge
+  ```
+- Because `app/seaweedfs-operator` was already orphaned and `seaweed-cluster` has no tracking annotations, ArgoCD's prune is a **complete no-op**. It will not touch your running cluster or operator.
 - ArgoCD updates `seaweedfs-csi` with the node-aware replication setting (`000` or `001`).
 
 ---
