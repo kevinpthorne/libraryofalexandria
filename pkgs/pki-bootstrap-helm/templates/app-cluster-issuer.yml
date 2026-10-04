@@ -15,10 +15,12 @@ spec:
   isCA: true
   commonName: app-{{ .Release.Name }}
   secretName: app-{{ .Release.Name }}-secret
+  duration: 87600h0m0s  # 10 years
+  renewBefore: 8760h0m0s  # 1 year
   privateKey:
     algorithm: RSA
     size: 2048
-    rotationPolicy: Always
+    rotationPolicy: Never
   issuerRef:
     name: {{ .Release.Name }}
     kind: ClusterIssuer

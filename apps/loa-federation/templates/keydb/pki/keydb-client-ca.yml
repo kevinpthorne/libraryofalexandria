@@ -10,6 +10,8 @@ spec:
   secretTemplate:
     labels:
       pki.loa.kevinpthorne.com/trusted-ca: "true"
+  duration: 87600h0m0s  # 10 years
+  renewBefore: 8760h0m0s  # 1 year
   privateKey:
     algorithm: RSA
     size: 2048
