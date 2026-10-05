@@ -56,7 +56,8 @@
               extraContainers = [
                 {
                   name = "stunnel";
-                  image = "dweomer/stunnel:latest";
+                  image = "cgr.dev/chainguard/stunnel:latest";
+                  command = [ "stunnel" "/etc/stunnel/stunnel.conf" ];
                   volumeMounts = [
                     {
                       name = "radar-cert";
