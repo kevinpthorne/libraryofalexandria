@@ -21,7 +21,7 @@
       }
       {
         name = "radar";
-        chart = "${pkgs.radar-helm}/radar-helm-1.12.2.tgz";
+        chart = "${pkgs.radar-helm}/radar-1.12.2.tgz"; # nixpkg name = radar-helm; helm chart name = radar
         values = lib2.deepMerge (
           [
             {
