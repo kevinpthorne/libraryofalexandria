@@ -12,8 +12,8 @@ data:
     debug = info
     
     [radar]
-    accept = 0.0.0.0:443
-    connect = 127.0.0.1:{{ .Values.service.port }}
+    accept = 0.0.0.0:{{ .Values.stunnel.port | default 8443 }}
+    connect = 127.0.0.1:{{ default .Values.service.port .Values.service.internalPort }}
     cert = /run/secrets/certs/tls.crt
     key = /run/secrets/certs/tls.key
 {{- end }}

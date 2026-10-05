@@ -71,7 +71,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            - --port={{ .Values.service.port }}
+            - --port={{ default .Values.service.port .Values.service.internalPort }}
             - --listen-address=0.0.0.0
             - --no-browser
             {{- if $basePath }}
@@ -187,7 +187,7 @@ spec:
             {{- end }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.port }}
+              containerPort: {{ default .Values.service.port .Values.service.internalPort }}
               protocol: TCP
           env:
             {{- if and (ne .Values.auth.mode "none") (or .Values.auth.secret .Values.auth.existingSecret) }}

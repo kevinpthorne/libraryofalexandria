@@ -51,6 +51,7 @@
               ];
               stunnel = {
                 enabled = true;
+                port = 8443;
               };
               extraContainers = [
                 {
@@ -68,11 +69,18 @@
                       readOnly = true;
                     }
                   ];
+                  securityContext = {
+                    allowPrivilegeEscalation = false;
+                    capabilities = {
+                      drop = [ "ALL" ];
+                    };
+                  };
                 }
               ];
               service = {
                 port = 443;
-                targetPort = 443;
+                targetPort = 8443;
+                internalPort = 9280;
               };
               podSecurityContext = {
                 runAsNonRoot = true;
