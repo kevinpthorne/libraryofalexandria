@@ -1,0 +1,15 @@
+apiVersion: akri.sh/v0
+kind: Configuration
+metadata:
+  name: ups
+  namespace: akri
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "1" # akri comes in wave 0
+spec:
+  discoveryHandler:
+    name: udev
+    discoveryDetails: |+
+      udevRules:
+        - 'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="051d", ATTRS{idProduct}=="0002"'
+  capacity: 1 # Only 1 pod can claim this physical USB device at a time
