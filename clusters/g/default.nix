@@ -7,7 +7,7 @@
 let
   defaultModule =
     id:
-    { pkgs, lib, ... }:
+    { pkgs, lib, config, ... }:
     {
       imports = [
         ../k/submodules/kevint.nix
@@ -19,6 +19,7 @@ let
         # vmImage.size = "20G";
 
         libraryofalexandria = {
+          node.interfaces = [ "ens33" ];
           node.deployment.colmena.hostName = "172.24.1.81";
           zarf.enable = lib.mkForce false;
 
@@ -34,16 +35,14 @@ let
           ];
           defaultGateway = "172.24.1.2";
 
-          interfaces = {
-            ens33 = {
-              useDHCP = false;
-              ipv4.addresses = [
-                {
-                  address = "172.24.1.81";
-                  prefixLength = 24; # Equivalent to subnet mask 255.255.255.0
-                }
-              ];
-            };
+          interfaces."${builtins.head config.libraryofalexandria.node.interfaces}" = {
+            useDHCP = false;
+            ipv4.addresses = [
+              {
+                address = "172.24.1.81";
+                prefixLength = 24; # Equivalent to subnet mask 255.255.255.0
+              }
+            ];
           };
         };
 

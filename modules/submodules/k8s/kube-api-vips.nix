@@ -38,7 +38,7 @@ in
 
     iface = lib.mkOption {
       type = lib.types.str;
-      default = (builtins.elemAt config.libraryofalexandria.cluster.virtualIps.interfaces 0);
+      default = builtins.head config.libraryofalexandria.node.virtualIpsInterfaces;
     };
   };
 

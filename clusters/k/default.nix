@@ -15,7 +15,7 @@ let
         else
           firstIpOctet + id + config.libraryofalexandria.cluster.masters.count;
     in
-    { pkgs, lib, ... }:
+    { pkgs, lib, config, ... }:
     {
       imports = [
         ./submodules
@@ -28,7 +28,7 @@ let
           mgmtVlan = {
             enable = true;
             vlanId = 101;
-            iface = "end0";
+            iface = builtins.head config.libraryofalexandria.node.interfaces;
             staticIp = "192.168.101.${toString ipLastOctet}";
           };
           colmena.hostName = "192.168.101.${toString ipLastOctet}";
@@ -45,16 +45,14 @@ let
           nameservers = [ "192.168.121.1" ];
           defaultGateway = "192.168.121.1";
 
-          interfaces = {
-            end0 = {
-              useDHCP = false;
-              ipv4.addresses = [
-                {
-                  address = "192.168.121.${toString ipLastOctet}";
-                  prefixLength = 24; # Equivalent to subnet mask 255.255.255.0
-                }
-              ];
-            };
+          interfaces."${builtins.head config.libraryofalexandria.node.interfaces}" = {
+            useDHCP = false;
+            ipv4.addresses = [
+              {
+                address = "192.168.121.${toString ipLastOctet}";
+                prefixLength = 24; # Equivalent to subnet mask 255.255.255.0
+              }
+            ];
           };
         };
       };
@@ -82,11 +80,11 @@ in
         ];
     };
     workers = {
-      count = 2;
+      count = 3;
       modules =
         with config.libraryofalexandria.cluster;
         nodeId: [
-          (import ../../modules/platforms/rpi5.nix)
+          (if nodeId != 2 then (import ../../modules/platforms/rpi5.nix) else (import ../../modules/platforms/msi-gp73.nix))
           (defaultModule false nodeId)
           (lib2.importIfExists ./worker.nix)
           (lib2.importIfExists ./worker-${toString nodeId}.nix)
@@ -117,7 +115,7 @@ in
         dns = "192.168.121.249";
         adguard = "192.168.121.248";
       };
-      interfaces = [ "end0" ];
+      interfaces = [ "end0" "eno1" ];
     };
     externalDomain = "k.kpt.link";
   };

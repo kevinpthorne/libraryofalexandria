@@ -19,6 +19,7 @@ let
         # vmImage.size = "20G";
 
         libraryofalexandria = {
+          node.interfaces = [ "enp0s9" ];
           node.deployment.colmena.hostName = "127.0.0.1";
           node.deployment.deploy-rs.hostName = "127.0.0.1";
           zarf.enable = lib.mkForce false;

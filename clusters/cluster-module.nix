@@ -91,7 +91,12 @@
               };
               interfaces = lib.mkOption {
                 type = lib.types.listOf lib.types.str;
-                default = [ "eth0" ];
+                default = [ "end0" ];
+                description = ''
+                  List of interfaces for virtual IPs across the cluster.
+                  This list must include every device's interface for virtual IPs.
+                  Note that only the first applicable interface is applied to k8s-api-vips on masters.
+                  Cilium will attempt to apply VIPs to all interfaces given here cluster-wide.'';
               };
               reservations = lib.mkOption {
                 type = lib.types.attrs;
@@ -348,9 +353,14 @@
           repo = lib.mkDefault "https://github.com/kevinpthorne/libraryofalexandria.git";
           subPath = lib.mkDefault "apps/loa-core";
           valuesOverrides.seaweedfs.replication = lib.mkDefault (
-            if (config.libraryofalexandria.cluster.masters.count + config.libraryofalexandria.cluster.workers.count) <= 1
-            then "000"
-            else "001"
+            if
+              (
+                config.libraryofalexandria.cluster.masters.count + config.libraryofalexandria.cluster.workers.count
+              ) <= 1
+            then
+              "000"
+            else
+              "001"
           );
         };
         loa-federation = {

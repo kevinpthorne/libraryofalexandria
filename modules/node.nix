@@ -48,6 +48,18 @@ in
       type = lib.types.port;
       default = 6443;
     };
+
+    interfaces = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ "end0" ];
+      description = "The network interfaces used for clustering, VIPs, and external communication";
+    };
+
+    virtualIpsInterfaces = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = lib.lists.intersectLists config.libraryofalexandria.cluster.virtualIps.interfaces config.libraryofalexandria.node.interfaces;
+      description = "The intersected list of valid VIP interfaces for this specific node";
+    };
   };
 
   options.libraryofalexandria.cluster = lib.mkOption {
