@@ -15,7 +15,12 @@ let
         else
           firstIpOctet + id + config.libraryofalexandria.cluster.masters.count;
     in
-    { pkgs, lib, config, ... }:
+    {
+      pkgs,
+      lib,
+      config,
+      ...
+    }:
     {
       imports = [
         ./submodules
@@ -84,7 +89,12 @@ in
       modules =
         with config.libraryofalexandria.cluster;
         nodeId: [
-          (if nodeId != 2 then (import ../../modules/platforms/rpi5.nix) else (import ../../modules/platforms/msi-gp73.nix))
+          (
+            if nodeId != 2 then
+              (import ../../modules/platforms/rpi5.nix)
+            else
+              (import ../../modules/platforms/msi-gp73.nix)
+          )
           (defaultModule false nodeId)
           (lib2.importIfExists ./worker.nix)
           (lib2.importIfExists ./worker-${toString nodeId}.nix)
@@ -115,7 +125,10 @@ in
         dns = "192.168.121.249";
         adguard = "192.168.121.248";
       };
-      interfaces = [ "end0" "eno1" ];
+      interfaces = [
+        "end0"
+        "enp5s0"
+      ];
     };
     externalDomain = "k.kpt.link";
   };

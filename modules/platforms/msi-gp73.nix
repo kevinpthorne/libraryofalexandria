@@ -1,9 +1,18 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  inputs,
+  ...
+}:
 
 {
   imports = [
     ../platform.nix
     (modulesPath + "/installer/scan/not-detected.nix")
+    inputs.disko.nixosModules.disko
+    ../submodules/disko-layouts/simple-efi.nix
   ];
 
   config = {
@@ -18,8 +27,17 @@
     boot.loader.grub.device = "nodev";
     boot.loader.grub.useOSProber = true;
 
+    disko.devices.disk.main.device = "/dev/nvme0n1";
+
     # Hardware configuration for MSI GP73 (i7 8th gen)
-    boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "usbhid" "usb_storage" "sd_mod" "nvme" ];
+    boot.initrd.availableKernelModules = [
+      "xhci_pci"
+      "ahci"
+      "usbhid"
+      "usb_storage"
+      "sd_mod"
+      "nvme"
+    ];
     boot.initrd.kernelModules = [ ];
     boot.kernelModules = [ "kvm-intel" ];
     boot.extraModulePackages = [ ];
@@ -38,6 +56,7 @@
       nvidiaSettings = true;
       package = config.boot.kernelPackages.nvidiaPackages.stable;
     };
+    nixpkgs.config.allowUnfree = true;
 
     # Power management: Do not sleep when lid is closed
     services.logind.lidSwitch = "ignore";
@@ -68,7 +87,7 @@
     powerManagement.cpuFreqGovernor = "performance"; # Default is often powersave on laptops
     hardware.bluetooth.enable = false;
     networking.wireless.enable = false;
-    
+
     # Disable sound to save resources
     hardware.pulseaudio.enable = false;
   };
