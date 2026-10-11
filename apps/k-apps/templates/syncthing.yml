@@ -1,0 +1,71 @@
+{{- if (index .Values "syncthing" "enabled" | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: syncthing
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: syncthing
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: syncthing/syncthing
+          tag: 1.29.2
+        targetPort: 8384
+        env:
+          - name: STGUIADDRESS
+            value: "127.0.0.1:8384"
+          - name: STHOMEDIR
+            value: "/var/syncthing/config"
+        service:
+          public: true
+          domains:
+            - "syncthing.{{ $cluster.name | default "k" }}.loa.internal"
+            - "syncthing.{{ $cluster.name | default "k" }}.kpt.link"
+          extraPorts:
+            - name: sync-tcp
+              port: 22000
+              targetPort: 22000
+              protocol: TCP
+            - name: sync-udp
+              port: 22000
+              targetPort: 22000
+              protocol: UDP
+            - name: discovery
+              port: 21027
+              targetPort: 21027
+              protocol: UDP
+        oauth2Proxy:
+          enabled: {{ $hasFederation }}
+          issuerUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
+        keycloak:
+          enabled: {{ $hasFederation }}
+        persistence:
+          data:
+            enabled: true
+            type: pvc
+            mountPath: /var/syncthing
+            size: 20Gi
+            storageClass: "longhorn"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: syncthing
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

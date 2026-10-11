@@ -1,0 +1,92 @@
+{{- if (index .Values "monica" "enabled" | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monica
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: monica
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: monica
+          tag: latest
+        targetPort: 80
+        env:
+          - name: APP_ENV
+            value: "production"
+          - name: APP_URL
+            value: "https://monica.{{ $cluster.name | default "k" }}.kpt.link"
+          {{- if $hasFederation }}
+          - name: DB_CONNECTION
+            value: "pgsql"
+          - name: DB_HOST
+            value: "127.0.0.1"
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_DATABASE
+            value: "monica"
+          - name: DB_USERNAME
+            value: "monica"
+          - name: DB_PASSWORD
+            value: ""
+          - name: CACHE_DRIVER
+            value: "redis"
+          - name: SESSION_DRIVER
+            value: "redis"
+          - name: QUEUE_CONNECTION
+            value: "redis"
+          - name: REDIS_HOST
+            value: "127.0.0.1"
+          - name: REDIS_PORT
+            value: "6379"
+          {{- end }}
+        service:
+          public: true
+          domains:
+            - "monica.{{ $cluster.name | default "k" }}.loa.internal"
+            - "monica.{{ $cluster.name | default "k" }}.kpt.link"
+        oauth2Proxy:
+          enabled: {{ $hasFederation }}
+          issuerUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
+        keycloak:
+          enabled: {{ $hasFederation }}
+        database:
+          enabled: {{ $hasFederation }}
+          createPrivateDatabase: {{ $hasFederation }}
+          appName: monica
+          databaseName: monica
+          userName: monica
+        redis:
+          enabled: {{ $hasFederation }}
+          createKeydbClient: {{ $hasFederation }}
+          appName: monica
+        persistence:
+          data:
+            enabled: true
+            type: pvc
+            mountPath: /var/www/html/storage
+            size: 10Gi
+            storageClass: "longhorn"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monica
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

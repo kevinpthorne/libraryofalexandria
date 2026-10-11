@@ -1,0 +1,13 @@
+{{- if and .Values.redis.enabled .Values.redis.createKeydbClient }}
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: KeydbClient
+metadata:
+  name: {{ .Values.redis.keydbClientName | default (include "app-template.fullname" .) }}
+  namespace: {{ .Values.redis.keydbClientNamespace | default .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  appName: {{ .Values.redis.appName | default (include "app-template.fullname" .) }}
+  appNamespace: {{ .Release.Namespace }}
+{{- end }}

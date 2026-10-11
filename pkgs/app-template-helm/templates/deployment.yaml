@@ -1,0 +1,388 @@
+apiVersion: apps/v1
+kind: {{ .Values.controllerType | default "Deployment" }}
+metadata:
+  name: {{ include "app-template.fullname" . }}
+  labels:
+    {{- include "app-template.labels" . | nindent 4 }}
+spec:
+  {{- if ne (.Values.controllerType | default "Deployment") "DaemonSet" }}
+  replicas: {{ .Values.replicaCount | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "app-template.selectorLabels" . | nindent 6 }}
+  {{- if eq (.Values.controllerType | default "Deployment") "StatefulSet" }}
+  serviceName: {{ include "app-template.fullname" . }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "app-template.selectorLabels" . | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.initContainers }}
+      initContainers:
+        {{- toYaml .Values.initContainers | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "app-template.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          {{- if .Values.command }}
+          command:
+            {{- toYaml .Values.command | nindent 12 }}
+          {{- end }}
+          {{- if .Values.args }}
+          args:
+            {{- toYaml .Values.args | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.targetPort }}
+              protocol: TCP
+            {{- range .Values.service.extraPorts }}
+            - name: {{ .name }}
+              containerPort: {{ .targetPort | default .port }}
+              protocol: {{ .protocol | default "TCP" }}
+            {{- end }}
+          {{- if .Values.env }}
+          env:
+            {{- toYaml .Values.env | nindent 12 }}
+          {{- end }}
+          {{- if .Values.envFrom }}
+          envFrom:
+            {{- toYaml .Values.envFrom | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.persistence.data.enabled }}
+            - name: data
+              mountPath: {{ .Values.persistence.data.mountPath | default "/data" }}
+              {{- if .Values.persistence.data.subPath }}
+              subPath: {{ .Values.persistence.data.subPath }}
+              {{- end }}
+            {{- end }}
+            {{- if .Values.trustedCaBundle.enabled }}
+            - name: cas
+              mountPath: /certs/cas
+              readOnly: true
+            - name: cas
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+              subPath: ca-bundle.crt
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
+        {{- if .Values.tls.enabled }}
+        - name: stunnel
+          image: cgr.dev/chainguard/stunnel:latest
+          command: ["stunnel", "/etc/stunnel/stunnel.conf"]
+          ports:
+            - name: https
+              containerPort: 443
+              protocol: TCP
+          volumeMounts:
+            - name: stunnel-conf
+              mountPath: /etc/stunnel
+              readOnly: true
+            - name: tls-cert
+              mountPath: /certs/tls
+              readOnly: true
+            {{- if .Values.trustedCaBundle.enabled }}
+            - name: cas
+              mountPath: /certs/cas
+              readOnly: true
+            {{- end }}
+            {{- if .Values.database.enabled }}
+            - name: db-client-cert
+              mountPath: /certs/db-client
+              readOnly: true
+            {{- end }}
+            {{- if .Values.redis.enabled }}
+            - name: keydb-client-cert
+              mountPath: /certs/keydb-client
+              readOnly: true
+            {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+        {{- end }}
+
+        {{- if .Values.oauth2Proxy.enabled }}
+        - name: oauth2-proxy
+          image: "{{ .Values.oauth2Proxy.image.repository }}:{{ .Values.oauth2Proxy.image.tag }}"
+          args:
+            - --http-address=127.0.0.1:4180
+            - --upstream={{ .Values.oauth2Proxy.upstream | default (printf "http://127.0.0.1:%v" .Values.targetPort) }}
+            - --provider=keycloak-oidc
+            - --client-id={{ .Values.oauth2Proxy.clientId | default (include "app-template.fullname" .) }}
+            - --client-secret=$(OAUTH2_PROXY_CLIENT_SECRET)
+            - --oidc-issuer-url={{ .Values.oauth2Proxy.issuerUrl }}
+            - --cookie-secret=$(OAUTH2_PROXY_COOKIE_SECRET)
+            - --email-domain=*
+            - --skip-provider-button=true
+            {{- if .Values.trustedCaBundle.enabled }}
+            - --provider-ca-file=/certs/cas/ca-bundle.crt
+            {{- end }}
+            {{- if .Values.oauth2Proxy.sslInsecureSkipVerify }}
+            - --ssl-insecure-skip-verify=true
+            {{- end }}
+            - --cookie-secure=true
+          env:
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oauth2Proxy.secretName | default (printf "%s-oauth-secret" (include "app-template.fullname" .)) }}
+                  key: {{ .Values.oauth2Proxy.clientSecretKey | default "secret" }}
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oauth2Proxy.secretName | default (printf "%s-oauth-secret" (include "app-template.fullname" .)) }}
+                  key: {{ .Values.oauth2Proxy.cookieSecretKey | default "secret" }}
+          ports:
+            - name: oauth
+              containerPort: 4180
+              protocol: TCP
+          {{- if .Values.trustedCaBundle.enabled }}
+          volumeMounts:
+            - name: cas
+              mountPath: /certs/cas
+              readOnly: true
+          {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+        {{- end }}
+
+        {{- if .Values.extraContainers }}
+        {{- toYaml .Values.extraContainers | nindent 8 }}
+        {{- end }}
+
+      volumes:
+        {{- if .Values.persistence.data.enabled }}
+        - name: data
+          {{- if eq (.Values.persistence.data.type | default "pvc") "pvc" }}
+          persistentVolumeClaim:
+            claimName: {{ include "app-template.fullname" . }}-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.tls.enabled }}
+        - name: stunnel-conf
+          configMap:
+            name: {{ include "app-template.fullname" . }}-stunnel-conf
+        - name: tls-cert
+          secret:
+            secretName: {{ .Values.tls.secretName | default (printf "%s-tls" (include "app-template.fullname" .)) }}
+        {{- if .Values.database.enabled }}
+        - name: db-client-cert
+          secret:
+            secretName: {{ .Values.database.clientCertSecretName | default (printf "pgedge-%s-client-cert" (include "app-template.fullname" .)) }}
+            defaultMode: 256
+        {{- end }}
+        {{- if .Values.redis.enabled }}
+        - name: keydb-client-cert
+          secret:
+            secretName: {{ .Values.redis.clientCertSecretName | default (printf "keydb-%s-client-cert" (include "app-template.fullname" .)) }}
+            defaultMode: 256
+        {{- end }}
+        {{- end }}
+        {{- if .Values.trustedCaBundle.enabled }}
+        - name: cas
+          configMap:
+            name: {{ .Values.trustedCaBundle.name | default "trusted-ca-bundle" }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+{{- range .Values.extraDeployments }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "app-template.fullname" $ }}-{{ .name }}
+  labels:
+    {{- include "app-template.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ .name }}
+spec:
+  replicas: {{ .replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "app-template.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ .name }}
+  template:
+    metadata:
+      labels:
+        {{- include "app-template.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ .name }}
+      {{- with .podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with $.Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .name }}
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy | default "IfNotPresent" }}
+          {{- if .command }}
+          command:
+            {{- toYaml .command | nindent 12 }}
+          {{- end }}
+          {{- if .args }}
+          args:
+            {{- toYaml .args | nindent 12 }}
+          {{- end }}
+          {{- if .ports }}
+          ports:
+            {{- toYaml .ports | nindent 12 }}
+          {{- end }}
+          {{- if or $.Values.env .env }}
+          env:
+            {{- if $.Values.env }}
+            {{- toYaml $.Values.env | nindent 12 }}
+            {{- end }}
+            {{- if .env }}
+            {{- toYaml .env | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- with $.Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $.Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- if $.Values.persistence.data.enabled }}
+            - name: data
+              mountPath: {{ $.Values.persistence.data.mountPath | default "/data" }}
+            {{- end }}
+            {{- if $.Values.trustedCaBundle.enabled }}
+            - name: cas
+              mountPath: /certs/cas
+              readOnly: true
+            - name: cas
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+              subPath: ca-bundle.crt
+              readOnly: true
+            {{- end }}
+            {{- with $.Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
+        {{- if or $.Values.database.enabled $.Values.redis.enabled }}
+        - name: stunnel
+          image: cgr.dev/chainguard/stunnel:latest
+          command: ["stunnel", "/etc/stunnel/stunnel.conf"]
+          volumeMounts:
+            - name: stunnel-conf
+              mountPath: /etc/stunnel
+              readOnly: true
+            {{- if $.Values.trustedCaBundle.enabled }}
+            - name: cas
+              mountPath: /certs/cas
+              readOnly: true
+            {{- end }}
+            {{- if $.Values.database.enabled }}
+            - name: db-client-cert
+              mountPath: /certs/db-client
+              readOnly: true
+            {{- end }}
+            {{- if $.Values.redis.enabled }}
+            - name: keydb-client-cert
+              mountPath: /certs/keydb-client
+              readOnly: true
+            {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+        {{- end }}
+
+      volumes:
+        {{- if $.Values.persistence.data.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "app-template.fullname" $ }}-data
+        {{- end }}
+        {{- if or $.Values.database.enabled $.Values.redis.enabled }}
+        - name: stunnel-conf
+          configMap:
+            name: {{ include "app-template.fullname" $ }}-stunnel-conf
+        {{- if $.Values.database.enabled }}
+        - name: db-client-cert
+          secret:
+            secretName: {{ $.Values.database.clientCertSecretName | default (printf "pgedge-%s-client-cert" (include "app-template.fullname" $)) }}
+            defaultMode: 256
+        {{- end }}
+        {{- if $.Values.redis.enabled }}
+        - name: keydb-client-cert
+          secret:
+            secretName: {{ $.Values.redis.clientCertSecretName | default (printf "keydb-%s-client-cert" (include "app-template.fullname" $)) }}
+            defaultMode: 256
+        {{- end }}
+        {{- end }}
+        {{- if $.Values.trustedCaBundle.enabled }}
+        - name: cas
+          configMap:
+            name: {{ $.Values.trustedCaBundle.name | default "trusted-ca-bundle" }}
+        {{- end }}
+        {{- with $.Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{- end }}

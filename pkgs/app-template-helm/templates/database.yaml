@@ -1,0 +1,15 @@
+{{- if and .Values.database.enabled .Values.database.createPrivateDatabase }}
+apiVersion: db.loa.kevinpthorne.com/v1alpha1
+kind: PrivateDatabase
+metadata:
+  name: {{ .Values.database.privateDatabaseName | default (printf "%s-database" (include "app-template.fullname" .)) }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  databaseName: {{ .Values.database.databaseName | default (include "app-template.fullname" .) }}
+  userName: {{ .Values.database.userName | default (include "app-template.fullname" .) }}
+  appNamespace: {{ .Release.Namespace }}
+  federate: {{ .Values.database.federate | default false }}
+{{- end }}

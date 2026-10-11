@@ -1,0 +1,284 @@
+{{- if (index .Values "mastodon" "enabled" | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mastodon
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: mastodon
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: ghcr.io/mastodon/mastodon
+          tag: v4.3.4
+        command: ["bundle", "exec", "puma", "-C", "config/puma.rb"]
+        targetPort: 3000
+        env:
+          - name: LOCAL_DOMAIN
+            value: "mastodon.{{ $cluster.name | default "k" }}.loa.internal"
+          - name: WEB_DOMAIN
+            value: "mastodon.{{ $cluster.name | default "k" }}.kpt.link"
+          - name: DB_HOST
+            value: "127.0.0.1"
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            value: "mastodon"
+          - name: DB_USER
+            value: "mastodon"
+          - name: REDIS_HOST
+            value: "127.0.0.1"
+          - name: REDIS_PORT
+            value: "6379"
+          - name: S3_ENABLED
+            value: "true"
+          - name: S3_PROTOCOL
+            value: "https"
+          - name: S3_HOSTNAME
+            value: "seaweed-cluster-s3-https.seaweedfs-system.svc.cluster.{{ $cluster.name | default "k" }}:8333"
+          - name: S3_ENDPOINT
+            value: "https://seaweed-cluster-s3-https.seaweedfs-system.svc.cluster.{{ $cluster.name | default "k" }}:8333"
+          - name: S3_BUCKET
+            value: "mastodon-media"
+          - name: OIDC_ENABLED
+            value: {{ if $hasFederation }}"true"{{ else }}"false"{{ end }}
+          - name: OIDC_DISPLAY_NAME
+            value: "Keycloak"
+          - name: OIDC_DISCOVERY
+            value: "true"
+          - name: OIDC_ISSUER
+            value: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
+          - name: OIDC_AUTH_METHOD
+            value: "post"
+          - name: OIDC_SCOPE
+            value: "openid,profile,email"
+          - name: OIDC_UID_FIELD
+            value: "preferred_username"
+          - name: OIDC_CLIENT_ID
+            value: "mastodon"
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: mastodon-oauth-secret
+                key: secret
+                optional: true
+          - name: SECRET_KEY_BASE
+            valueFrom:
+              secretKeyRef:
+                name: mastodon-secrets
+                key: secret-key-base
+                optional: true
+          - name: OTP_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: mastodon-secrets
+                key: otp-secret
+                optional: true
+        service:
+          public: true
+          domains:
+            - "mastodon.{{ $cluster.name | default "k" }}.loa.internal"
+            - "mastodon.{{ $cluster.name | default "k" }}.kpt.link"
+        database:
+          enabled: {{ $hasFederation }}
+          createPrivateDatabase: {{ $hasFederation }}
+          appName: mastodon
+          databaseName: mastodon
+          userName: mastodon
+        redis:
+          enabled: {{ $hasFederation }}
+          createKeydbClient: {{ $hasFederation }}
+          appName: mastodon
+        keycloak:
+          enabled: {{ $hasFederation }}
+          clientId: mastodon
+          redirectUris:
+            - "https://mastodon.{{ $cluster.name | default "k" }}.loa.internal/auth/auth/openid_connect/callback"
+            - "https://mastodon.{{ $cluster.name | default "k" }}.kpt.link/auth/auth/openid_connect/callback"
+        extraDeployments:
+          - name: streaming
+            replicaCount: 1
+            command: ["node", "./streaming"]
+            ports:
+              - name: streaming
+                containerPort: 4000
+                protocol: TCP
+          - name: sidekiq
+            replicaCount: 1
+            command: ["bundle", "exec", "sidekiq"]
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mastodon
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+
+{{- if $hasFederation }}
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: mastodon-secret-key-base
+  namespace: mastodon
+spec:
+  length: 64
+  digits: 10
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: mastodon-otp-secret
+  namespace: mastodon
+spec:
+  length: 64
+  digits: 10
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mastodon-secrets
+  namespace: mastodon
+spec:
+  refreshInterval: "0"
+  target:
+    name: mastodon-secrets
+    template:
+      engineVersion: v2
+      data:
+        secret-key-base: "{{ `{{ .secretKeyBase }}` }}"
+        otp-secret: "{{ `{{ .otpSecret }}` }}"
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: mastodon-secret-key-base
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: mastodon-otp-secret
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Identity
+metadata:
+  name: mastodon
+  namespace: mastodon
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Credentials
+metadata:
+  name: mastodon-s3-creds
+  namespace: mastodon
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  secretRef:
+    name: mastodon-s3-creds
+  target:
+    identityRef:
+      name: mastodon
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: Bucket
+metadata:
+  name: mastodon-media
+  namespace: mastodon
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  size: 50Gi
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3Policy
+metadata:
+  name: mastodon-media-policy
+  namespace: mastodon
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  policy: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:*"
+          ],
+          "Resource": [
+            "arn:aws:s3:::mastodon-media",
+            "arn:aws:s3:::mastodon-media/*"
+          ]
+        }
+      ]
+    }
+---
+apiVersion: seaweed.seaweedfs.com/v1
+kind: S3PolicyBinding
+metadata:
+  name: mastodon-media-binding
+  namespace: mastodon
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  seaweedRef:
+    name: seaweed-cluster
+    namespace: seaweedfs-system
+  identityRef:
+    name: mastodon
+  policyRef:
+    name: mastodon-media-policy
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-s3-from-mastodon
+  namespace: seaweedfs-system
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  from:
+    - group: ""
+      kind: Namespace
+      name: mastodon
+  to:
+    - group: ""
+      kind: Service
+      name: seaweed-cluster-s3-https
+{{- end }}
+{{- end }}

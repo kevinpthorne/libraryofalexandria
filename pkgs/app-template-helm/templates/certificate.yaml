@@ -1,0 +1,32 @@
+{{- if .Values.tls.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "app-template.fullname" . }}-tls
+  labels:
+    {{- include "app-template.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  secretName: {{ .Values.tls.secretName | default (printf "%s-tls" (include "app-template.fullname" .)) }}
+  dnsNames:
+    - {{ include "app-template.fullname" . }}
+    - {{ include "app-template.fullname" . }}.{{ .Release.Namespace }}.svc
+    - {{ include "app-template.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+    {{- if .Values.cluster.name }}
+    - {{ include "app-template.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.{{ .Values.cluster.name }}
+    - {{ include "app-template.fullname" . }}.{{ .Values.cluster.name }}.loa.internal
+    {{- end }}
+    {{- range .Values.service.domains }}
+    - {{ . }}
+    {{- end }}
+    {{- range .Values.tls.sans }}
+    - {{ . }}
+    {{- end }}
+  issuerRef:
+    name: {{ .Values.tls.issuerRef.name | default "pki-bootstrap" }}
+    kind: {{ .Values.tls.issuerRef.kind | default "ClusterIssuer" }}
+    {{- if .Values.tls.issuerRef.group }}
+    group: {{ .Values.tls.issuerRef.group }}
+    {{- end }}
+{{- end }}

@@ -1,0 +1,78 @@
+{{- if (index .Values "archivebox" "enabled" | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: archivebox
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: archivebox
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: archivebox/archivebox
+          tag: master
+        targetPort: 8000
+        env:
+          - name: ALLOWED_HOSTS
+            value: "*"
+          - name: MEDIA_MAX_SIZE
+            value: "1000m"
+          - name: TIMEOUT
+            value: "120"
+          - name: CHECK_SSL_VALIDITY
+            value: "True"
+          {{- if $hasFederation }}
+          - name: DATABASE_URL
+            value: "postgres://archivebox:archivebox@127.0.0.1:5432/archivebox"
+          - name: REDIS_URL
+            value: "redis://127.0.0.1:6379/0"
+          {{- end }}
+        service:
+          public: true
+          domains:
+            - "archivebox.{{ $cluster.name | default "k" }}.loa.internal"
+            - "archivebox.{{ $cluster.name | default "k" }}.kpt.link"
+        oauth2Proxy:
+          enabled: {{ $hasFederation }}
+          issuerUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
+        keycloak:
+          enabled: {{ $hasFederation }}
+        database:
+          enabled: {{ $hasFederation }}
+          createPrivateDatabase: {{ $hasFederation }}
+          appName: archivebox
+          databaseName: archivebox
+          userName: archivebox
+        redis:
+          enabled: {{ $hasFederation }}
+          createKeydbClient: {{ $hasFederation }}
+          appName: archivebox
+        persistence:
+          data:
+            enabled: true
+            type: pvc
+            mountPath: /data
+            size: 20Gi
+            storageClass: "longhorn"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: archivebox
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

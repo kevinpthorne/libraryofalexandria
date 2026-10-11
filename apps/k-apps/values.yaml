@@ -172,3 +172,27 @@ sipcord:
       guild: "824777279707807784"
       channel: "1023045430738685952"
       name: "Phoenix Squadron 501st"
+
+syncthing:
+  enabled: true
+
+mastodon:
+  enabled: true
+
+archivebox:
+  enabled: true
+
+cyberchef:
+  enabled: true
+
+yourls:
+  enabled: true
+
+librespeed:
+  enabled: true
+
+excalidraw:
+  enabled: true
+
+monica:
+  enabled: true

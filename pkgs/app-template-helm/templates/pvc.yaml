@@ -1,0 +1,15 @@
+{{- if and .Values.persistence.data.enabled (eq (.Values.persistence.data.type | default "pvc") "pvc") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "app-template.fullname" . }}-data
+  labels:
+    {{- include "app-template.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.data.accessMode | default "ReadWriteOnce" }}
+  storageClassName: {{ .Values.persistence.data.storageClass | default "longhorn" }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.data.size | default "10Gi" }}
+{{- end }}

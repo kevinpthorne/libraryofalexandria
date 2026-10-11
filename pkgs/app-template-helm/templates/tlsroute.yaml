@@ -1,0 +1,31 @@
+{{- if and .Values.tls.enabled .Values.gateway.enabled }}
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: {{ include "app-template.fullname" . }}-tls-443
+  labels:
+    {{- include "app-template.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    {{- if .Values.service.public }}
+    external-dns.loa.internal/expose: "public"
+    {{- end }}
+    {{- with .Values.gateway.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  parentRefs:
+    - name: {{ .Values.gateway.name | default "local-gateway" }}
+      namespace: {{ .Values.gateway.namespace | default "kube-system" }}
+      sectionName: {{ .Values.gateway.sectionName | default "tls-443" }}
+  {{- if or .Values.gateway.hostnames .Values.service.domains }}
+  hostnames:
+    {{- range (.Values.gateway.hostnames | default .Values.service.domains) }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  rules:
+    - backendRefs:
+        - name: {{ include "app-template.fullname" . }}
+          port: {{ .Values.gateway.targetPort | default (.Values.service.port | default 443) }}
+{{- end }}

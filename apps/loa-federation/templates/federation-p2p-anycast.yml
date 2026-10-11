@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: federation-p2p-anycast
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/kevinpthorne/p2p-anycast.git'
+    path: deploy/helm/anycast-origin
+    targetRevision: 0.4.0
+    helm:
+      releaseName: federation-p2p-anycast
+      valuesObject:
+        existingSecret: "p2p-anycast-secrets"
+        identity:
+          pvc:
+            enabled: true
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

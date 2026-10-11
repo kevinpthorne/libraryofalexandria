@@ -1,0 +1,121 @@
+{{- if (index .Values "yourls" "enabled" | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yourls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: yourls
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: yourls
+          tag: latest
+        targetPort: 80
+        service:
+          public: true
+          domains:
+            - "yourls.{{ $cluster.name | default "k" }}.loa.internal"
+            - "yourls.{{ $cluster.name | default "k" }}.kpt.link"
+            - "urls.{{ $cluster.name | default "k" }}.loa.internal"
+            - "urls.{{ $cluster.name | default "k" }}.kpt.link"
+        database:
+          enabled: {{ $hasFederation }}
+          createPrivateDatabase: {{ $hasFederation }}
+          appName: yourls
+          databaseName: yourls
+          userName: yourls
+        oauth2Proxy:
+          enabled: {{ $hasFederation }}
+          issuerUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
+        keycloak:
+          enabled: {{ $hasFederation }}
+        {{- if $hasFederation }}
+        env:
+          - name: YOURLS_DB_HOST
+            value: "127.0.0.1"
+          - name: YOURLS_DB_USER
+            value: "yourls"
+          - name: YOURLS_DB_PASS
+            value: ""
+          - name: YOURLS_DB_NAME
+            value: "yourls"
+          - name: YOURLS_SITE
+            value: "https://yourls.{{ $cluster.name | default "k" }}.kpt.link"
+          - name: YOURLS_USER
+            value: "admin"
+          - name: YOURLS_PASS
+            value: "admin"
+        extraVolumes:
+          - name: yourls-db-driver
+            configMap:
+              name: yourls-db-driver
+        extraVolumeMounts:
+          - name: yourls-db-driver
+            mountPath: /var/www/html/user/db.php
+            subPath: db.php
+        {{- end }}
+        persistence:
+          data:
+            enabled: true
+            type: pvc
+            mountPath: /var/www/html/user/pages
+            size: 5Gi
+            storageClass: "longhorn"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: yourls
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+
+{{- if $hasFederation }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yourls-db-driver
+  namespace: yourls
+data:
+  db.php: |
+    <?php
+    yourls_add_filter('db_connect_custom_dsn', function($in) {
+        $in = str_replace("mysql:","pgsql:",$in);
+        return str_replace("charset=utf8mb4","",$in);
+    });
+    yourls_add_filter('html_footer_text', function($in) {
+        return $in . ' on PostgreSQL 🐘';
+    });
+    yourls_add_filter('fetch_wrapper_statement', function(string $query) {
+        $query = str_replace('`', '"', $query);
+        $query = preg_replace('/LIMIT\s+(\d+)\s*,\s*(\d+)/i', 'LIMIT $2 OFFSET $1', $query);
+        $query = preg_replace('/current_timestamp\(\)/i', 'CURRENT_TIMESTAMP', $query);
+        $query = preg_replace('/\bRAND\s*\(/i', 'RANDOM(', $query);
+        $query = preg_replace('/\bDATETIME\b/i', 'TIMESTAMP', $query);
+        $query = preg_replace('/\bBINARY\b/i', '', $query);
+        $query = preg_replace('/\s+UNSIGNED/i', '', $query);
+        $query = preg_replace('/\bBIGINT\s*(?:\(\d+\))?\s*(?:UNSIGNED\s+)?(?:NOT\s+NULL\s+)?AUTO_INCREMENT/i', 'BIGSERIAL', $query);
+        $query = preg_replace('/\bINT\s*(?:\(\d+\))?\s*(?:UNSIGNED\s+)?(?:NOT\s+NULL\s+)?AUTO_INCREMENT/i', 'SERIAL', $query);
+        $query = preg_replace('/\bAUTO_INCREMENT\b/i', '', $query);
+        $query = preg_replace('/\bINT\(\d+\)/i', 'INTEGER', $query);
+        $query = preg_replace('/\bBIGINT\(\d+\)/i', 'BIGINT', $query);
+        return $query;
+    });
+    require_once YOURLS_ABSPATH.'/includes/class-mysql.php';
+{{- end }}
+{{- end }}

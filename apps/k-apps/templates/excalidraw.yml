@@ -1,0 +1,40 @@
+{{- if (index .Values "excalidraw" "enabled" | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: excalidraw
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: excalidraw
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: excalidraw/excalidraw
+          tag: latest
+        targetPort: 80
+        service:
+          public: true
+          domains:
+            - "excalidraw.{{ $cluster.name | default "k" }}.loa.internal"
+            - "excalidraw.{{ $cluster.name | default "k" }}.kpt.link"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: excalidraw
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

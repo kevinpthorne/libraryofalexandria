@@ -19,7 +19,6 @@
     libraryofalexandria.node.platform = "msi-gp73";
     nixpkgs.hostPlatform = "x86_64-linux";
 
-    # Using GRUB with OS Prober to detect the existing Windows installation on the other NVMe
     boot.loader.grub.enable = true;
     boot.loader.grub.efiSupport = true;
     # Must be false when efiInstallAsRemovable is true

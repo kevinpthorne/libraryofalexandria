@@ -1,0 +1,40 @@
+{{- if (index .Values "cyberchef" "enabled" | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cyberchef
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: cyberchef
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: mpepping/cyberchef
+          tag: v10.19.4
+        targetPort: 8000
+        service:
+          public: true
+          domains:
+            - "cyberchef.{{ $cluster.name | default "k" }}.loa.internal"
+            - "cyberchef.{{ $cluster.name | default "k" }}.kpt.link"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cyberchef
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

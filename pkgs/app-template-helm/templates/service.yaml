@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "app-template.fullname" . }}
+  labels:
+    {{- include "app-template.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.service.public }}
+    external-dns.loa.internal/expose: "public"
+    {{- end }}
+    {{- if .Values.service.domains }}
+    external-dns.alpha.kubernetes.io/hostname: {{ join "," .Values.service.domains | quote }}
+    {{- end }}
+spec:
+  type: {{ .Values.service.type | default "ClusterIP" }}
+  ports:
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP
+    {{- range .Values.service.extraPorts }}
+    - name: {{ .name }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort | default .port }}
+      protocol: {{ .protocol | default "TCP" }}
+    {{- end }}
+  selector:
+    {{- include "app-template.selectorLabels" . | nindent 4 }}

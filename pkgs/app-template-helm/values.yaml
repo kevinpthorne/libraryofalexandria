@@ -1,0 +1,115 @@
+nameOverride: ""
+fullnameOverride: ""
+
+cluster:
+  name: "k"
+
+controllerType: "Deployment"
+replicaCount: 1
+
+image:
+  repository: ""
+  tag: ""
+  pullPolicy: IfNotPresent
+
+command: []
+args: []
+
+env: []
+envFrom: []
+
+targetPort: 80
+
+service:
+  type: ClusterIP
+  public: true
+  port: 443
+  domains: []
+  extraPorts: []
+
+tls:
+  enabled: true
+  secretName: ""
+  sans: []
+  issuerRef:
+    name: "pki-bootstrap"
+    kind: "ClusterIssuer"
+
+gateway:
+  enabled: true
+  name: "local-gateway"
+  namespace: "kube-system"
+  sectionName: "tls-443"
+  targetPort: 443
+  hostnames: []
+  annotations: {}
+
+trustedCaBundle:
+  enabled: true
+  name: "trusted-ca-bundle"
+
+database:
+  enabled: false
+  createPrivateDatabase: true
+  appName: "main"
+  databaseName: ""
+  userName: ""
+  federate: false
+  host: ""
+  port: 5432
+  clientCertSecretName: ""
+
+redis:
+  enabled: false
+  createKeydbClient: true
+  appName: ""
+  keydbClientName: ""
+  keydbClientNamespace: ""
+  host: "keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380"
+  port: 6379
+  clientCertSecretName: ""
+
+oauth2Proxy:
+  enabled: false
+  image:
+    repository: quay.io/oauth2-proxy/oauth2-proxy
+    tag: v7.8.1
+  clientId: ""
+  clientSecretKey: "secret"
+  cookieSecretKey: "secret"
+  secretName: ""
+  issuerUrl: ""
+  upstream: ""
+
+keycloak:
+  enabled: false
+  realm: "loa"
+  clientId: ""
+  clientName: ""
+  secretName: ""
+  passwordName: ""
+  redirectUris: []
+
+persistence:
+  data:
+    enabled: false
+    type: pvc
+    mountPath: /data
+    subPath: ""
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    storageClass: "longhorn"
+
+initContainers: []
+extraContainers: []
+extraDeployments: []
+extraVolumes: []
+extraVolumeMounts: []
+
+podAnnotations: {}
+securityContext: {}
+podSecurityContext: {}
+resources: {}
+livenessProbe: {}
+readinessProbe: {}
+startupProbe: {}

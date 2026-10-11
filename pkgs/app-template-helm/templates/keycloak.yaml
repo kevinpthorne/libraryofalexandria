@@ -1,0 +1,64 @@
+{{- if .Values.keycloak.enabled }}
+{{- $secretName := .Values.keycloak.secretName | default (printf "%s-oauth-secret" (include "app-template.fullname" .)) }}
+{{- $passwordName := .Values.keycloak.passwordName | default (printf "%s-oauth-password" (include "app-template.fullname" .)) }}
+{{- $clientId := .Values.keycloak.clientId | default (include "app-template.fullname" .) }}
+{{- $redirectUris := .Values.keycloak.redirectUris }}
+{{- if not $redirectUris }}
+  {{- $redirectUris = list }}
+  {{- range .Values.service.domains }}
+    {{- $redirectUris = append $redirectUris (printf "https://%s/oauth2/callback" .) }}
+  {{- end }}
+{{- end }}
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: {{ $passwordName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  length: 32
+  digits: 5
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $secretName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "0"
+  target:
+    name: {{ $secretName }}
+    template:
+      engineVersion: v2
+      data:
+        secret: "{{ `{{ .password }}` }}"
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: {{ $passwordName }}
+---
+apiVersion: authn.loa.kevinpthorne.com/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: {{ .Values.keycloak.clientName | default (include "app-template.fullname" .) }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  realm: {{ .Values.keycloak.realm | default "loa" }}
+  clientId: {{ $clientId }}
+  secretRef:
+    name: {{ $secretName }}
+    key: secret
+  redirectUris:
+    {{- range $redirectUris }}
+    - {{ . | quote }}
+    {{- end }}
+{{- end }}

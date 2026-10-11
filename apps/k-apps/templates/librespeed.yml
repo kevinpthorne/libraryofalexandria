@@ -1,0 +1,64 @@
+{{- if (index .Values "librespeed" "enabled" | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: librespeed
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: librespeed
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: librespeed/speedtest
+          tag: latest
+        targetPort: 80
+        env:
+          - name: TITLE
+            value: "LibreSpeed (LOA K)"
+          {{- if $hasFederation }}
+          - name: DB_TYPE
+            value: "postgresql"
+          - name: DB_HOSTNAME
+            value: "127.0.0.1"
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            value: "librespeed"
+          - name: DB_USERNAME
+            value: "librespeed"
+          - name: DB_PASSWORD
+            value: ""
+          {{- end }}
+        service:
+          public: true
+          domains:
+            - "speedtest.{{ $cluster.name | default "k" }}.loa.internal"
+            - "speedtest.{{ $cluster.name | default "k" }}.kpt.link"
+        database:
+          enabled: {{ $hasFederation }}
+          createPrivateDatabase: {{ $hasFederation }}
+          appName: librespeed
+          databaseName: librespeed
+          userName: librespeed
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: librespeed
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

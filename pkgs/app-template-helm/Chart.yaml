@@ -1,0 +1,6 @@
+apiVersion: v2
+name: app-template-helm
+description: Standard application template for Library of Alexandria workloads
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
