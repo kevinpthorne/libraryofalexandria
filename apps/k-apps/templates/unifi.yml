@@ -14,7 +14,7 @@ spec:
         service:
           domains:
             - unifi.k.loa.internal
-        replicaCount: 0
+        replicaCount: 1
   destination:
     server: https://kubernetes.default.svc
     namespace: unifi
