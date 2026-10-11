@@ -15,7 +15,6 @@ mongodb:
     size: 2Gi
   resources:
     limits:
-      cpu: 500m
       memory: 350Mi
     requests:
       cpu: 100m
@@ -23,7 +22,6 @@ mongodb:
 
 resources:
   limits:
-    cpu: '1'
     memory: 1Gi
   requests:
     cpu: 100m
