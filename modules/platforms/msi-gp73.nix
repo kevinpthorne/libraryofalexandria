@@ -19,15 +19,19 @@
     libraryofalexandria.node.platform = "msi-gp73";
     nixpkgs.hostPlatform = "x86_64-linux";
 
-    # Bootloader setup
-    # Using GRUB with OS Prober to preserve and detect the existing Windows installation
+    # Using GRUB with OS Prober to detect the existing Windows installation on the other NVMe
     boot.loader.grub.enable = true;
     boot.loader.grub.efiSupport = true;
-    boot.loader.efi.canTouchEfiVariables = true;
-    boot.loader.grub.device = "nodev";
-    boot.loader.grub.useOSProber = true;
+    # Must be false when efiInstallAsRemovable is true
+    boot.loader.efi.canTouchEfiVariables = false;
+    # Install fallback EFI bootloader in case MSI BIOS wipes NVRAM
+    boot.loader.grub.efiInstallAsRemovable = true;
+    # Install MBR bootloader to the 1MB EF02 partition as a secondary fallback
+    boot.loader.grub.device = "/dev/disk/by-id/nvme-WDS100T3X0C-00SJG0_204181800580";
+    boot.loader.grub.useOSProber = false;  # I accidentally wiped windows and dont want to boot into the alter-nixos
+    boot.loader.efi.efiSysMountPoint = "/boot";
 
-    disko.devices.disk.main.device = "/dev/nvme0n1";
+    disko.devices.disk.main.device = "/dev/disk/by-id/nvme-WDS100T3X0C-00SJG0_204181800580";
 
     # Hardware configuration for MSI GP73 (i7 8th gen)
     boot.initrd.availableKernelModules = [
@@ -41,6 +45,10 @@
     boot.initrd.kernelModules = [ ];
     boot.kernelModules = [ "kvm-intel" ];
     boot.extraModulePackages = [ ];
+    
+    # Suppress harmless but noisy PCIe Advanced Error Reporting (AER) spam 
+    # and disable ASPM to ensure maximum PCIe stability for a plugged-in node
+    boot.kernelParams = [ "pci=noaer" "pcie_aspm=off" ];
 
     hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
