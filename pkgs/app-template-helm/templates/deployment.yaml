@@ -23,10 +23,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- with .Values.podSecurityContext }}
+      {{- $podSecDefaults := dict "runAsNonRoot" true "seccompProfile" (dict "type" "RuntimeDefault") }}
+      {{- $podSec := merge (deepCopy (.Values.podSecurityContext | default dict)) $podSecDefaults }}
       securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- toYaml $podSec | nindent 8 }}
       {{- if .Values.initContainers }}
       initContainers:
         {{- toYaml .Values.initContainers | nindent 8 }}
@@ -64,10 +64,10 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.securityContext }}
+          {{- $secDefaults := dict "allowPrivilegeEscalation" false "runAsNonRoot" true "capabilities" (dict "drop" (list "ALL")) "seccompProfile" (dict "type" "RuntimeDefault") }}
+          {{- $sec := merge (deepCopy (.Values.securityContext | default dict)) $secDefaults }}
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- toYaml $sec | nindent 12 }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
@@ -140,6 +140,8 @@ spec:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
         {{- end }}
 
         {{- if .Values.oauth2Proxy.enabled }}
@@ -192,6 +194,8 @@ spec:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
         {{- end }}
 
         {{- if .Values.extraContainers }}
@@ -262,10 +266,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- with $.Values.podSecurityContext }}
+      {{- $podSecDefaults := dict "runAsNonRoot" true "seccompProfile" (dict "type" "RuntimeDefault") }}
+      {{- $podSec := merge (deepCopy ($.Values.podSecurityContext | default dict)) $podSecDefaults }}
       securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- toYaml $podSec | nindent 8 }}
       containers:
         - name: {{ .name }}
           image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
@@ -295,10 +299,11 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with $.Values.securityContext }}
+          {{- $secDefaults := dict "allowPrivilegeEscalation" false "runAsNonRoot" true "capabilities" (dict "drop" (list "ALL")) "seccompProfile" (dict "type" "RuntimeDefault") }}
+          {{- $secUser := merge (deepCopy (.securityContext | default dict)) ($.Values.securityContext | default dict) }}
+          {{- $sec := merge $secUser $secDefaults }}
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- toYaml $sec | nindent 12 }}
           volumeMounts:
             {{- if $.Values.persistence.data.enabled }}
             - name: data
@@ -352,6 +357,8 @@ spec:
             capabilities:
               drop:
                 - ALL
+            seccompProfile:
+              type: RuntimeDefault
         {{- end }}
 
       volumes:

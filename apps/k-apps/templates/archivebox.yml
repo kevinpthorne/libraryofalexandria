@@ -21,6 +21,23 @@ spec:
           repository: archivebox/archivebox
           tag: master
         targetPort: 8000
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 911
+          runAsGroup: 911
+          fsGroup: 911
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 911
+          runAsGroup: 911
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
         env:
           - name: ALLOWED_HOSTS
             value: "*"
