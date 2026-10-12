@@ -123,7 +123,7 @@ spec:
         extraVolumes:
           - name: cas
             configMap:
-              name: trusted-ca-bundle
+              name: gitea-trusted-ca-bundle
           - name: gitea-tls
             secret:
               secretName: gitea-tls
@@ -260,6 +260,26 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+---
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: gitea-trusted-ca-bundle
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  sources:
+    - useDefaultCAs: true
+    - configMap:
+        name: trusted-ca-bundle
+        key: ca-bundle.crt
+  target:
+    configMap:
+      key: "ca-bundle.crt"
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: gitea
 
 ---
 apiVersion: seaweed.seaweedfs.com/v1
