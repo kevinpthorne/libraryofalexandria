@@ -24,7 +24,7 @@ spec:
       {{- end }}
     spec:
       {{- $podSecDefaults := dict "runAsNonRoot" true "seccompProfile" (dict "type" "RuntimeDefault") }}
-      {{- $podSec := merge (deepCopy (.Values.podSecurityContext | default dict)) $podSecDefaults }}
+      {{- $podSec := mergeOverwrite (deepCopy $podSecDefaults) (.Values.podSecurityContext | default dict) }}
       securityContext:
         {{- toYaml $podSec | nindent 8 }}
       {{- if .Values.initContainers }}
@@ -65,7 +65,7 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- $secDefaults := dict "allowPrivilegeEscalation" false "runAsNonRoot" true "capabilities" (dict "drop" (list "ALL")) "seccompProfile" (dict "type" "RuntimeDefault") }}
-          {{- $sec := merge (deepCopy (.Values.securityContext | default dict)) $secDefaults }}
+          {{- $sec := mergeOverwrite (deepCopy $secDefaults) (.Values.securityContext | default dict) }}
           securityContext:
             {{- toYaml $sec | nindent 12 }}
           {{- with .Values.livenessProbe }}
@@ -157,6 +157,12 @@ spec:
             - --cookie-secret=$(OAUTH2_PROXY_COOKIE_SECRET)
             - --email-domain=*
             - --skip-provider-button=true
+            {{- range (.Values.oauth2Proxy.extraAudiences | default (list "account")) }}
+            - --oidc-extra-audience={{ . }}
+            {{- end }}
+            {{- if .Values.oauth2Proxy.insecureOidcAllowUnverifiedEmail }}
+            - --insecure-oidc-allow-unverified-email=true
+            {{- end }}
             {{- if .Values.trustedCaBundle.enabled }}
             - --provider-ca-file=/certs/cas/ca-bundle.crt
             {{- end }}
@@ -164,6 +170,9 @@ spec:
             - --ssl-insecure-skip-verify=true
             {{- end }}
             - --cookie-secure=true
+            {{- with .Values.oauth2Proxy.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           env:
             - name: OAUTH2_PROXY_CLIENT_SECRET
               valueFrom:
@@ -267,7 +276,7 @@ spec:
       {{- end }}
     spec:
       {{- $podSecDefaults := dict "runAsNonRoot" true "seccompProfile" (dict "type" "RuntimeDefault") }}
-      {{- $podSec := merge (deepCopy ($.Values.podSecurityContext | default dict)) $podSecDefaults }}
+      {{- $podSec := mergeOverwrite (deepCopy $podSecDefaults) ($.Values.podSecurityContext | default dict) }}
       securityContext:
         {{- toYaml $podSec | nindent 8 }}
       containers:
@@ -300,14 +309,16 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- $secDefaults := dict "allowPrivilegeEscalation" false "runAsNonRoot" true "capabilities" (dict "drop" (list "ALL")) "seccompProfile" (dict "type" "RuntimeDefault") }}
-          {{- $secUser := merge (deepCopy (.securityContext | default dict)) ($.Values.securityContext | default dict) }}
-          {{- $sec := merge $secUser $secDefaults }}
+          {{- $sec := mergeOverwrite (deepCopy $secDefaults) ($.Values.securityContext | default dict) (.securityContext | default dict) }}
           securityContext:
             {{- toYaml $sec | nindent 12 }}
           volumeMounts:
             {{- if $.Values.persistence.data.enabled }}
             - name: data
               mountPath: {{ $.Values.persistence.data.mountPath | default "/data" }}
+              {{- if $.Values.persistence.data.subPath }}
+              subPath: {{ $.Values.persistence.data.subPath }}
+              {{- end }}
             {{- end }}
             {{- if $.Values.trustedCaBundle.enabled }}
             - name: cas

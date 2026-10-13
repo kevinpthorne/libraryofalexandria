@@ -83,6 +83,9 @@ spec:
           - name: creds
             mountPath: /etc/cloudflared/creds
             readOnly: true
+          {{- with .Values.extraVolumeMounts }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
       volumes:
@@ -94,6 +97,9 @@ spec:
             items:
               - key: config.yaml
                 path: config.yaml
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

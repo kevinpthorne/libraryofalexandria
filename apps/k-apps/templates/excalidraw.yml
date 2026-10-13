@@ -20,6 +20,35 @@ spec:
           repository: excalidraw/excalidraw
           tag: latest
         targetPort: 80
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 101
+          runAsGroup: 101
+          fsGroup: 101
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 101
+          runAsGroup: 101
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_BIND_SERVICE
+          seccompProfile:
+            type: RuntimeDefault
+        extraVolumes:
+          - name: nginx-cache
+            emptyDir: {}
+          - name: nginx-run
+            emptyDir: {}
+        extraVolumeMounts:
+          - name: nginx-cache
+            mountPath: /var/cache/nginx
+          - name: nginx-run
+            mountPath: /var/run
         service:
           public: true
           domains:

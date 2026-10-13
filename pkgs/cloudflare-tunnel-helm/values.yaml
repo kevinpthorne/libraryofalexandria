@@ -10,6 +10,11 @@ cloudflare:
   enableWarp: false
   # Define ingress rules for the tunnel.
   ingress: []
+  # Global originRequest options
+  originRequest: {}
+
+extraVolumes: []
+extraVolumeMounts: []
 
 image:
   repository: cloudflare/cloudflared

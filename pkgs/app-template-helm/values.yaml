@@ -80,6 +80,10 @@ oauth2Proxy:
   secretName: ""
   issuerUrl: ""
   upstream: ""
+  extraAudiences:
+    - account
+  insecureOidcAllowUnverifiedEmail: false
+  extraArgs: []
 
 keycloak:
   enabled: false
@@ -105,6 +109,7 @@ extraContainers: []
 extraDeployments: []
 extraVolumes: []
 extraVolumeMounts: []
+extraConfigMaps: []
 
 podAnnotations: {}
 podSecurityContext:

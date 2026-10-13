@@ -15,14 +15,27 @@ spec:
           tunnelKeySecret: {{ .Values.cloudflared.tunnelKeySecret | quote }}
           tunnelKeySecretKey: {{ .Values.cloudflared.tunnelKeySecretKey | quote }}
           tunnelId: {{ .Values.cloudflared.tunnelId | quote }}
+          originRequest:
+            caPool: /etc/cloudflared/certs/ca-bundle.crt
           ingress:
             {{- range .Values.cloudflared.domains }}
             - hostname: {{ . | quote }}
               service: https://cilium-gateway-local-gateway.kube-system.svc.cluster.local:443
               originRequest:
-                noTLSVerify: true
+                caPool: /etc/cloudflared/certs/ca-bundle.crt
                 originServerName: {{ . | quote }}
             {{- end }}
+
+        extraVolumes:
+          - name: trusted-ca-bundle
+            configMap:
+              name: trusted-ca-bundle
+
+        extraVolumeMounts:
+          - name: trusted-ca-bundle
+            mountPath: /etc/cloudflared/certs
+            readOnly: true
+
 
         # Enforce restricted security contexts
         podSecurityContext:

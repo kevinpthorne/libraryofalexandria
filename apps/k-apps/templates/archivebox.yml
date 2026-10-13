@@ -21,6 +21,12 @@ spec:
           repository: archivebox/archivebox
           tag: master
         targetPort: 8000
+        command:
+          - /bin/bash
+          - -c
+        args:
+          - |
+            cd /data && exec archivebox server --quick-init 0.0.0.0:8000
         podSecurityContext:
           runAsNonRoot: true
           runAsUser: 911

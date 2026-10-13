@@ -185,7 +185,7 @@ archivebox:
 cyberchef:
   enabled: true
 
-yourls:
+shlink:
   enabled: true
 
 librespeed:

@@ -20,7 +20,40 @@ spec:
         image:
           repository: monica
           tag: latest
-        targetPort: 80
+        targetPort: 8080
+        command:
+          - /bin/bash
+          - -c
+        args:
+          - |
+            set -e
+            source /etc/apache2/envvars
+            mkdir -p /var/www/html/storage/app/public \
+                     /var/www/html/storage/framework/cache \
+                     /var/www/html/storage/framework/sessions \
+                     /var/www/html/storage/framework/views \
+                     /var/www/html/storage/logs
+            php /var/www/html/artisan storage:link || true
+            php /var/www/html/artisan migrate --force
+            rm -f /var/run/apache2/apache2.pid
+            exec apache2 -DFOREGROUND
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 33
+          runAsGroup: 33
+          fsGroup: 33
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 33
+          runAsGroup: 33
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
         env:
           - name: APP_ENV
             value: "production"
@@ -75,8 +108,47 @@ spec:
             enabled: true
             type: pvc
             mountPath: /var/www/html/storage
+            subPath: data
             size: 10Gi
             storageClass: "longhorn"
+        extraConfigMaps:
+          - name: monica-apache-conf
+            data:
+              ports.conf: |
+                Listen 8080
+              000-default.conf: |
+                <VirtualHost *:8080>
+                    ServerAdmin webmaster@localhost
+                    DocumentRoot /var/www/html/public
+
+                    <Directory /var/www/html/public>
+                        Options Indexes FollowSymLinks
+                        AllowOverride All
+                        Require all granted
+                    </Directory>
+
+                    ErrorLog /dev/stderr
+                    CustomLog /dev/stdout combined
+                </VirtualHost>
+        extraVolumes:
+          - name: monica-apache-conf
+            configMap:
+              name: monica-apache-conf
+          - name: apache-run
+            emptyDir: {}
+          - name: apache-lock
+            emptyDir: {}
+        extraVolumeMounts:
+          - name: monica-apache-conf
+            mountPath: /etc/apache2/ports.conf
+            subPath: ports.conf
+          - name: monica-apache-conf
+            mountPath: /etc/apache2/sites-enabled/000-default.conf
+            subPath: 000-default.conf
+          - name: apache-run
+            mountPath: /var/run/apache2
+          - name: apache-lock
+            mountPath: /var/lock/apache2
   destination:
     server: https://kubernetes.default.svc
     namespace: monica

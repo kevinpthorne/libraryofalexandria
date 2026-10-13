@@ -20,10 +20,12 @@ data:
     no-autoupdate: true
 
     originRequest:
-      noTLSVerify: true
       keepAliveConnections: 0 # Kills the SNI pool poisoning bug
       matchSNItoHost: true
       http2Origin: false
+      {{- with .Values.cloudflare.originRequest }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
 
     # Ingress configuration
     ingress:

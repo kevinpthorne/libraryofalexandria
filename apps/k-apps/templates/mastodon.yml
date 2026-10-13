@@ -157,6 +157,8 @@ spec:
   digits: 10
   symbols: 0
   allowRepeat: true
+  secretKeys:
+    - secretKeyBase
 ---
 apiVersion: generators.external-secrets.io/v1alpha1
 kind: Password
@@ -168,6 +170,8 @@ spec:
   digits: 10
   symbols: 0
   allowRepeat: true
+  secretKeys:
+    - otpSecret
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret

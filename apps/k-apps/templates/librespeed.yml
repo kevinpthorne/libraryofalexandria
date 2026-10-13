@@ -18,13 +18,15 @@ spec:
         cluster:
           name: {{ $cluster.name | default "k" }}
         image:
-          repository: librespeed/speedtest
+          repository: ghcr.io/librespeed/speedtest
           tag: latest
-        targetPort: 80
+        targetPort: 8080
         env:
           - name: TITLE
             value: "LibreSpeed (LOA K)"
           {{- if $hasFederation }}
+          - name: TELEMETRY
+            value: "true"
           - name: DB_TYPE
             value: "postgresql"
           - name: DB_HOSTNAME
