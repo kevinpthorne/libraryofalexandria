@@ -45,6 +45,16 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         env:
+          - name: USER
+            value: "archivebox"
+          - name: ARCHIVEBOX_USER
+            value: "archivebox"
+          - name: LOGNAME
+            value: "archivebox"
+          - name: PUID
+            value: "911"
+          - name: PGID
+            value: "911"
           - name: ALLOWED_HOSTS
             value: "*"
           - name: MEDIA_MAX_SIZE

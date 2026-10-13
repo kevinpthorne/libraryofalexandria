@@ -21,6 +21,18 @@ spec:
           repository: ghcr.io/librespeed/speedtest
           tag: latest
         targetPort: 8080
+        podSecurityContext:
+          runAsNonRoot: false
+          runAsUser: 0
+          runAsGroup: 0
+          fsGroup: 0
+        securityContext:
+          allowPrivilegeEscalation: true
+          runAsNonRoot: false
+          runAsUser: 0
+          runAsGroup: 0
+          capabilities:
+            drop: []
         env:
           - name: TITLE
             value: "LibreSpeed (LOA K)"
