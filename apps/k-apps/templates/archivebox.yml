@@ -63,7 +63,15 @@ spec:
             value: "120"
           - name: CHECK_SSL_VALIDITY
             value: "True"
+          - name: CSRF_TRUSTED_ORIGINS
+            value: "https://archivebox.{{ $cluster.name | default "k" }}.loa.internal,https://archivebox.{{ $cluster.name | default "k" }}.kpt.link"
           {{- if $hasFederation }}
+          - name: REVERSE_PROXY_USER_HEADER
+            value: "X-Forwarded-User"
+          - name: REVERSE_PROXY_WHITELIST
+            value: "127.0.0.1,::1"
+          - name: LOGOUT_REDIRECT_URL
+            value: "/oauth2/sign_out"
           - name: DATABASE_URL
             value: "postgres://archivebox:archivebox@127.0.0.1:5432/archivebox"
           - name: REDIS_URL
@@ -77,6 +85,10 @@ spec:
         oauth2Proxy:
           enabled: {{ $hasFederation }}
           issuerUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
+          {{- if $hasFederation }}
+          extraArgs:
+            - --user-id-claim=preferred_username
+          {{- end }}
         keycloak:
           enabled: {{ $hasFederation }}
         database:

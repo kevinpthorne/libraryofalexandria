@@ -1,6 +1,5 @@
 {{- if (index .Values "librespeed" "enabled" | default true) -}}
 {{- $cluster := .Values.cluster | default dict -}}
-{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -18,51 +17,31 @@ spec:
         cluster:
           name: {{ $cluster.name | default "k" }}
         image:
-          repository: ghcr.io/librespeed/speedtest
+          repository: ghcr.io/librespeed/speedtest-go
           tag: latest
-        targetPort: 8080
+        targetPort: 8989
         podSecurityContext:
-          runAsNonRoot: false
-          runAsUser: 0
-          runAsGroup: 0
-          fsGroup: 0
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
         securityContext:
-          allowPrivilegeEscalation: true
-          runAsNonRoot: false
-          runAsUser: 0
-          runAsGroup: 0
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
           capabilities:
-            drop: []
-        env:
-          - name: TITLE
-            value: "LibreSpeed (LOA K)"
-          {{- if $hasFederation }}
-          - name: TELEMETRY
-            value: "true"
-          - name: DB_TYPE
-            value: "postgresql"
-          - name: DB_HOSTNAME
-            value: "127.0.0.1"
-          - name: DB_PORT
-            value: "5432"
-          - name: DB_NAME
-            value: "librespeed"
-          - name: DB_USERNAME
-            value: "librespeed"
-          - name: DB_PASSWORD
-            value: ""
-          {{- end }}
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
         service:
           public: true
           domains:
             - "speedtest.{{ $cluster.name | default "k" }}.loa.internal"
             - "speedtest.{{ $cluster.name | default "k" }}.kpt.link"
-        database:
-          enabled: {{ $hasFederation }}
-          createPrivateDatabase: {{ $hasFederation }}
-          appName: librespeed
-          databaseName: librespeed
-          userName: librespeed
   destination:
     server: https://kubernetes.default.svc
     namespace: librespeed
