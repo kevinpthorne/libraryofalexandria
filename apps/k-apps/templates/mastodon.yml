@@ -66,6 +66,18 @@ spec:
             value: "https://seaweed-cluster-s3-https.seaweedfs-system.svc.cluster.{{ $cluster.name | default "k" }}:8333"
           - name: S3_BUCKET
             value: "mastodon-media"
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: mastodon-s3-creds
+                key: accessKey
+                optional: true
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: mastodon-s3-creds
+                key: secretKey
+                optional: true
           - name: OIDC_ENABLED
             value: {{ if $hasFederation }}"true"{{ else }}"false"{{ end }}
           - name: OIDC_DISPLAY_NAME
@@ -222,11 +234,10 @@ spec:
   seaweedRef:
     name: seaweed-cluster
     namespace: seaweedfs-system
+  identityRef:
+    name: mastodon
   secretRef:
     name: mastodon-s3-creds
-  target:
-    identityRef:
-      name: mastodon
 ---
 apiVersion: seaweed.seaweedfs.com/v1
 kind: Bucket
@@ -236,10 +247,10 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
-  seaweedRef:
+  clusterRef:
     name: seaweed-cluster
     namespace: seaweedfs-system
-  size: 50Gi
+  name: mastodon-media
 ---
 apiVersion: seaweed.seaweedfs.com/v1
 kind: S3Policy
@@ -252,22 +263,12 @@ spec:
   seaweedRef:
     name: seaweed-cluster
     namespace: seaweedfs-system
-  policy: |
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Action": [
-            "s3:*"
-          ],
-          "Resource": [
-            "arn:aws:s3:::mastodon-media",
-            "arn:aws:s3:::mastodon-media/*"
-          ]
-        }
+  statements:
+    - effect: Allow
+      actions: [s3:GetObject, s3:PutObject, s3:DeleteObject, s3:ListBucket]
+      resources: [
+        "mastodon-media/*", "mastodon-media"
       ]
-    }
 ---
 apiVersion: seaweed.seaweedfs.com/v1
 kind: S3PolicyBinding
@@ -280,26 +281,38 @@ spec:
   seaweedRef:
     name: seaweed-cluster
     namespace: seaweedfs-system
-  identityRef:
-    name: mastodon
   policyRef:
     name: mastodon-media-policy
+  subjects:
+    - kind: S3Identity
+      name: mastodon
 ---
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
+apiVersion: seaweed.seaweedfs.com/v1
+kind: ResourceReferenceGrant
 metadata:
-  name: allow-s3-from-mastodon
+  name: seaweed-mastodon-grant
   namespace: seaweedfs-system
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   from:
-    - group: ""
-      kind: Namespace
-      name: mastodon
+    - group: seaweed.seaweedfs.com
+      kind: S3Identity
+      namespace: mastodon
+    - group: seaweed.seaweedfs.com
+      kind: S3Credentials
+      namespace: mastodon
+    - group: seaweed.seaweedfs.com
+      kind: Bucket
+      namespace: mastodon
+    - group: seaweed.seaweedfs.com
+      kind: S3Policy
+      namespace: mastodon
+    - group: seaweed.seaweedfs.com
+      kind: S3PolicyBinding
+      namespace: mastodon
   to:
-    - group: ""
-      kind: Service
-      name: seaweed-cluster-s3-https
+    - group: seaweed.seaweedfs.com
+      kind: Seaweed
 {{- end }}
 {{- end }}
