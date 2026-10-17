@@ -16,6 +16,10 @@ spec:
       port: {{ .Values.rtmps.port | default 1936 }}
       targetPort: rtmps
       protocol: TCP
+    - name: rtmp
+      port: {{ .Values.rtmps.port | default 1935 }}
+      targetPort: rtmp
+      protocol: TCP
   selector:
     {{- include "mediamtx.selectorLabels" . | nindent 4 }}
 {{- end }}
@@ -32,7 +36,7 @@ metadata:
     external-dns.alpha.kubernetes.io/hostname: {{ .Values.internalDomain | quote }}
   {{- end }}
 spec:
-  type: {{ .Values.service.internal.type | default "ClusterIP" }}
+  type: {{ .Values.service.internal.type | default "LoadBalancer" }}
   ports:
     {{- if .Values.hls.enabled }}
     - name: hls
@@ -43,6 +47,10 @@ spec:
     - name: rtmps
       port: {{ .Values.rtmps.port | default 1936 }}
       targetPort: rtmps
+      protocol: TCP
+    - name: rtmp
+      port: 1935
+      targetPort: rtmp
       protocol: TCP
   selector:
     {{- include "mediamtx.selectorLabels" . | nindent 4 }}

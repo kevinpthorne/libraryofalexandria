@@ -11,9 +11,10 @@ data:
     webrtc: no
     srt: no
 
-    # RTMPS (Strict TLS on port 1936)
+    # RTMPS
     rtmp: yes
-    rtmpEncryption: {{ .Values.rtmps.encryption | default "strict" }}
+    rtmpAddress: :1935
+    rtmpEncryption: {{ .Values.rtmps.encryption | default "optional" }}
     rtmpsAddress: :{{ .Values.rtmps.port | default 1936 }}
     rtmpServerCert: /certs/tls.crt
     rtmpServerKey: /certs/tls.key

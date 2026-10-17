@@ -26,6 +26,9 @@ spec:
             - name: rtmps
               containerPort: {{ .Values.rtmps.port | default 1936 }}
               protocol: TCP
+            - name: rtmp
+              containerPort: 1935
+              protocol: TCP
             {{- if .Values.hls.enabled }}
             - name: hls
               containerPort: {{ .Values.hls.port | default 8888 }}

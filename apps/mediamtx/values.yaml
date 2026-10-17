@@ -18,7 +18,7 @@ auth:
 
 rtmps:
   port: 1936
-  encryption: strict # strict | optional
+  encryption: optional # strict | optional
 
 hls:
   enabled: true
@@ -32,7 +32,7 @@ service:
   # Internal cluster/LAN service (HLS + RTMPS for Jellyfin and internal clients)
   internal:
     enabled: true
-    type: ClusterIP
+    type: LoadBalancer
 
 tls:
   enabled: true
