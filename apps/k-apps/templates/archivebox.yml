@@ -94,7 +94,6 @@ spec:
         database:
           enabled: {{ $hasFederation }}
           createPrivateDatabase: {{ $hasFederation }}
-          appName: archivebox
           databaseName: archivebox
           userName: archivebox
         redis:

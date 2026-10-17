@@ -96,7 +96,6 @@ spec:
         database:
           enabled: {{ $hasFederation }}
           createPrivateDatabase: {{ $hasFederation }}
-          appName: monica
           databaseName: monica
           userName: monica
         redis:

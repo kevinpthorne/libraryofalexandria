@@ -28,7 +28,6 @@ spec:
         database:
           enabled: {{ $hasFederation }}
           createPrivateDatabase: {{ $hasFederation }}
-          appName: shlink
           databaseName: shlink
           userName: shlink
         oauth2Proxy:

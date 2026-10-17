@@ -120,7 +120,6 @@ spec:
         database:
           enabled: {{ $hasFederation }}
           createPrivateDatabase: {{ $hasFederation }}
-          appName: mastodon
           databaseName: mastodon
           userName: mastodon
         redis:
