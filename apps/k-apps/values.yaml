@@ -209,3 +209,5 @@ mediamtx:
   auth:
     secretName: "mediamtx-auth"
     secretKey: "stream-key"
+    userKey: "stream-user"
+    defaultUser: "publisher"

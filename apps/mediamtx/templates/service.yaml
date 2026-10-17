@@ -16,10 +16,6 @@ spec:
       port: {{ .Values.rtmps.port | default 1936 }}
       targetPort: rtmps
       protocol: TCP
-    - name: rtmp
-      port: {{ .Values.rtmps.port | default 1935 }}
-      targetPort: rtmp
-      protocol: TCP
   selector:
     {{- include "mediamtx.selectorLabels" . | nindent 4 }}
 {{- end }}

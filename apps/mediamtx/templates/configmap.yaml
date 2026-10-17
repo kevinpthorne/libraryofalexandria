@@ -27,3 +27,28 @@ data:
     {{- else }}
     hls: no
     {{- end }}
+
+    # Authentication
+    authMethod: internal
+    authInternalUsers:
+      {{- if .Values.auth.secretName }}
+      - user: {{ .Values.auth.defaultUser | default "publisher" }}
+        pass: ""
+        permissions:
+          - action: publish
+      - user: any
+        permissions:
+          - action: read
+          - action: playback
+      {{- else }}
+      - user: any
+        permissions:
+          - action: publish
+          - action: read
+          - action: playback
+      {{- end }}
+
+    # Paths (Allow dynamic stream paths)
+    paths:
+      all_others:
+

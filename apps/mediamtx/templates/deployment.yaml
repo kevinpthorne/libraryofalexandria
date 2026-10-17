@@ -37,13 +37,13 @@ spec:
           {{- if or .Values.auth.secretName .Values.extraEnv }}
           env:
             {{- if .Values.auth.secretName }}
-            - name: MTX_PATHDEFAULTS_PUBLISHPASS
+            - name: MTX_AUTHINTERNALUSERS_0_PASS
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.auth.secretName }}
                   key: {{ .Values.auth.secretKey | default "stream-key" }}
             {{- if .Values.auth.userKey }}
-            - name: MTX_PATHDEFAULTS_PUBLISHUSER
+            - name: MTX_AUTHINTERNALUSERS_0_USER
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.auth.secretName }}
