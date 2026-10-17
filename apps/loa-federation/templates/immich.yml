@@ -21,6 +21,7 @@ spec:
               existingClaim: immich-library-pvc
         controllers:
           main:
+            strategy: Recreate
             pod:
               securityContext:
                 runAsNonRoot: true
