@@ -24,6 +24,9 @@ rtmps:
 hls:
   enabled: true
   port: 8888
+  variant: mpegts # mpegts | fmp4 | lowLatency
+  segmentDuration: 2s
+  segmentCount: 7
 
 service:
   # Public internet-facing service (ONLY RTMPS exposed)

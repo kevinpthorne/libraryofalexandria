@@ -24,6 +24,9 @@ data:
     hls: yes
     hlsAddress: :{{ .Values.hls.port | default 8888 }}
     hlsEncryption: no
+    hlsVariant: {{ .Values.hls.variant | default "mpegts" }}
+    hlsSegmentDuration: {{ .Values.hls.segmentDuration | default "2s" }}
+    hlsSegmentCount: {{ .Values.hls.segmentCount | default 7 }}
     {{- else }}
     hls: no
     {{- end }}
