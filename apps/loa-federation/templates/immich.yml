@@ -321,6 +321,8 @@ spec:
     helm:
       valuesObject:
         svcName: "immich"
+        ca:
+          name: {{ .Values.pki.rootCAIssuer }}
         cert:
           sans:
             - "immich.{{ .Values.cluster.name }}.loa.internal"

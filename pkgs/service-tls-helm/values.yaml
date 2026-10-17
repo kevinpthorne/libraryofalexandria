@@ -1,7 +1,7 @@
 svcName: ""
 ca:
   kind: ClusterIssuer
-  name: pki-bootstrap
+  name: app-pki-bootstrap-issuer
 cert:
   secretName: ""
   sans: []
