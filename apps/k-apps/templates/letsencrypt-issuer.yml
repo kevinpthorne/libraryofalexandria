@@ -1,0 +1,39 @@
+{{- if (index .Values "letsencrypt" "enabled" | default true) -}}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: {{ (index .Values "letsencrypt" "email") | default "admin@kpt.link" }}
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: {{ (index .Values "letsencrypt" "secretName") | default "cf-key" }}
+              key: {{ (index .Values "letsencrypt" "secretKey") | default "api-key" }}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: {{ (index .Values "letsencrypt" "email") | default "admin@kpt.link" }}
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: {{ (index .Values "letsencrypt" "secretName") | default "cf-key" }}
+              key: {{ (index .Values "letsencrypt" "secretKey") | default "api-key" }}
+{{- end }}

@@ -1,0 +1,49 @@
+{{- if .Values.service.public.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mediamtx.fullname" . }}
+  labels:
+    {{- include "mediamtx.labels" . | nindent 4 }}
+  annotations:
+    external-dns.loa.internal/expose: "public"
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.domain | quote }}
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
+spec:
+  type: {{ .Values.service.public.type | default "LoadBalancer" }}
+  ports:
+    - name: rtmps
+      port: {{ .Values.rtmps.port | default 1936 }}
+      targetPort: rtmps
+      protocol: TCP
+  selector:
+    {{- include "mediamtx.selectorLabels" . | nindent 4 }}
+{{- end }}
+{{- if .Values.service.internal.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mediamtx.fullname" . }}-internal
+  labels:
+    {{- include "mediamtx.labels" . | nindent 4 }}
+  {{- if .Values.internalDomain }}
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.internalDomain | quote }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.internal.type | default "ClusterIP" }}
+  ports:
+    {{- if .Values.hls.enabled }}
+    - name: hls
+      port: {{ .Values.hls.port | default 8888 }}
+      targetPort: hls
+      protocol: TCP
+    {{- end }}
+    - name: rtmps
+      port: {{ .Values.rtmps.port | default 1936 }}
+      targetPort: rtmps
+      protocol: TCP
+  selector:
+    {{- include "mediamtx.selectorLabels" . | nindent 4 }}
+{{- end }}

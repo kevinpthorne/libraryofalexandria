@@ -1,0 +1,17 @@
+{{- if .Values.tls.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "mediamtx.fullname" . }}-tls
+  labels:
+    {{- include "mediamtx.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  secretName: {{ .Values.tls.secretName | default (printf "%s-tls" (include "mediamtx.fullname" .)) }}
+  dnsNames:
+    - {{ .Values.domain | quote }}
+  issuerRef:
+    name: {{ .Values.tls.issuerName | default "letsencrypt-prod" }}
+    kind: {{ .Values.tls.issuerKind | default "ClusterIssuer" }}
+{{- end }}

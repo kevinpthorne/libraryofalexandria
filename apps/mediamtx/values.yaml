@@ -1,0 +1,63 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: bluenviron/mediamtx
+  tag: latest
+  pullPolicy: IfNotPresent
+
+domain: catcher.k.kpt.link
+internalDomain: catcher.k.loa.internal
+
+# Stream key authentication from a Kubernetes Secret (no plaintext secrets in git)
+auth:
+  secretName: "mediamtx-auth"
+  secretKey: "stream-key"
+  userKey: "stream-user"
+  autoGenerate: false
+
+rtmps:
+  port: 1936
+  encryption: strict # strict | optional
+
+hls:
+  enabled: true
+  port: 8888
+
+service:
+  # Public internet-facing service (ONLY RTMPS exposed)
+  public:
+    enabled: true
+    type: LoadBalancer
+  # Internal cluster/LAN service (HLS + RTMPS for Jellyfin and internal clients)
+  internal:
+    enabled: true
+    type: ClusterIP
+
+tls:
+  enabled: true
+  secretName: mediamtx-tls
+  issuerName: letsencrypt-prod
+  issuerKind: ClusterIssuer
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
+extraEnv: []
+resources: {}

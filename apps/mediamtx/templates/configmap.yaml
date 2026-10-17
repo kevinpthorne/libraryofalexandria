@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mediamtx.fullname" . }}-config
+  labels:
+    {{- include "mediamtx.labels" . | nindent 4 }}
+data:
+  mediamtx.yml: |
+    # Protocols
+    rtsp: no
+    webrtc: no
+    srt: no
+
+    # RTMPS (Strict TLS on port 1936)
+    rtmp: yes
+    rtmpEncryption: {{ .Values.rtmps.encryption | default "strict" }}
+    rtmpsAddress: :{{ .Values.rtmps.port | default 1936 }}
+    rtmpServerCert: /certs/tls.crt
+    rtmpServerKey: /certs/tls.key
+
+    # HLS (Internal streaming for Jellyfin)
+    {{- if .Values.hls.enabled }}
+    hls: yes
+    hlsAddress: :{{ .Values.hls.port | default 8888 }}
+    hlsEncryption: no
+    {{- else }}
+    hls: no
+    {{- end }}

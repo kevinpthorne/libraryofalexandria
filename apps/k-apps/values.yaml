@@ -196,3 +196,16 @@ excalidraw:
 
 monica:
   enabled: true
+
+letsencrypt:
+  enabled: true
+  email: "admin@kpt.link"
+
+mediamtx:
+  enabled: true
+  domain: "catcher.k.kpt.link"
+  rtmpsPort: 1936
+  issuerName: "letsencrypt-prod"
+  auth:
+    secretName: "mediamtx-auth"
+    secretKey: "stream-key"

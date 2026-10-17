@@ -1,0 +1,39 @@
+{{- if (index .Values "mediamtx" "enabled" | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $domain := (index .Values "mediamtx" "domain") | default (printf "catcher.%s.kpt.link" ($cluster.name | default "k")) -}}
+{{- $issuerName := (index .Values "mediamtx" "issuerName") | default "letsencrypt-prod" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mediamtx
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: apps/mediamtx
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        domain: {{ $domain | quote }}
+        rtmps:
+          port: {{ (index .Values "mediamtx" "rtmpsPort") | default 1936 }}
+        tls:
+          issuerName: {{ $issuerName | quote }}
+        {{- if hasKey (index .Values "mediamtx") "auth" }}
+        auth:
+          {{- toYaml (index .Values "mediamtx" "auth") | nindent 10 }}
+        {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mediamtx
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}
