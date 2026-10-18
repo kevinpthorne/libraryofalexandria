@@ -86,12 +86,14 @@ spec:
           keydb-client-cert:
             type: secret
             name: keydb-immich-client-cert
+            defaultMode: 0600
             globalMounts:
               - path: /certs/keydb-client
                 readOnly: true
           pgedge-client-cert:
             type: secret
             name: pgedge-immich-client-cert
+            defaultMode: 0600
             globalMounts:
               - path: /certs/pgedge-client
                 readOnly: true
