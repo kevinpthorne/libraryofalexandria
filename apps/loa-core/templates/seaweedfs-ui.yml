@@ -1,0 +1,47 @@
+{{- if .Values.seaweedfsUi.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: seaweedfs-ui
+  namespace: {{ .Values.argoNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.seaweedfsUi.syncWave | default "2" | quote }}
+spec:
+  project: default
+  source:
+    chart: {{ .Values.seaweedfsUi.chart | default "seaweedfs-ui" | quote }}
+    repoURL: {{ .Values.seaweedfsUi.repoURL | default "oci://ghcr.io/kevinpthorne/charts" | quote }}
+    targetRevision: {{ .Values.seaweedfsUi.targetRevision | default "0.1.0" | quote }}
+    helm:
+      valuesObject:
+        image:
+          repository: {{ .Values.seaweedfsUi.image.repository | default "ghcr.io/kevinpthorne/seaweedfs-ui" | quote }}
+          tag: {{ .Values.seaweedfsUi.image.tag | default "latest" | quote }}
+          pullPolicy: {{ .Values.seaweedfsUi.image.pullPolicy | default "IfNotPresent" | quote }}
+        config:
+          tls:
+            enabled: {{ .Values.seaweedfsUi.config.tls.enabled | default true }}
+            existingSecret: {{ .Values.seaweedfsUi.config.tls.existingSecret | default "seaweed-cluster-server-tls" | quote }}
+          discovery:
+            kubernetes:
+              enabled: {{ .Values.seaweedfsUi.config.discovery.kubernetes.enabled | default true }}
+              filerSyncPodSelector: {{ .Values.seaweedfsUi.config.discovery.kubernetes.filerSyncPodSelector | default "app=seaweedfs-filer-sync" | quote }}
+        {{- with .Values.seaweedfsUi.extraValues }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.seaweedfsUi.values }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.seaweedfsUi.namespace | default "seaweedfs-system" }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

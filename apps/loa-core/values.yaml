@@ -9,3 +9,24 @@ hostdns:
 
 cloudflareExternaldns:
   enabled: true
+
+seaweedfsUi:
+  enabled: true
+  chart: seaweedfs-ui
+  repoURL: oci://ghcr.io/kevinpthorne/charts
+  targetRevision: "0.1.0"
+  namespace: seaweedfs-system
+  syncWave: "2"
+  image:
+    repository: ghcr.io/kevinpthorne/seaweedfs-ui
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  config:
+    tls:
+      enabled: true
+      existingSecret: seaweed-cluster-server-tls
+    discovery:
+      kubernetes:
+        enabled: true
+        filerSyncPodSelector: "app=seaweedfs-filer-sync"
+  extraValues: {}
