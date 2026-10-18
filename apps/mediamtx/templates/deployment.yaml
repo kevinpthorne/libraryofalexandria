@@ -31,10 +31,20 @@ spec:
             - name: rtmp
               containerPort: 1935
               protocol: TCP
+            {{- if .Values.rtsp.enabled }}
+            - name: rtsp
+              containerPort: {{ .Values.rtsp.port | default 8554 }}
+              protocol: TCP
+            {{- end }}
             {{- if .Values.hls.enabled }}
             - name: hls
               containerPort: {{ .Values.hls.port | default 8888 }}
               protocol: TCP
+            {{- end }}
+            {{- if .Values.srt.enabled }}
+            - name: srt
+              containerPort: {{ .Values.srt.port | default 8890 }}
+              protocol: UDP
             {{- end }}
           {{- if or .Values.auth.secretName .Values.extraEnv }}
           env:

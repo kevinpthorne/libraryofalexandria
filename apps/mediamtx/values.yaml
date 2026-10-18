@@ -21,6 +21,15 @@ rtmps:
   port: 1936
   encryption: optional # strict | optional
 
+rtsp:
+  enabled: true
+  port: 8554
+
+srt:
+  enabled: true
+  port: 8890
+  public: true
+
 hls:
   enabled: true
   port: 8888

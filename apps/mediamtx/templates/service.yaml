@@ -16,6 +16,12 @@ spec:
       port: {{ .Values.rtmps.port | default 1936 }}
       targetPort: rtmps
       protocol: TCP
+    {{- if and .Values.srt.enabled .Values.srt.public }}
+    - name: srt
+      port: {{ .Values.srt.port | default 8890 }}
+      targetPort: srt
+      protocol: UDP
+    {{- end }}
   selector:
     {{- include "mediamtx.selectorLabels" . | nindent 4 }}
 {{- end }}
@@ -48,6 +54,18 @@ spec:
       port: 1935
       targetPort: rtmp
       protocol: TCP
+    {{- if .Values.rtsp.enabled }}
+    - name: rtsp
+      port: {{ .Values.rtsp.port | default 8554 }}
+      targetPort: rtsp
+      protocol: TCP
+    {{- end }}
+    {{- if .Values.srt.enabled }}
+    - name: srt
+      port: {{ .Values.srt.port | default 8890 }}
+      targetPort: srt
+      protocol: UDP
+    {{- end }}
   selector:
     {{- include "mediamtx.selectorLabels" . | nindent 4 }}
 {{- end }}

@@ -7,9 +7,20 @@ metadata:
 data:
   mediamtx.yml: |
     # Protocols
+    {{- if .Values.rtsp.enabled }}
+    rtsp: yes
+    rtspAddress: :{{ .Values.rtsp.port | default 8554 }}
+    rtspTransports: [tcp]
+    {{- else }}
     rtsp: no
+    {{- end }}
     webrtc: no
+    {{- if .Values.srt.enabled }}
+    srt: yes
+    srtAddress: :{{ .Values.srt.port | default 8890 }}
+    {{- else }}
     srt: no
+    {{- end }}
 
     # RTMPS
     rtmp: yes
