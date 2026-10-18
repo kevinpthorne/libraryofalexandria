@@ -13,6 +13,7 @@ metadata:
     {{- else }}
     external-dns.loa.internal/expose: "public"
     {{- end }}
+    {{- end }}
     {{- else }}
     {}
     {{- end }}

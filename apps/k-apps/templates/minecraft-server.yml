@@ -16,6 +16,7 @@ spec:
             - mc.k.loa.internal
             - mc.k.kpt.link
           public: true
+          anycast: true
   destination:
     server: https://kubernetes.default.svc
     namespace: minecraft
