@@ -61,13 +61,18 @@ data:
         pass: ""
         permissions:
           - action: publish
+          - action: api
       - user: any
         permissions:
+          - action: api
+          - action: metrics
           - action: read
           - action: playback
       {{- else }}
       - user: any
         permissions:
+          - action: api
+          - action: metrics
           - action: publish
           - action: read
           - action: playback
