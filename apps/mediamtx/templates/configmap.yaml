@@ -19,6 +19,9 @@ data:
     rtmpServerCert: /certs/tls.crt
     rtmpServerKey: /certs/tls.key
 
+    # Buffers
+    writeQueueSize: 2048
+
     # HLS (Internal streaming for Jellyfin)
     {{- if .Values.hls.enabled }}
     hls: yes
@@ -26,7 +29,7 @@ data:
     hlsEncryption: no
     hlsVariant: {{ .Values.hls.variant | default "mpegts" }}
     hlsSegmentDuration: {{ .Values.hls.segmentDuration | default "2s" }}
-    hlsSegmentCount: {{ .Values.hls.segmentCount | default 7 }}
+    hlsSegmentCount: {{ .Values.hls.segmentCount | default 15 }}
     {{- else }}
     hls: no
     {{- end }}
