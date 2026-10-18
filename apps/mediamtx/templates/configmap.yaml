@@ -22,6 +22,14 @@ data:
     srt: no
     {{- end }}
 
+    # API (Internal Control & Monitoring)
+    {{- if .Values.api.enabled }}
+    api: yes
+    apiAddress: 127.0.0.1:{{ .Values.api.port | default 9997 }}
+    {{- else }}
+    api: no
+    {{- end }}
+
     # RTMPS
     rtmp: yes
     rtmpAddress: :1935

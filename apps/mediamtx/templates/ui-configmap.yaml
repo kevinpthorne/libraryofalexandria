@@ -1,0 +1,695 @@
+{{- if .Values.ui.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mediamtx.fullname" . }}-ui
+  labels:
+    {{- include "mediamtx.labels" . | nindent 4 }}
+data:
+  nginx.conf: |
+    server {
+        listen {{ .Values.ui.port | default 8080 }};
+        server_name _;
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /v3/ {
+            proxy_pass http://127.0.0.1:{{ .Values.api.port | default 9997 }}/v3/;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_read_timeout 15s;
+        }
+
+        location /hls/ {
+            proxy_pass http://127.0.0.1:{{ .Values.hls.port | default 8888 }}/;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+    }
+
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>MediaMTX Dashboard</title>
+      <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+      <style>
+        :root {
+          --bg-main: #0b0f19;
+          --bg-card: #151d30;
+          --bg-card-hover: #1c2742;
+          --border-color: #24304f;
+          --text-main: #f3f4f6;
+          --text-muted: #9ca3af;
+          --accent-blue: #3b82f6;
+          --accent-green: #10b981;
+          --accent-amber: #f59e0b;
+          --accent-red: #ef4444;
+          --accent-purple: #8b5cf6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          background-color: var(--bg-main);
+          color: var(--text-main);
+          min-height: 100vh;
+          padding: 24px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-bottom: 24px;
+          border-bottom: 1px solid var(--border-color);
+          margin-bottom: 24px;
+          flex-wrap: wrap;
+          gap: 16px;
+        }
+        .title-group { display: flex; align-items: center; gap: 14px; }
+        .logo-badge {
+          background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+          color: white;
+          padding: 8px 14px;
+          border-radius: 8px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+          font-size: 16px;
+        }
+        h1 { font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .server-domain { color: var(--text-muted); font-size: 13px; font-family: monospace; }
+        .controls { display: flex; align-items: center; gap: 12px; }
+        .badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 10px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 500;
+          background: rgba(255, 255, 255, 0.08);
+        }
+        .badge-live { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-waiting { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .pulse-dot {
+          width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-green);
+          box-shadow: 0 0 8px var(--accent-green);
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        button, select {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          color: var(--text-main);
+          padding: 8px 14px;
+          border-radius: 6px;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        button:hover { background: var(--bg-card-hover); border-color: var(--accent-blue); }
+        button.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+        button.primary:hover { background: #2563eb; }
+        button.danger { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: var(--accent-red); }
+        button.danger:hover { background: var(--accent-red); color: #fff; }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 16px;
+          margin-bottom: 28px;
+        }
+        .stat-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 10px;
+          padding: 16px 20px;
+        }
+        .stat-label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .stat-value { font-size: 24px; font-weight: 700; color: #fff; }
+
+        .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+        .section-title { font-size: 17px; font-weight: 600; }
+
+        .stream-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 18px;
+          margin-bottom: 32px;
+        }
+        .stream-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          padding: 22px;
+          transition: border-color 0.2s;
+        }
+        .stream-card.live { border-color: rgba(16, 185, 129, 0.4); }
+        .stream-card-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 14px;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+        .path-name { font-size: 18px; font-weight: 700; font-family: monospace; color: #60a5fa; }
+        .stream-details {
+          display: flex;
+          gap: 20px;
+          margin-bottom: 16px;
+          font-size: 13px;
+          color: var(--text-muted);
+          flex-wrap: wrap;
+        }
+        .stream-details span strong { color: var(--text-main); }
+        .tracks-info {
+          background: rgba(0, 0, 0, 0.25);
+          padding: 8px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-family: monospace;
+          margin-bottom: 18px;
+          color: #cbd5e1;
+          display: flex;
+          gap: 14px;
+          flex-wrap: wrap;
+        }
+
+        .url-box {
+          background: rgba(0, 0, 0, 0.35);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 12px;
+          margin-top: 10px;
+        }
+        .url-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 6px 0;
+          font-size: 12px;
+          font-family: monospace;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          gap: 10px;
+        }
+        .url-item:last-child { border-bottom: none; }
+        .url-tag {
+          font-weight: 600;
+          color: #93c5fd;
+          min-width: 80px;
+        }
+        .url-text {
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          color: #e2e8f0;
+        }
+        .btn-copy {
+          padding: 3px 8px;
+          font-size: 11px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .btn-copy:hover { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 13px;
+          margin-bottom: 32px;
+          background: var(--bg-card);
+          border-radius: 8px;
+          overflow: hidden;
+          border: 1px solid var(--border-color);
+        }
+        th, td {
+          padding: 12px 16px;
+          text-align: left;
+          border-bottom: 1px solid var(--border-color);
+        }
+        th {
+          background: rgba(0, 0, 0, 0.2);
+          color: var(--text-muted);
+          font-weight: 600;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        tr:hover td { background: var(--bg-card-hover); }
+
+        /* Modal Preview */
+        .modal-backdrop {
+          display: none;
+          position: fixed;
+          top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(0, 0, 0, 0.85);
+          backdrop-filter: blur(4px);
+          z-index: 1000;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+        }
+        .modal-content {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          width: 100%;
+          max-width: 900px;
+          overflow: hidden;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
+          border-bottom: 1px solid var(--border-color);
+        }
+        .modal-body {
+          padding: 20px;
+          background: #000;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 400px;
+        }
+        video {
+          width: 100%;
+          max-height: 520px;
+          border-radius: 6px;
+          outline: none;
+        }
+
+        .toast {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          background: #10b981;
+          color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+          transform: translateY(100px);
+          opacity: 0;
+          transition: all 0.3s ease;
+          z-index: 2000;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .empty-state {
+          padding: 40px;
+          text-align: center;
+          color: var(--text-muted);
+          background: var(--bg-card);
+          border: 1px dashed var(--border-color);
+          border-radius: 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <header>
+          <div class="title-group">
+            <div class="logo-badge">MTX</div>
+            <div>
+              <h1>MediaMTX Dashboard <span id="conn-badge" class="badge badge-waiting">Connecting...</span></h1>
+              <div class="server-domain">Internal: {{ .Values.internalDomain | default "catcher.k.loa.internal" }} &bull; Public: {{ .Values.domain | default "catcher.k.kpt.link" }}</div>
+            </div>
+          </div>
+          <div class="controls">
+            <span id="version-tag" class="badge">v---</span>
+            <label style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+              <input type="checkbox" id="auto-refresh" checked> Auto-refresh
+            </label>
+            <select id="refresh-interval">
+              <option value="2000">2s</option>
+              <option value="5000" selected>5s</option>
+              <option value="10000">10s</option>
+            </select>
+            <button class="primary" id="btn-manual-refresh">Refresh</button>
+          </div>
+        </header>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Active Streams</div>
+            <div class="stat-value" id="stat-active-streams">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Viewers (Readers)</div>
+            <div class="stat-value" id="stat-total-readers">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Publishers</div>
+            <div class="stat-value" id="stat-total-publishers">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Data Received</div>
+            <div class="stat-value" id="stat-bytes-received">0 MB</div>
+          </div>
+        </div>
+
+        <!-- Active Streams Section -->
+        <div class="section-header">
+          <div class="section-title">Configured & Live Paths</div>
+        </div>
+        <div id="streams-container" class="stream-grid">
+          <div class="empty-state">Loading paths...</div>
+        </div>
+
+        <!-- Connections Section -->
+        <div class="section-header">
+          <div class="section-title">Active Connections (RTMP & SRT)</div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Protocol</th>
+                <th>Remote Address</th>
+                <th>Type</th>
+                <th>State</th>
+                <th>Data Received</th>
+                <th>Data Sent</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="connections-tbody">
+              <tr><td colspan="7" style="text-align:center; color: var(--text-muted);">No active connections</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Stream Preview Modal -->
+      <div id="preview-modal" class="modal-backdrop">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="modal-stream-title" style="font-size: 16px; font-weight: 600;">Stream Preview</h3>
+            <button id="modal-close" class="btn-copy">&times; Close</button>
+          </div>
+          <div class="modal-body">
+            <video id="preview-video" controls autoplay muted playsinline></video>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast Notification -->
+      <div id="toast" class="toast">URL copied to clipboard!</div>
+
+      <script>
+        const internalHost = "{{ .Values.internalDomain | default "catcher.k.loa.internal" }}";
+        const publicHost = "{{ .Values.domain | default "catcher.k.kpt.link" }}";
+        const rtmpsPort = "{{ .Values.rtmps.port | default 1936 }}";
+        const srtPort = "{{ .Values.srt.port | default 8890 }}";
+        const rtspPort = "{{ .Values.rtsp.port | default 8554 }}";
+        const hlsPort = "{{ .Values.hls.port | default 8888 }}";
+
+        let currentHls = null;
+
+        function formatBytes(bytes) {
+          if (!bytes || bytes === 0) return '0 B';
+          const k = 1024;
+          const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showToast(msg) {
+          const toast = document.getElementById('toast');
+          toast.textContent = msg;
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function copyText(text) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast('Copied: ' + text);
+          }).catch(err => {
+            prompt('Copy URL:', text);
+          });
+        }
+
+        async function fetchAPI(endpoint) {
+          try {
+            const res = await fetch(endpoint);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.json();
+          } catch (e) {
+            console.error(`Error fetching ${endpoint}:`, e);
+            return null;
+          }
+        }
+
+        async function postAPI(endpoint) {
+          try {
+            const res = await fetch(endpoint, { method: 'POST' });
+            return res.ok;
+          } catch (e) {
+            console.error(`Error calling ${endpoint}:`, e);
+            return false;
+          }
+        }
+
+        async function updateDashboard() {
+          const info = await fetchAPI('/v3/info');
+          const connBadge = document.getElementById('conn-badge');
+          const versionTag = document.getElementById('version-tag');
+
+          if (info) {
+            connBadge.className = 'badge badge-live';
+            connBadge.innerHTML = '<span class="pulse-dot"></span> Online';
+            versionTag.textContent = info.version || 'Active';
+          } else {
+            connBadge.className = 'badge badge-waiting';
+            connBadge.textContent = 'Disconnected';
+          }
+
+          // Fetch paths
+          const pathsData = await fetchAPI('/v3/paths/list');
+          const streamsContainer = document.getElementById('streams-container');
+          let activeStreams = 0;
+          let totalReaders = 0;
+          let totalPublishers = 0;
+          let totalBytesIn = 0;
+
+          if (pathsData && pathsData.items && pathsData.items.length > 0) {
+            streamsContainer.innerHTML = '';
+            pathsData.items.forEach(path => {
+              const isLive = path.ready === true;
+              const readersCount = (path.readers && path.readers.length) || 0;
+              const bytesReceived = path.bytesReceived || 0;
+              totalReaders += readersCount;
+              totalBytesIn += bytesReceived;
+
+              if (isLive) {
+                activeStreams++;
+                totalPublishers++;
+              }
+
+              const pathName = path.name;
+              const sourceProtocol = path.source ? (path.source.type || 'Unknown') : 'None';
+              const sourceId = path.source ? (path.source.id || '') : '';
+
+              let tracksDesc = 'No tracks detected';
+              if (path.tracks && path.tracks.length > 0) {
+                tracksDesc = path.tracks.map(t => {
+                  let str = t.type || 'Track';
+                  if (t.codec) str += ` (${t.codec})`;
+                  return str;
+                }).join(' &bull; ');
+              }
+
+              const rtmpIngest = `rtmp://${internalHost}:1935/${pathName}`;
+              const rtmpsIngest = `rtmps://${publicHost}:${rtmpsPort}/${pathName}`;
+              const srtPlay = `srt://${internalHost}:${srtPort}?streamid=read:${pathName}&latency=1000`;
+              const rtspPlay = `rtsp://${internalHost}:${rtspPort}/${pathName}`;
+              const hlsUrl = `http://${internalHost}:${hlsPort}/${pathName}/index.m3u8`;
+
+              const card = document.createElement('div');
+              card.className = `stream-card ${isLive ? 'live' : ''}`;
+              card.innerHTML = `
+                <div class="stream-card-top">
+                  <div>
+                    <span class="path-name">/${pathName}</span>
+                    <span style="margin-left: 10px;" class="badge ${isLive ? 'badge-live' : 'badge-waiting'}">
+                      ${isLive ? '<span class="pulse-dot"></span> Live' : 'Waiting for Source'}
+                    </span>
+                  </div>
+                  <div>
+                    ${isLive ? `<button class="primary" onclick="openPreview('${pathName}')">&#9658; Preview Stream</button>` : ''}
+                  </div>
+                </div>
+                <div class="stream-details">
+                  <span>Source: <strong>${sourceProtocol}</strong></span>
+                  <span>Readers: <strong>${readersCount}</strong></span>
+                  <span>Data In: <strong>${formatBytes(bytesReceived)}</strong></span>
+                </div>
+                <div class="tracks-info">Tracks: ${tracksDesc}</div>
+                <div class="url-box">
+                  <div class="url-item">
+                    <span class="url-tag">SRT Play</span>
+                    <span class="url-text">${srtPlay}</span>
+                    <button class="btn-copy" onclick="copyText('${srtPlay}')">Copy</button>
+                  </div>
+                  <div class="url-item">
+                    <span class="url-tag">RTMPS Ingest</span>
+                    <span class="url-text">${rtmpsIngest}</span>
+                    <button class="btn-copy" onclick="copyText('${rtmpsIngest}')">Copy</button>
+                  </div>
+                  <div class="url-item">
+                    <span class="url-tag">RTMP Ingest</span>
+                    <span class="url-text">${rtmpIngest}</span>
+                    <button class="btn-copy" onclick="copyText('${rtmpIngest}')">Copy</button>
+                  </div>
+                  <div class="url-item">
+                    <span class="url-tag">RTSP Play</span>
+                    <span class="url-text">${rtspPlay}</span>
+                    <button class="btn-copy" onclick="copyText('${rtspPlay}')">Copy</button>
+                  </div>
+                  <div class="url-item">
+                    <span class="url-tag">HLS URL</span>
+                    <span class="url-text">${hlsUrl}</span>
+                    <button class="btn-copy" onclick="copyText('${hlsUrl}')">Copy</button>
+                  </div>
+                </div>
+              `;
+              streamsContainer.appendChild(card);
+            });
+          } else {
+            streamsContainer.innerHTML = '<div class="empty-state">No active stream paths at this moment. Start streaming to MediaMTX to view details here.</div>';
+          }
+
+          document.getElementById('stat-active-streams').textContent = activeStreams;
+          document.getElementById('stat-total-readers').textContent = totalReaders;
+          document.getElementById('stat-total-publishers').textContent = totalPublishers;
+          document.getElementById('stat-bytes-received').textContent = formatBytes(totalBytesIn);
+
+          // Fetch connections (RTMP + SRT)
+          const [rtmpConns, srtConns] = await Promise.all([
+            fetchAPI('/v3/rtmpconns/list'),
+            fetchAPI('/v3/srtconns/list')
+          ]);
+
+          const tbody = document.getElementById('connections-tbody');
+          const allConns = [];
+
+          if (rtmpConns && rtmpConns.items) {
+            rtmpConns.items.forEach(c => allConns.push({ ...c, protocol: 'RTMP', kickUrl: `/v3/rtmpconns/kick/${c.id}` }));
+          }
+          if (srtConns && srtConns.items) {
+            srtConns.items.forEach(c => allConns.push({ ...c, protocol: 'SRT', kickUrl: `/v3/srtconns/kick/${c.id}` }));
+          }
+
+          if (allConns.length > 0) {
+            tbody.innerHTML = '';
+            allConns.forEach(c => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td><strong>${c.protocol}</strong></td>
+                <td style="font-family: monospace;">${c.remoteAddr || 'Unknown'}</td>
+                <td><span class="badge ${c.state === 'publish' ? 'badge-live' : 'badge'}">${c.state || 'active'}</span></td>
+                <td>${c.state || 'idle'}</td>
+                <td>${formatBytes(c.bytesReceived || 0)}</td>
+                <td>${formatBytes(c.bytesSent || 0)}</td>
+                <td><button class="danger btn-copy" onclick="kickClient('${c.kickUrl}')">Kick</button></td>
+              `;
+              tbody.appendChild(tr);
+            });
+          } else {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 20px;">No client connections currently active.</td></tr>';
+          }
+        }
+
+        async function kickClient(kickUrl) {
+          if (!confirm('Are you sure you want to disconnect this client?')) return;
+          const ok = await postAPI(kickUrl);
+          if (ok) {
+            showToast('Client disconnected');
+            updateDashboard();
+          } else {
+            showToast('Failed to disconnect client');
+          }
+        }
+
+        function openPreview(pathName) {
+          const modal = document.getElementById('preview-modal');
+          const video = document.getElementById('preview-video');
+          const title = document.getElementById('modal-stream-title');
+          title.textContent = `Live Stream Preview: /${pathName}`;
+
+          const streamUrl = `/hls/${pathName}/index.m3u8`;
+
+          if (Hls.isSupported()) {
+            if (currentHls) currentHls.destroy();
+            currentHls = new Hls({ enableWorker: true, lowLatencyMode: false });
+            currentHls.loadSource(streamUrl);
+            currentHls.attachMedia(video);
+            currentHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = streamUrl;
+            video.play().catch(() => {});
+          }
+
+          modal.style.display = 'flex';
+        }
+
+        function closePreview() {
+          const modal = document.getElementById('preview-modal');
+          const video = document.getElementById('preview-video');
+          modal.style.display = 'none';
+          video.pause();
+          if (currentHls) {
+            currentHls.destroy();
+            currentHls = null;
+          }
+          video.src = '';
+        }
+
+        document.getElementById('modal-close').addEventListener('click', closePreview);
+        document.getElementById('preview-modal').addEventListener('click', (e) => {
+          if (e.target.id === 'preview-modal') closePreview();
+        });
+
+        let timer = null;
+        function scheduleRefresh() {
+          if (timer) clearInterval(timer);
+          const auto = document.getElementById('auto-refresh').checked;
+          const interval = parseInt(document.getElementById('refresh-interval').value, 10);
+          if (auto) {
+            timer = setInterval(updateDashboard, interval);
+          }
+        }
+
+        document.getElementById('auto-refresh').addEventListener('change', scheduleRefresh);
+        document.getElementById('refresh-interval').addEventListener('change', scheduleRefresh);
+        document.getElementById('btn-manual-refresh').addEventListener('click', () => {
+          updateDashboard();
+          showToast('Dashboard refreshed');
+        });
+
+        // Initial load
+        updateDashboard();
+        scheduleRefresh();
+      </script>
+    </body>
+    </html>
+{{- end }}

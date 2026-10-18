@@ -40,6 +40,12 @@ metadata:
 spec:
   type: {{ .Values.service.internal.type | default "LoadBalancer" }}
   ports:
+    {{- if .Values.ui.enabled }}
+    - name: ui
+      port: {{ .Values.ui.servicePort | default 8080 }}
+      targetPort: ui
+      protocol: TCP
+    {{- end }}
     {{- if .Values.hls.enabled }}
     - name: hls
       port: {{ .Values.hls.port | default 8888 }}

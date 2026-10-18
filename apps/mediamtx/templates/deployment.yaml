@@ -13,6 +13,9 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if .Values.ui.enabled }}
+        checksum/ui-config: {{ include (print $.Template.BasePath "/ui-configmap.yaml") . | sha256sum }}
+        {{- end }}
       labels:
         {{- include "mediamtx.selectorLabels" . | nindent 8 }}
     spec:
@@ -45,6 +48,11 @@ spec:
             - name: srt
               containerPort: {{ .Values.srt.port | default 8890 }}
               protocol: UDP
+            {{- end }}
+            {{- if .Values.api.enabled }}
+            - name: api
+              containerPort: {{ .Values.api.port | default 9997 }}
+              protocol: TCP
             {{- end }}
           {{- if or .Values.auth.secretName .Values.extraEnv }}
           env:
@@ -83,6 +91,32 @@ spec:
             - name: tls
               mountPath: /certs
               readOnly: true
+        {{- if .Values.ui.enabled }}
+        - name: admin-ui
+          image: "{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"
+          imagePullPolicy: {{ .Values.ui.image.pullPolicy | default "IfNotPresent" }}
+          ports:
+            - name: ui
+              containerPort: {{ .Values.ui.port | default 8080 }}
+              protocol: TCP
+          {{- with .Values.ui.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.ui.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: ui
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: ui
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
+              readOnly: true
+        {{- end }}
       volumes:
         - name: config
           configMap:
@@ -90,3 +124,8 @@ spec:
         - name: tls
           secret:
             secretName: {{ .Values.tls.secretName | default "mediamtx-tls" }}
+        {{- if .Values.ui.enabled }}
+        - name: ui
+          configMap:
+            name: {{ include "mediamtx.fullname" . }}-ui
+        {{- end }}

@@ -24,6 +24,10 @@ spec:
         auth:
           {{- toYaml (index .Values "mediamtx" "auth") | nindent 10 }}
         {{- end }}
+        {{- if hasKey (index .Values "mediamtx") "ui" }}
+        ui:
+          {{- toYaml (index .Values "mediamtx" "ui") | nindent 10 }}
+        {{- end }}
   destination:
     server: https://kubernetes.default.svc
     namespace: mediamtx

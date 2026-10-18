@@ -30,6 +30,30 @@ srt:
   port: 8890
   public: true
 
+api:
+  enabled: true
+  port: 9997
+
+ui:
+  enabled: true
+  port: 8080
+  servicePort: 8080
+  image:
+    repository: nginxinc/nginx-unprivileged
+    tag: alpine
+    pullPolicy: IfNotPresent
+  securityContext:
+    runAsUser: 101
+    runAsGroup: 101
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+  resources: {}
+
 hls:
   enabled: true
   port: 8888
