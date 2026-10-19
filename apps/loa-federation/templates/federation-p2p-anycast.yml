@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: 'https://github.com/kevinpthorne/p2p-anycast.git'
     path: deploy/helm/anycast-origin
-    targetRevision: 0.6.0
+    targetRevision: 0.7.0
     helm:
       releaseName: federation-p2p-anycast
       valuesObject:
