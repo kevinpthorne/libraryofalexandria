@@ -17,7 +17,7 @@ spec:
         existingSecret: "p2p-anycast-secrets"
         identity:
           pvc:
-            enabled: true
+            enabled: false
         config:
           edge_multiaddrs:
             - "/dns4/one.oc.kpt.link/udp/4003/quic-v1/p2p/Qmd3GpKPfKAeq4ppr82ypW7psuknbHNEkdHM2T7hzn8NJE"
