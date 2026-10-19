@@ -15,6 +15,9 @@ spec:
         image:
           repository: ghcr.io/kevinpthorne/anycast-origin
         existingSecret: "p2p-anycast-secrets"
+        publicValues:
+          caPub: {{ (lookup "v1" "Secret" "kube-system" "p2p-anycast-secrets" | default (lookup "v1" "Secret" .Release.Namespace "p2p-anycast-secrets") | dig "data" "ca.pub" "" | b64dec) | quote }}
+          manifestBase64: {{ (lookup "v1" "Secret" "kube-system" "p2p-anycast-secrets" | default (lookup "v1" "Secret" .Release.Namespace "p2p-anycast-secrets") | dig "data" "origin_manifest.pb" "" | b64dec) | quote }}
         identity:
           pvc:
             enabled: true
