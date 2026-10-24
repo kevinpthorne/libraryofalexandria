@@ -38,5 +38,5 @@ cloudflared:
   tunnelKeySecretKey: api-key
   tunnelId: "32cab819-2ee5-4055-8c19-d56a7115b00c"
   domains:
-    - "immich.kpt.link"
+    # - "immich.kpt.link"  # harden for CVE-2026-111497
     - "ident.kpt.link"
