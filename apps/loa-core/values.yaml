@@ -13,7 +13,7 @@ cloudflareExternaldns:
 seaweedfsUi:
   enabled: true
   chart: seaweedfs-ui
-  repoURL: oci://ghcr.io/kevinpthorne/charts
+  repoURL: oci://ghcr.io/kevinpthorne/charts/seaweedfs-ui
   targetRevision: "0.1.0"
   namespace: seaweedfs-system
   syncWave: "2"
