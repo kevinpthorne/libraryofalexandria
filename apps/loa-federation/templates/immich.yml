@@ -6,9 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://immich-app.github.io/immich-charts
+    repoURL: ghcr.io/immich-app/immich-charts
     chart: immich
-    targetRevision: 0.12.0
+    targetRevision: 0.13.4
     helm:
       # We override the values to enforce a restricted security context
       values: |
@@ -32,6 +32,9 @@ spec:
                   type: RuntimeDefault
             containers:
               main:
+                image:
+                  repository: ghcr.io/immich-app/immich-server
+                  tag: v3.3.5
                 resources:
                   requests:
                     memory: 256Mi
