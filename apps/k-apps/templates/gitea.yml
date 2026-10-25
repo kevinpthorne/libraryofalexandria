@@ -170,6 +170,8 @@ spec:
           enabled: true
           persistence:
             storageClass: "longhorn"
+          postgresql-ha:
+            enabled: false
           primary:
             podSecurityContext:
               enabled: true
@@ -197,6 +199,17 @@ spec:
     managedNamespaceMetadata:
       labels:
         zarf.dev/agent: "ignore"
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: gitea
+      jsonPointers:
+        - /spec/template/metadata/annotations/checksum~1config
+        - /spec/template/spec/containers/0/securityContext/enabled
+        - /spec/template/spec/initContainers/0/securityContext/enabled
+        - /spec/template/spec/initContainers/1/securityContext/enabled
+        - /spec/template/spec/initContainers/2/securityContext/enabled
+        - /spec/template/spec/initContainers/2/env/9/value
 
 ---
 apiVersion: argoproj.io/v1alpha1

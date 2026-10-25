@@ -17,8 +17,10 @@ spec:
         cluster:
           name: {{ $cluster.name | default "k" }}
         image:
-          repository: ghcr.io/librespeed/speedtest-go
+          repository: jarylc/librespeed-speedtest-go
           tag: latest
+        command:
+          - /app/speedtest
         targetPort: 8989
         podSecurityContext:
           runAsNonRoot: true

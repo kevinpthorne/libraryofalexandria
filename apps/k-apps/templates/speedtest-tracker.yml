@@ -73,6 +73,12 @@ spec:
             mountPath: /config
             size: 10Gi
             storageClass: "longhorn"
+        extraVolumes:
+          - name: run-volume
+            emptyDir: {}
+        extraVolumeMounts:
+          - name: run-volume
+            mountPath: /run
   destination:
     server: https://kubernetes.default.svc
     namespace: speedtest-tracker

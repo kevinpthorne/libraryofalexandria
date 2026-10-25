@@ -47,7 +47,7 @@ spec:
         publicServerName: "matrix.{{ $cluster.name | default "k" }}.loa.internal"
         signingkey:
           job:
-            enabled: true
+            enabled: false
             podSecurityContext:
               runAsNonRoot: true
               runAsUser: 666
@@ -138,7 +138,7 @@ spec:
             - idp_id: keycloak
               idp_name: "Keycloak"
               discover: true
-              issuer: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/app"
+              issuer: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
               client_id: "matrix"
               client_secret: "matrix-client-secret"
               scopes: ["openid", "profile"]
@@ -159,7 +159,7 @@ spec:
           host: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "pgedge" }}{{ else }}pgedge{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc"
           port: 5432
           username: "matrix"
-          database: "app"
+          database: "matrix"
           password: "dummy"
         {{- else }}
         redis:
@@ -384,13 +384,12 @@ spec:
 {{- if $hasFederation }}
 ---
 apiVersion: db.loa.kevinpthorne.com/v1alpha1
-kind: PrivateSchema
+kind: PrivateDatabase
 metadata:
   name: matrix
   namespace: matrix
 spec:
-  databaseName: app
-  schemaName: matrix
+  databaseName: matrix
   userName: matrix
   appNamespace: matrix
 ---

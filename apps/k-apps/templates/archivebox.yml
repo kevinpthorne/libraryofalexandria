@@ -84,7 +84,7 @@ spec:
             - "archivebox.{{ $cluster.name | default "k" }}.kpt.link"
         oauth2Proxy:
           enabled: {{ $hasFederation }}
-          issuerUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
+          issuerUrl: "https://ident.kpt.link/realms/loa"
           {{- if $hasFederation }}
           extraArgs:
             - --user-id-claim=preferred_username

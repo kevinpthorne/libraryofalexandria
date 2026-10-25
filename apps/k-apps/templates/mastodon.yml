@@ -85,7 +85,7 @@ spec:
           - name: OIDC_DISCOVERY
             value: "true"
           - name: OIDC_ISSUER
-            value: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
+            value: "https://ident.kpt.link/realms/loa"
           - name: OIDC_AUTH_METHOD
             value: "post"
           - name: OIDC_SCOPE
@@ -111,6 +111,24 @@ spec:
               secretKeyRef:
                 name: mastodon-secrets
                 key: otp-secret
+                optional: true
+          - name: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+            valueFrom:
+              secretKeyRef:
+                name: mastodon-secrets
+                key: active-record-encryption-deterministic-key
+                optional: true
+          - name: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+            valueFrom:
+              secretKeyRef:
+                name: mastodon-secrets
+                key: active-record-encryption-key-derivation-salt
+                optional: true
+          - name: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+            valueFrom:
+              secretKeyRef:
+                name: mastodon-secrets
+                key: active-record-encryption-primary-key
                 optional: true
         service:
           public: true
@@ -184,6 +202,45 @@ spec:
   secretKeys:
     - otpSecret
 ---
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: mastodon-ar-deterministic-key
+  namespace: mastodon
+spec:
+  length: 64
+  digits: 10
+  symbols: 0
+  allowRepeat: true
+  secretKeys:
+    - arDeterministicKey
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: mastodon-ar-key-derivation-salt
+  namespace: mastodon
+spec:
+  length: 64
+  digits: 10
+  symbols: 0
+  allowRepeat: true
+  secretKeys:
+    - arKeyDerivationSalt
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: mastodon-ar-primary-key
+  namespace: mastodon
+spec:
+  length: 64
+  digits: 10
+  symbols: 0
+  allowRepeat: true
+  secretKeys:
+    - arPrimaryKey
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
@@ -198,6 +255,9 @@ spec:
       data:
         secret-key-base: "{{ `{{ .secretKeyBase }}` }}"
         otp-secret: "{{ `{{ .otpSecret }}` }}"
+        active-record-encryption-deterministic-key: "{{ `{{ .arDeterministicKey }}` }}"
+        active-record-encryption-key-derivation-salt: "{{ `{{ .arKeyDerivationSalt }}` }}"
+        active-record-encryption-primary-key: "{{ `{{ .arPrimaryKey }}` }}"
   dataFrom:
   - sourceRef:
       generatorRef:
@@ -209,6 +269,21 @@ spec:
         apiVersion: generators.external-secrets.io/v1alpha1
         kind: Password
         name: mastodon-otp-secret
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: mastodon-ar-deterministic-key
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: mastodon-ar-key-derivation-salt
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: mastodon-ar-primary-key
 ---
 apiVersion: seaweed.seaweedfs.com/v1
 kind: S3Identity
