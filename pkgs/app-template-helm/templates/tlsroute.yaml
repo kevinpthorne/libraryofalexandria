@@ -8,7 +8,11 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
     {{- if .Values.service.public }}
+    {{- if .Values.service.anycast }}
+    p2p-anycast.io/expose: "true"
+    {{- else }}
     external-dns.loa.internal/expose: "public"
+    {{- end }}
     {{- end }}
     {{- with .Values.gateway.annotations }}
     {{- toYaml . | nindent 4 }}

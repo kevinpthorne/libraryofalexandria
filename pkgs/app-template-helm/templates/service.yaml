@@ -6,7 +6,11 @@ metadata:
     {{- include "app-template.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.service.public }}
+    {{- if .Values.service.anycast }}
+    p2p-anycast.io/expose: "true"
+    {{- else }}
     external-dns.loa.internal/expose: "public"
+    {{- end }}
     {{- end }}
     {{- if .Values.service.domains }}
     external-dns.alpha.kubernetes.io/hostname: {{ join "," .Values.service.domains | quote }}

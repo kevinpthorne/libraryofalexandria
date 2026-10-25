@@ -1,0 +1,82 @@
+{{- if (index .Values "lancommander" "enabled" | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lancommander
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: lancommander
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: lancommander/lancommander
+          tag: latest
+        targetPort: 1337
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_BIND_SERVICE
+          seccompProfile:
+            type: RuntimeDefault
+        env:
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: TZ
+            value: "Etc/UTC"
+        service:
+          public: true
+          domains:
+            - "lancommander.{{ $cluster.name | default "k" }}.loa.internal"
+            - "lancommander.{{ $cluster.name | default "k" }}.kpt.link"
+          extraPorts:
+            - name: beacon
+              port: 35891
+              targetPort: 35891
+              protocol: UDP
+            - name: ipx
+              port: 213
+              targetPort: 213
+              protocol: UDP
+        persistence:
+          data:
+            enabled: true
+            type: pvc
+            mountPath: /app/Data
+            size: 50Gi
+            storageClass: "longhorn"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: lancommander
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

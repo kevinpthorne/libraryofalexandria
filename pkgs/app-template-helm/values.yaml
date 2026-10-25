@@ -23,6 +23,7 @@ targetPort: 80
 service:
   type: ClusterIP
   public: true
+  anycast: true
   port: 443
   domains: []
   extraPorts: []
