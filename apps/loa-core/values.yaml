@@ -30,3 +30,6 @@ seaweedfsUi:
         enabled: true
         filerSyncPodSelector: "app=seaweedfs-filer-sync"
   extraValues: {}
+
+publicGateway:
+  enabled: true
