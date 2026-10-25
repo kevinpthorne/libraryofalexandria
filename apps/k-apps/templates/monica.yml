@@ -84,10 +84,9 @@ spec:
             value: "6379"
           {{- end }}
         service:
-          public: true
+          public: false
           domains:
             - "monica.{{ $cluster.name | default "k" }}.loa.internal"
-            - "monica.{{ $cluster.name | default "k" }}.kpt.link"
         oauth2Proxy:
           enabled: {{ $hasFederation }}
           issuerUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"

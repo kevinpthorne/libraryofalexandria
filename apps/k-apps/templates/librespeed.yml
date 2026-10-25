@@ -38,10 +38,9 @@ spec:
           seccompProfile:
             type: RuntimeDefault
         service:
-          public: true
+          public: false
           domains:
             - "speedtest.{{ $cluster.name | default "k" }}.loa.internal"
-            - "speedtest.{{ $cluster.name | default "k" }}.kpt.link"
   destination:
     server: https://kubernetes.default.svc
     namespace: librespeed

@@ -1,0 +1,122 @@
+{{- $speedtestTracker := index .Values "speedtest-tracker" | default .Values.speedtestTracker | default dict -}}
+{{- if ($speedtestTracker.enabled | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: speedtest-tracker
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: speedtest-tracker
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: lscr.io/linuxserver/speedtest-tracker
+          tag: latest
+        targetPort: 80
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_BIND_SERVICE
+          seccompProfile:
+            type: RuntimeDefault
+        env:
+          - name: PUID
+            value: "1000"
+          - name: PGID
+            value: "1000"
+          - name: S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES
+            value: "1"
+          - name: DB_CONNECTION
+            value: "sqlite"
+          - name: APP_URL
+            value: "https://speedtest-tracker.{{ $cluster.name | default "k" }}.kpt.link"
+          {{- if $hasFederation }}
+          - name: APP_KEY
+            valueFrom:
+              secretKeyRef:
+                name: speedtest-tracker-app-key
+                key: appKey
+          {{- else }}
+          - name: APP_KEY
+            value: "base64:dGVzdGtleWZvcnNwZWVkdGVzdHRyYWNrZXIxMjM0NTY="
+          {{- end }}
+        service:
+          public: false
+          domains:
+            - "speedtest-tracker.{{ $cluster.name | default "k" }}.loa.internal"
+        persistence:
+          data:
+            enabled: true
+            type: pvc
+            mountPath: /config
+            size: 10Gi
+            storageClass: "longhorn"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: speedtest-tracker
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+
+{{- if $hasFederation }}
+---
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: Password
+metadata:
+  name: speedtest-tracker-app-key
+  namespace: speedtest-tracker
+spec:
+  length: 32
+  digits: 10
+  symbols: 0
+  allowRepeat: true
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: speedtest-tracker-app-key
+  namespace: speedtest-tracker
+spec:
+  refreshInterval: "0"
+  target:
+    name: speedtest-tracker-app-key
+    template:
+      engineVersion: v2
+      data:
+        appKey: "base64:{{ `{{ .password | b64enc }}` }}"
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: Password
+        name: speedtest-tracker-app-key
+{{- end }}
+{{- end }}

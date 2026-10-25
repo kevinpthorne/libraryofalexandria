@@ -197,6 +197,11 @@ excalidraw:
 monica:
   enabled: true
 
+speedtestTracker:
+  enabled: true
+
+lancommander:
+  enabled: true
 letsencrypt:
   enabled: true
   email: "admin@kpt.link"
