@@ -25,6 +25,37 @@ spec:
         args:
           - LANCommander.Server.dll
           - --docker
+        initContainers:
+          - name: init-directories
+            image: lancommander/lancommander:latest
+            command:
+              - /bin/sh
+              - -c
+              - |
+                mkdir -p /app/LANCommander/Server/Data/Backups \
+                         /app/LANCommander/Server/Data/Logs \
+                         /app/LANCommander/Server/Data/Launcher \
+                         /app/LANCommander/Server/Data/Media \
+                         /app/LANCommander/Server/Data/Modules \
+                         /app/LANCommander/Server/Data/Saves \
+                         /app/LANCommander/Server/Data/Servers \
+                         /app/LANCommander/Server/Data/Snippets \
+                         /app/LANCommander/Server/Data/Updates \
+                         /app/LANCommander/Server/Data/Upload
+                cp -rn /app/Data/* /app/LANCommander/Server/Data/ 2>/dev/null || true
+            volumeMounts:
+              - name: data
+                mountPath: /app/LANCommander
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              capabilities:
+                drop:
+                  - ALL
+              seccompProfile:
+                type: RuntimeDefault
         podSecurityContext:
           runAsNonRoot: true
           runAsUser: 1000

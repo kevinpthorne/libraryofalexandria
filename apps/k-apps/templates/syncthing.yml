@@ -46,7 +46,7 @@ spec:
               protocol: UDP
         oauth2Proxy:
           enabled: {{ $hasFederation }}
-          issuerUrl: "https://ident.kpt.link/realms/loa"
+          issuerUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
         keycloak:
           enabled: {{ $hasFederation }}
         persistence:

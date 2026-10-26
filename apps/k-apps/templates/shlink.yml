@@ -34,6 +34,7 @@ spec:
           enabled: {{ $hasFederation }}
           issuerUrl: "https://ident.kpt.link/realms/loa"
           upstream: "http://127.0.0.1:8080"
+          sslInsecureSkipVerify: true
           extraArgs:
             - --skip-auth-route=GET=^/[a-zA-Z0-9_\.\-\~]+/?$
             - --skip-auth-route=GET=^/[a-zA-Z0-9_\.\-\~]+/qr-code/?$
@@ -58,6 +59,8 @@ spec:
         env:
           - name: PORT
             value: "8082"
+          - name: SHELL_VERBOSITY
+            value: "3"
           - name: DB_DRIVER
             value: "postgres"
           - name: DB_HOST

@@ -20,6 +20,8 @@ spec:
         image:
           repository: monica
           tag: latest
+        podAnnotations:
+          rollout: "2"
         targetPort: 8080
         command:
           - /bin/bash

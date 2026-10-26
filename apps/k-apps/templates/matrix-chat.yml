@@ -392,6 +392,7 @@ spec:
   databaseName: matrix
   userName: matrix
   appNamespace: matrix
+  federate: false
 ---
 apiVersion: authn.loa.kevinpthorne.com/v1alpha1
 kind: KeycloakClient
