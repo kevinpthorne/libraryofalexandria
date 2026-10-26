@@ -1,5 +1,6 @@
 {{- if (index .Values "lancommander" "enabled" | default true) -}}
 {{- $cluster := .Values.cluster | default dict -}}
+{{- $hasFederation := hasKey ($cluster.apps | default dict) "loa-federation" -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -41,8 +42,33 @@ spec:
                          /app/LANCommander/Server/Data/Servers \
                          /app/LANCommander/Server/Data/Snippets \
                          /app/LANCommander/Server/Data/Updates \
-                         /app/LANCommander/Server/Data/Upload
+                         /app/LANCommander/Server/Data/Upload \
+                         /app/LANCommander/Server/Data/Templates/AuthenticationProviders/OIDC
                 cp -rn /app/Data/* /app/LANCommander/Server/Data/ 2>/dev/null || true
+                cat << 'EOF' > /app/LANCommander/Server/Data/Templates/AuthenticationProviders/OIDC/Keycloak.yml
+                Name: Keycloak
+                Slug: keycloak
+                Type: OpenIdConnect
+                Color: '#4d7cf2'
+                Icon: key
+                Documentation: https://ident.kpt.link
+                ClientId: lancommander
+                ConfigurationEndpoint: https://ident.kpt.link/realms/loa/.well-known/openid-configuration
+                Scopes:
+                  - openid
+                  - profile
+                  - email
+                  - roles
+                ClaimMappings:
+                  - Name: nameidentifier
+                    Value: sub
+                  - Name: name
+                    Value: preferred_username
+                  - Name: email
+                    Value: email
+                  - Name: role
+                    Value: realm_access.roles
+                EOF
             volumeMounts:
               - name: data
                 mountPath: /app/LANCommander
@@ -82,6 +108,13 @@ spec:
             value: "1000"
           - name: TZ
             value: "Etc/UTC"
+          {{- if $hasFederation }}
+          - name: KEYCLOAK_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: lancommander-oauth-secret
+                key: secret
+          {{- end }}
         service:
           public: true
           domains:
@@ -103,6 +136,12 @@ spec:
             mountPath: /app/LANCommander
             size: 50Gi
             storageClass: "longhorn"
+        keycloak:
+          enabled: {{ $hasFederation }}
+          clientId: lancommander
+          redirectUris:
+            - "https://lancommander.{{ $cluster.name | default "k" }}.loa.internal/SignInOIDC"
+            - "https://lancommander.{{ $cluster.name | default "k" }}.kpt.link/SignInOIDC"
   destination:
     server: https://kubernetes.default.svc
     namespace: lancommander
