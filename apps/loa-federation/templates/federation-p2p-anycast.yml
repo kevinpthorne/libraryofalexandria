@@ -25,7 +25,7 @@ spec:
             - "/dns4/three.oc.kpt.link/udp/4003/quic-v1/p2p/QmX1xGoRbKm6zrcWP3NUxZwR3nese1pF1Bxq2GyA3pMwtn"
         k8sDiscovery:
           enabled: true
-          defaultGatewayTarget: "cilium-gateway-local-gateway.kube-system.svc.cluster.local:443"
+          defaultGatewayTarget: "cilium-gateway-public-gateway.public-gateway.svc.cluster.local:443"
         podSecurityContext:
           runAsNonRoot: true
           runAsUser: 1000
