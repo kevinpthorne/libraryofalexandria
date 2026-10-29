@@ -1,0 +1,161 @@
+{{- if ((.Values.acmeServer | default dict).enabled | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: acme-server
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/app-template-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        fullnameOverride: acme-server
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        image:
+          repository: smallstep/step-ca
+          tag: latest
+        command:
+          - step-ca
+        args:
+          - /etc/step-ca/ca.json
+          - --password-file
+          - /etc/step-ca/password.txt
+        targetPort: 9000
+        tls:
+          enabled: false
+        service:
+          public: false
+          port: 9000
+          domains:
+            - "acme.{{ $cluster.name | default "k" }}.loa.internal"
+            - "acme.loa.internal"
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        extraVolumes:
+          - name: step-config
+            configMap:
+              name: acme-server-config
+          - name: ca-secret
+            secret:
+              secretName: app-pki-bootstrap-secret
+          - name: db-data
+            emptyDir: {}
+        extraVolumeMounts:
+          - name: step-config
+            mountPath: /etc/step-ca
+            readOnly: true
+          - name: ca-secret
+            mountPath: /certs
+            readOnly: true
+          - name: db-data
+            mountPath: /home/step/db
+        extraConfigMaps:
+          - name: acme-server-config
+            data:
+              password.txt: ""
+              ca.json: |
+                {
+                  "root": "/certs/tls.crt",
+                  "crt": "/certs/tls.crt",
+                  "key": "/certs/tls.key",
+                  "address": ":9000",
+                  "dnsNames": [
+                    "acme.{{ $cluster.name | default "k" }}.loa.internal",
+                    "acme.loa.internal",
+                    "acme-server",
+                    "acme-server.cert-manager.svc",
+                    "acme-server.cert-manager.svc.cluster.local"
+                  ],
+                  "logger": {"format": "text"},
+                  "db": {
+                    "type": "badger",
+                    "dataSource": "/home/step/db"
+                  },
+                  "authority": {
+                    "provisioners": [
+                      {
+                        "type": "ACME",
+                        "name": "acme"
+                      }
+                    ]
+                  },
+                  "tls": {
+                    "cipherSuites": [
+                      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+                      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+                      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+                    ],
+                    "minVersion": 1.2,
+                    "maxVersion": 1.3
+                  }
+                }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: acme-server-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: acme-server
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
+            hostnames:
+              - "acme.{{ $cluster.name | default "k" }}.loa.internal"
+              - "acme.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 9000
+                targetService: acme-server
+                tls:
+                  mode: Passthrough
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+{{- end }}

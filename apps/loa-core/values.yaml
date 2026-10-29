@@ -33,3 +33,6 @@ seaweedfsUi:
 
 publicGateway:
   enabled: true
+
+acmeServer:
+  enabled: true
