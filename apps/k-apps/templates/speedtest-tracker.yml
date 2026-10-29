@@ -22,6 +22,40 @@ spec:
           repository: lscr.io/linuxserver/speedtest-tracker
           tag: latest
         targetPort: 80
+        initContainers:
+          - name: init-storage
+            image: lscr.io/linuxserver/speedtest-tracker:latest
+            command:
+              - /bin/sh
+              - -c
+              - |
+                mkdir -p /app/www/storage/framework/views \
+                         /app/www/storage/framework/cache/data \
+                         /app/www/storage/framework/sessions \
+                         /app/www/storage/logs \
+                         /app/www/bootstrap/cache \
+                         /config/nginx/site-confs
+                touch /config/database.sqlite
+                cp /etc/speedtest-custom/default.conf /config/nginx/site-confs/default.conf
+            volumeMounts:
+              - name: data
+                mountPath: /config
+              - name: storage-volume
+                mountPath: /app/www/storage
+              - name: bootstrap-cache
+                mountPath: /app/www/bootstrap/cache
+              - name: custom-config
+                mountPath: /etc/speedtest-custom
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              capabilities:
+                drop:
+                  - ALL
+              seccompProfile:
+                type: RuntimeDefault
         podSecurityContext:
           runAsNonRoot: true
           runAsUser: 1000
@@ -50,6 +84,8 @@ spec:
             value: "1"
           - name: DB_CONNECTION
             value: "sqlite"
+          - name: DB_DATABASE
+            value: "/config/database.sqlite"
           - name: APP_URL
             value: "https://speedtest-tracker.{{ $cluster.name | default "k" }}.kpt.link"
           {{- if $hasFederation }}
@@ -76,9 +112,58 @@ spec:
         extraVolumes:
           - name: run-volume
             emptyDir: {}
+          - name: storage-volume
+            emptyDir: {}
+          - name: bootstrap-cache
+            emptyDir: {}
+          - name: custom-config
+            configMap:
+              name: speedtest-tracker-custom-config
+              defaultMode: 493
         extraVolumeMounts:
           - name: run-volume
             mountPath: /run
+          - name: storage-volume
+            mountPath: /app/www/storage
+          - name: bootstrap-cache
+            mountPath: /app/www/bootstrap/cache
+          - name: custom-config
+            mountPath: /usr/bin/s6-setuidgid
+            subPath: s6-setuidgid
+        extraConfigMaps:
+          - name: speedtest-tracker-custom-config
+            data:
+              s6-setuidgid: |
+                #!/bin/sh
+                shift 1
+                exec "$@"
+              default.conf: |
+                server {
+                    listen 80 default_server;
+                    listen [::]:80 default_server;
+                    server_name _;
+                    set $root /app/www/public;
+                    if (!-d /app/www/public) {
+                        set $root /config/www;
+                    }
+                    root $root;
+                    index index.html index.htm index.php;
+                    location / {
+                        try_files $uri $uri/ /index.html /index.htm /index.php$is_args$args;
+                    }
+                    location ~ ^(.+\.php)(.*)$ {
+                        fastcgi_split_path_info ^(.+\.php)(.*)$;
+                        if (!-f $document_root$fastcgi_script_name) { return 404; }
+                        fastcgi_pass 127.0.0.1:9000;
+                        fastcgi_index index.php;
+                        fastcgi_buffers 16 4k;
+                        fastcgi_buffer_size 16k;
+                        include /etc/nginx/fastcgi_params;
+                    }
+                    location ~ /\.ht {
+                        deny all;
+                    }
+                }
   destination:
     server: https://kubernetes.default.svc
     namespace: speedtest-tracker

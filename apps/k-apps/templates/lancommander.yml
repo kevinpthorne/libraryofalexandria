@@ -115,10 +115,21 @@ spec:
                 name: lancommander-oauth-secret
                 key: secret
           {{- end }}
+        tls:
+          issuerRef:
+            name: letsencrypt-prod
+            kind: ClusterIssuer
+        gateway:
+          parentRefs:
+            - name: public-gateway
+              namespace: public-gateway
+              sectionName: tls-443
+            - name: local-gateway
+              namespace: kube-system
+              sectionName: tls-443
         service:
           public: true
           domains:
-            - "lancommander.{{ $cluster.name | default "k" }}.loa.internal"
             - "lancommander.{{ $cluster.name | default "k" }}.kpt.link"
           extraPorts:
             - name: beacon
@@ -140,7 +151,6 @@ spec:
           enabled: {{ $hasFederation }}
           clientId: lancommander
           redirectUris:
-            - "https://lancommander.{{ $cluster.name | default "k" }}.loa.internal/SignInOIDC"
             - "https://lancommander.{{ $cluster.name | default "k" }}.kpt.link/SignInOIDC"
   destination:
     server: https://kubernetes.default.svc

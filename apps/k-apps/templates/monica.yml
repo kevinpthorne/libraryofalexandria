@@ -21,7 +21,7 @@ spec:
           repository: monica
           tag: latest
         podAnnotations:
-          rollout: "2"
+          rollout: "3"
         targetPort: 8080
         command:
           - /bin/bash
@@ -74,6 +74,10 @@ spec:
             value: "monica"
           - name: DB_PASSWORD
             value: ""
+          - name: DB_SSLMODE
+            value: "disable"
+          - name: PGSSLMODE
+            value: "disable"
           - name: CACHE_DRIVER
             value: "redis"
           - name: SESSION_DRIVER
