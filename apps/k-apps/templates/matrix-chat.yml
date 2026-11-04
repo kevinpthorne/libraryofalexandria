@@ -43,8 +43,8 @@ spec:
     targetRevision: 3.12.28
     helm:
       valuesObject:
-        serverName: "matrix.{{ $cluster.name | default "k" }}.loa.internal"
-        publicServerName: "matrix.{{ $cluster.name | default "k" }}.loa.internal"
+        serverName: "matrix.{{ $cluster.name | default "k" }}.kpt.link"
+        publicServerName: "matrix.{{ $cluster.name | default "k" }}.kpt.link"
         signingkey:
           job:
             enabled: false
@@ -241,7 +241,7 @@ spec:
     helm:
       valuesObject:
         defaultServer:
-          url: "https://matrix.{{ $cluster.name | default "k" }}.loa.internal"
+          url: "https://matrix.{{ $cluster.name | default "k" }}.kpt.link"
           name: "{{ $cluster.name | default "k" | upper }} Matrix"
         podSecurityContext:
           runAsNonRoot: true
@@ -308,6 +308,7 @@ spec:
         cert:
           secretName: "matrix-tls"
           sans:
+            - "matrix.{{ $cluster.name | default "k" }}.kpt.link"
             - "matrix.{{ $cluster.name | default "k" }}.loa.internal"
   destination:
     server: https://kubernetes.default.svc
@@ -337,7 +338,9 @@ spec:
         cert:
           secretName: "element-tls"
           sans:
+            - "chat.kpt.link"
             - "chat.{{ $cluster.name | default "k" }}.loa.internal"
+            - "chat.{{ $cluster.name | default "k" }}.kpt.link"
   destination:
     server: https://kubernetes.default.svc
     namespace: matrix
@@ -366,6 +369,7 @@ spec:
             gatewayName: local-gateway
             gatewayNamespace: kube-system
             hostnames:
+              - "matrix.{{ $cluster.name | default "k" }}.kpt.link"
               - "matrix.{{ $cluster.name | default "k" }}.loa.internal"
             ports:
               - port: 443
@@ -379,7 +383,9 @@ spec:
             gatewayName: local-gateway
             gatewayNamespace: kube-system
             hostnames:
+              - "chat.kpt.link"
               - "chat.{{ $cluster.name | default "k" }}.loa.internal"
+              - "chat.{{ $cluster.name | default "k" }}.kpt.link"
             ports:
               - port: 443
                 protocol: TLS
@@ -417,5 +423,6 @@ spec:
   clientId: matrix
   secret: "matrix-client-secret"
   redirectUris:
+    - "https://matrix.{{ $cluster.name | default "k" }}.kpt.link/_synapse/client/oidc/callback"
     - "https://matrix.{{ $cluster.name | default "k" }}.loa.internal/_synapse/client/oidc/callback"
 {{- end }}
