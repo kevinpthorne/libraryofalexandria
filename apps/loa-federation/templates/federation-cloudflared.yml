@@ -20,7 +20,7 @@ spec:
           ingress:
             {{- range .Values.cloudflared.domains }}
             - hostname: {{ . | quote }}
-              service: https://cilium-gateway-local-gateway.kube-system.svc.cluster.local:443
+              service: https://cilium-gateway-public-gateway.public-gateway.svc.cluster.local:443
               originRequest:
                 caPool: /etc/cloudflared/certs/ca-bundle.crt
                 originServerName: {{ . | quote }}
