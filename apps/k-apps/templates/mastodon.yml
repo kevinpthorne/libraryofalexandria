@@ -20,7 +20,13 @@ spec:
         image:
           repository: ghcr.io/mastodon/mastodon
           tag: v4.3.4
-        command: ["bundle", "exec", "puma", "-C", "config/puma.rb"]
+        command:
+          - /bin/bash
+          - -c
+        args:
+          - |
+            bundle exec rails db:migrate || bundle exec rails db:schema:load
+            exec bundle exec puma -C config/puma.rb
         targetPort: 3000
         podSecurityContext:
           runAsNonRoot: true
