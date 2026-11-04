@@ -149,7 +149,7 @@ spec:
                     root $root;
                     index index.html index.htm index.php;
                     location / {
-                        try_files $uri $uri/ /index.html /index.htm /index.php$is_args$args;
+                        try_files $uri $uri/ /index.php?$query_string;
                     }
                     location ~ ^(.+\.php)(.*)$ {
                         fastcgi_split_path_info ^(.+\.php)(.*)$;
@@ -159,6 +159,9 @@ spec:
                         fastcgi_buffers 16 4k;
                         fastcgi_buffer_size 16k;
                         include /etc/nginx/fastcgi_params;
+                        fastcgi_param HTTPS on;
+                        fastcgi_param HTTP_X_FORWARDED_PROTO https;
+                        fastcgi_param HTTP_X_FORWARDED_SSL on;
                     }
                     location ~ /\.ht {
                         deny all;

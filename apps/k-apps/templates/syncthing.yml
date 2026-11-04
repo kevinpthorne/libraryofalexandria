@@ -47,6 +47,8 @@ spec:
         oauth2Proxy:
           enabled: {{ $hasFederation }}
           issuerUrl: "https://ident.{{ $cluster.name | default "k" }}.loa.internal/realms/loa"
+          extraArgs:
+            - --pass-host-header=false
         keycloak:
           enabled: {{ $hasFederation }}
         persistence:
