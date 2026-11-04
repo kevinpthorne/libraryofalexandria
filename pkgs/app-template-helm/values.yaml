@@ -33,7 +33,7 @@ tls:
   secretName: ""
   sans: []
   issuerRef:
-    name: "pki-bootstrap"
+    name: "app-pki-bootstrap-issuer"
     kind: "ClusterIssuer"
 
 gateway:
