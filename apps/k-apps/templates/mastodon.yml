@@ -152,8 +152,11 @@ spec:
             - "https://mastodon.{{ $cluster.name | default "k" }}.kpt.link/auth/auth/openid_connect/callback"
         extraDeployments:
           - name: streaming
+            image:
+              repository: ghcr.io/mastodon/mastodon-streaming
+              tag: v4.3.4
             replicaCount: 1
-            command: ["node", "./streaming"]
+            command: ["node", "./streaming/index.js"]
             ports:
               - name: streaming
                 containerPort: 4000

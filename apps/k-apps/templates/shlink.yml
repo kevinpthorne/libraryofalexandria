@@ -63,13 +63,13 @@ spec:
             type: RuntimeDefault
         readinessProbe:
           httpGet:
-            path: /health
+            path: /rest/v3/health
             port: 8082
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
           httpGet:
-            path: /health
+            path: /rest/v3/health
             port: 8082
           initialDelaySeconds: 10
           periodSeconds: 20

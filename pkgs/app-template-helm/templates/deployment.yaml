@@ -289,7 +289,7 @@ spec:
         {{- toYaml $podSec | nindent 8 }}
       containers:
         - name: {{ .name }}
-          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+          image: "{{ if .image }}{{ .image.repository | default $.Values.image.repository }}:{{ .image.tag | default $.Values.image.tag }}{{ else }}{{ $.Values.image.repository }}:{{ $.Values.image.tag }}{{ end }}"
           imagePullPolicy: {{ $.Values.image.pullPolicy | default "IfNotPresent" }}
           {{- if .command }}
           command:

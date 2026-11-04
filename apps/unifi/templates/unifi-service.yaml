@@ -31,3 +31,4 @@ spec:
       protocol: UDP
   selector:
     {{- include "unifi.selectorLabels" . | nindent 4 }}
+    app: {{ include "unifi.fullname" . }}

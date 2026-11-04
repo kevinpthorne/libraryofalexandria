@@ -162,18 +162,6 @@ spec:
                   localpart_template: "{% if user.preferred_username %}{{ "{{ user.preferred_username }}" }}{% else %}{{ "{{ user.sub }}" }}{% endif %}"
                   display_name_template: "{{ "{{ user.name }}" }}"
           {{- end }}
-        {{- if $hasFederation }}
-        redis:
-          enabled: false
-        postgresql:
-          enabled: false
-        externalPostgresql:
-          host: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "pgedge" }}{{ else }}pgedge{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc"
-          port: 5432
-          username: "matrix"
-          database: "matrix"
-          password: "dummy"
-        {{- else }}
         redis:
           enabled: true
           master:
@@ -191,6 +179,16 @@ spec:
               capabilities:
                 drop:
                   - ALL
+        {{- if $hasFederation }}
+        postgresql:
+          enabled: false
+        externalPostgresql:
+          host: "{{ if .Values.pgedge }}{{ .Values.pgedge.appName | default "pgedge" }}{{ else }}pgedge{{ end }}-{{ $cluster.name | default "k" }}-data-rw.pgedge.svc"
+          port: 5432
+          username: "matrix"
+          database: "matrix"
+          password: "dummy"
+        {{- else }}
         postgresql:
           enabled: true
           persistence:
