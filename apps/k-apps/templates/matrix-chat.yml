@@ -397,6 +397,9 @@ spec:
             createGateway: false
             gatewayName: public-gateway
             gatewayNamespace: public-gateway
+            annotations:
+              external-dns.loa.internal/expose: "public"
+              external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
             hostnames:
               - "matrix.{{ $cluster.name | default "k" }}.kpt.link"
             ports:
@@ -410,9 +413,11 @@ spec:
             createGateway: false
             gatewayName: public-gateway
             gatewayNamespace: public-gateway
+            annotations:
+              external-dns.loa.internal/expose: "public"
+              external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
             hostnames:
               - "chat.kpt.link"
-              - "chat.{{ $cluster.name | default "k" }}.kpt.link"
             ports:
               - port: 443
                 protocol: TLS
