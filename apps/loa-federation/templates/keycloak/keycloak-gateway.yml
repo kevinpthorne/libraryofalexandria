@@ -28,6 +28,19 @@ spec:
               targetService: keycloak
               annotations:
                 "external-dns.loa.internal/federate": "true"
+        - name: keycloak-app-public
+          createGateway: false
+          gatewayName: public-gateway
+          gatewayNamespace: public-gateway
+          hostnames:
+          - ident.kpt.link
+          ports:
+            - port: 443
+              targetPort: 8443
+              protocol: TLS
+              tls:
+                mode: Passthrough
+              targetService: keycloak
   destination:
     server: https://kubernetes.default.svc
     namespace: keycloak
