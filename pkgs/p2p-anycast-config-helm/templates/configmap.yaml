@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMapName }}
+  namespace: {{ .Values.namespace }}
+data:
+  {{- if .Values.ca }}
+  ca.pub: |
+    {{- .Values.ca | nindent 4 }}
+  {{- end }}
+  {{- if .Values.manifestBase64 }}
+  origin_manifest.pb: |
+    {{- .Values.manifestBase64 | nindent 4 }}
+  {{- end }}

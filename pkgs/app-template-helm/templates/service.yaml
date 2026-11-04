@@ -18,9 +18,9 @@ metadata:
 spec:
   type: {{ .Values.service.type | default "ClusterIP" }}
   ports:
-    - name: https
-      port: 443
-      targetPort: 443
+    - name: {{ if eq (int (.Values.service.port | default 443)) 443 }}https{{ else }}http{{ end }}
+      port: {{ .Values.service.port | default 443 }}
+      targetPort: {{ if .Values.tls.enabled }}443{{ else }}{{ .Values.targetPort }}{{ end }}
       protocol: TCP
     {{- range .Values.service.extraPorts }}
     - name: {{ .name }}

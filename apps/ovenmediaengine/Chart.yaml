@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ovenmediaengine
+description: A Helm chart for OvenMediaEngine sub-second latency live streaming server
+type: application
+version: 0.1.0
+appVersion: "0.21.0"

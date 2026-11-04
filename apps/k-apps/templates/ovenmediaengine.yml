@@ -1,0 +1,46 @@
+{{- $ome := .Values.ovenmediaengine | default dict -}}
+{{- if ($ome.enabled | default true) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $domain := $ome.domain | default (printf "catcher.%s.kpt.link" ($cluster.name | default "k")) -}}
+{{- $internalDomain := $ome.internalDomain | default (printf "catcher.%s.loa.internal" ($cluster.name | default "k")) -}}
+{{- $issuerName := $ome.issuerName | default "letsencrypt-prod" -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ovenmediaengine
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: apps/ovenmediaengine
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        domain: {{ $domain | quote }}
+        internalDomain: {{ $internalDomain | quote }}
+        rtmps:
+          port: {{ $ome.rtmpsPort | default 1936 }}
+        tls:
+          issuerName: {{ $issuerName | quote }}
+        {{- if hasKey $ome "auth" }}
+        auth:
+          {{- toYaml $ome.auth | nindent 10 }}
+        {{- end }}
+        {{- if hasKey $ome "ui" }}
+        ui:
+          {{- toYaml $ome.ui | nindent 10 }}
+        {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ovenmediaengine
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+{{- end }}

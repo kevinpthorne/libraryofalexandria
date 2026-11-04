@@ -1,0 +1,136 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: airensoft/ovenmediaengine
+  tag: latest
+  pullPolicy: IfNotPresent
+
+domain: catcher.k.kpt.link
+internalDomain: catcher.k.loa.internal
+
+appName: app
+
+# Stream & API authentication
+auth:
+  secretName: "ovenmediaengine-auth"
+  secretKey: "stream-key"
+  userKey: "stream-user"
+  defaultUser: "publisher"
+  autoGenerate: false
+  signedPolicy:
+    enabled: false
+    policyQueryKeyName: "policy"
+    signatureQueryKeyName: "signature"
+
+api:
+  enabled: true
+  port: 8081
+  accessToken: "ome-internal-api-token"
+
+rtmp:
+  enabled: true
+  port: 1935
+  ertmp: true
+
+rtmps:
+  enabled: true
+  port: 1936
+  stunnelImage:
+    repository: cgr.dev/chainguard/stunnel
+    tag: latest
+    pullPolicy: IfNotPresent
+
+srt:
+  enabled: true
+  port: 8890
+  playbackPort: 9998
+  public: true
+
+llhls:
+  enabled: true
+  port: 3333
+  tlsPort: 3334
+  public: true
+  chunkDuration: "0.5"
+  partHoldBack: "1.5"
+  segmentDuration: 6
+  segmentCount: 10
+
+hls:
+  enabled: true
+  segmentDuration: 4
+  segmentCount: 4
+
+webrtc:
+  enabled: true
+  signallingPort: 3333
+  signallingTlsPort: 3334
+  icePortRangeStart: 10000
+  icePortRangeEnd: 10003
+  tcpIcePort: 10000
+  turnPort: 3478
+  public: true
+  stunServer: "stun.ovenmediaengine.com:13478"
+
+ovt:
+  enabled: true
+  port: 9000
+
+ui:
+  enabled: true
+  port: 8080
+  servicePort: 8080
+  image:
+    repository: nginxinc/nginx-unprivileged
+    tag: alpine
+    pullPolicy: IfNotPresent
+  securityContext:
+    runAsUser: 101
+    runAsGroup: 101
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+  resources: {}
+
+service:
+  # Public internet-facing service (RTMPS, SRT, WebRTC/LLHLS TLS)
+  public:
+    enabled: true
+    type: LoadBalancer
+  # Internal cluster/LAN service (UI, LLHLS/HLS, WebRTC, RTMPS, RTMP, SRT)
+  internal:
+    enabled: true
+    type: LoadBalancer
+
+tls:
+  enabled: true
+  secretName: ovenmediaengine-tls
+  issuerName: letsencrypt-prod
+  issuerKind: ClusterIssuer
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
+extraEnv: []
+resources: {}

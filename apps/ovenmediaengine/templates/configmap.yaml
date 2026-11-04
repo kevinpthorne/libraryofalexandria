@@ -1,0 +1,342 @@
+{{- $iceStart := int (.Values.webrtc.icePortRangeStart | default 10000) -}}
+{{- $iceEnd := int (.Values.webrtc.icePortRangeEnd | default 10003) -}}
+{{- $httpPort := .Values.llhls.port | default 3333 -}}
+{{- $tlsPort := .Values.llhls.tlsPort | default 3334 -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ovenmediaengine.fullname" . }}-config
+  labels:
+    {{- include "ovenmediaengine.labels" . | nindent 4 }}
+data:
+  Logger.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Logger version="2">
+      <Path>/tmp</Path>
+      <File enabled="false"/>
+      <Tag name="SRT" level="critical" />
+      <Tag name="HTTP.Server" level="warn" />
+      <Tag name=".*\.Stat" level="warn" />
+      <Tag name=".*" level="info" />
+    </Logger>
+
+  {{- if .Values.rtmps.enabled }}
+  stunnel.conf: |
+    foreground = yes
+    pid =
+    [rtmps]
+    accept = {{ .Values.rtmps.port | default 1936 }}
+    connect = 127.0.0.1:{{ .Values.rtmp.port | default 1935 }}
+    cert = /certs/tls.crt
+    key = /certs/tls.key
+  {{- end }}
+
+  Server.xml: |
+    <?xml version="1.0" encoding="UTF-8" ?>
+    <Server version="8">
+      <Name>OvenMediaEngine</Name>
+      <Type>origin</Type>
+      <IP>*</IP>
+      <PrivacyProtection>false</PrivacyProtection>
+      <StunServer>{{ .Values.webrtc.stunServer | default "stun.ovenmediaengine.com:13478" }}</StunServer>
+
+      <Modules>
+        <HTTP2>
+          <Enable>true</Enable>
+        </HTTP2>
+        <LLHLS>
+          <Enable>{{ if .Values.llhls.enabled }}true{{ else }}false{{ end }}</Enable>
+        </LLHLS>
+        {{- if .Values.rtmp.ertmp }}
+        <ERTMP>
+          <Enable>true</Enable>
+        </ERTMP>
+        {{- end }}
+        <P2P>
+          <Enable>false</Enable>
+          <MaxClientPeersPerHostPeer>2</MaxClientPeersPerHostPeer>
+        </P2P>
+        <Jemalloc>
+          <BackgroundPurge>true</BackgroundPurge>
+        </Jemalloc>
+        <TaskPool>
+          <ThreadCount>4</ThreadCount>
+          <MaxTasks>128</MaxTasks>
+        </TaskPool>
+      </Modules>
+
+      <Bind>
+        {{- if .Values.api.enabled }}
+        <Managers>
+          <API>
+            <Port>{{ .Values.api.port | default 8081 }}</Port>
+            <WorkerCount>1</WorkerCount>
+          </API>
+        </Managers>
+        {{- end }}
+        <Providers>
+          <RTSPC>
+            <WorkerCount>1</WorkerCount>
+          </RTSPC>
+          {{- if .Values.ovt.enabled }}
+          <OVT>
+            <WorkerCount>1</WorkerCount>
+          </OVT>
+          {{- end }}
+          {{- if .Values.rtmp.enabled }}
+          <RTMP>
+            <Port>{{ .Values.rtmp.port | default 1935 }}</Port>
+            <WorkerCount>1</WorkerCount>
+          </RTMP>
+          {{- end }}
+          {{- if .Values.srt.enabled }}
+          <SRT>
+            <Port>{{ .Values.srt.port | default 8890 }}</Port>
+            <WorkerCount>1</WorkerCount>
+          </SRT>
+          {{- end }}
+          {{- if .Values.webrtc.enabled }}
+          <WebRTC>
+            <Signalling>
+              <Port>{{ .Values.webrtc.signallingPort | default $httpPort }}</Port>
+              {{- if .Values.tls.enabled }}
+              <TLSPort>{{ .Values.webrtc.signallingTlsPort | default $tlsPort }}</TLSPort>
+              {{- end }}
+              <WorkerCount>1</WorkerCount>
+            </Signalling>
+            <IceCandidates>
+              <IceCandidate>${env:OME_HOST_IP:*}:{{ $iceStart }}-{{ $iceEnd }}/udp</IceCandidate>
+              <IceCandidate>${env:OME_HOST_IP:*}:{{ .Values.webrtc.tcpIcePort | default 10000 }}/tcp</IceCandidate>
+              <TcpRelay>${env:OME_HOST_IP:*}:{{ .Values.webrtc.turnPort | default 3478 }}</TcpRelay>
+              <TcpRelayForce>false</TcpRelayForce>
+              <TcpIceWorkerCount>1</TcpIceWorkerCount>
+              <TcpRelayWorkerCount>1</TcpRelayWorkerCount>
+            </IceCandidates>
+          </WebRTC>
+          {{- end }}
+        </Providers>
+
+        <Publishers>
+          {{- if .Values.ovt.enabled }}
+          <OVT>
+            <Port>{{ .Values.ovt.port | default 9000 }}</Port>
+            <WorkerCount>1</WorkerCount>
+          </OVT>
+          {{- end }}
+          {{- if .Values.llhls.enabled }}
+          <LLHLS>
+            <Port>{{ $httpPort }}</Port>
+            {{- if .Values.tls.enabled }}
+            <TLSPort>{{ $tlsPort }}</TLSPort>
+            {{- end }}
+            <WorkerCount>1</WorkerCount>
+          </LLHLS>
+          {{- end }}
+          {{- if .Values.hls.enabled }}
+          <HLS>
+            <Port>{{ $httpPort }}</Port>
+            {{- if .Values.tls.enabled }}
+            <TLSPort>{{ $tlsPort }}</TLSPort>
+            {{- end }}
+            <WorkerCount>1</WorkerCount>
+          </HLS>
+          {{- end }}
+          {{- if .Values.srt.enabled }}
+          <SRT>
+            <Port>{{ .Values.srt.playbackPort | default 9998 }}</Port>
+            <WorkerCount>1</WorkerCount>
+          </SRT>
+          {{- end }}
+          {{- if .Values.webrtc.enabled }}
+          <WebRTC>
+            <Signalling>
+              <Port>{{ .Values.webrtc.signallingPort | default $httpPort }}</Port>
+              {{- if .Values.tls.enabled }}
+              <TLSPort>{{ .Values.webrtc.signallingTlsPort | default $tlsPort }}</TLSPort>
+              {{- end }}
+              <WorkerCount>1</WorkerCount>
+            </Signalling>
+            <IceCandidates>
+              <IceCandidate>${env:OME_HOST_IP:*}:{{ $iceStart }}-{{ $iceEnd }}/udp</IceCandidate>
+              <IceCandidate>${env:OME_HOST_IP:*}:{{ .Values.webrtc.tcpIcePort | default 10000 }}/tcp</IceCandidate>
+              <TcpRelay>${env:OME_HOST_IP:*}:{{ .Values.webrtc.turnPort | default 3478 }}</TcpRelay>
+              <TcpRelayForce>false</TcpRelayForce>
+              <TcpIceWorkerCount>1</TcpIceWorkerCount>
+              <TcpRelayWorkerCount>1</TcpRelayWorkerCount>
+            </IceCandidates>
+          </WebRTC>
+          {{- end }}
+        </Publishers>
+      </Bind>
+
+      {{- if .Values.api.enabled }}
+      <Managers>
+        <Host>
+          <Names>
+            <Name>*</Name>
+          </Names>
+        </Host>
+        <API>
+          <AccessToken>${env:OME_API_ACCESS_TOKEN:{{ .Values.api.accessToken | default "ome-internal-api-token" }}}</AccessToken>
+          <CrossDomains>
+            <Url>*</Url>
+          </CrossDomains>
+        </API>
+      </Managers>
+      {{- end }}
+
+      <Defaults>
+        <CrossDomains>
+          <Url>*</Url>
+        </CrossDomains>
+      </Defaults>
+
+      <VirtualHosts>
+        <VirtualHost>
+          <Name>default</Name>
+          <Distribution>ovenmediaengine.com</Distribution>
+          <Host>
+            <Names>
+              <Name>*</Name>
+            </Names>
+            {{- if .Values.tls.enabled }}
+            <TLS>
+              <CertPath>/certs/tls.crt</CertPath>
+              <KeyPath>/certs/tls.key</KeyPath>
+              <ChainCertPath>/certs/tls.crt</ChainCertPath>
+            </TLS>
+            {{- end }}
+          </Host>
+
+          {{- if and .Values.auth.signedPolicy .Values.auth.signedPolicy.enabled }}
+          <SignedPolicy>
+            <PolicyQueryKeyName>{{ .Values.auth.signedPolicy.policyQueryKeyName | default "policy" }}</PolicyQueryKeyName>
+            <SignatureQueryKeyName>{{ .Values.auth.signedPolicy.signatureQueryKeyName | default "signature" }}</SignatureQueryKeyName>
+            <SecretKey>${env:OME_STREAM_KEY:default-secret-key}</SecretKey>
+            <Enables>
+              <Providers>rtmp,webrtc,srt</Providers>
+            </Enables>
+          </SignedPolicy>
+          {{- end }}
+
+          <Applications>
+            <Application>
+              <Name>{{ .Values.appName | default "app" }}</Name>
+              <Type>live</Type>
+              <OutputProfiles>
+                <OutputProfile>
+                  <Name>bypass_stream</Name>
+                  <OutputStreamName>${OriginStreamName}</OutputStreamName>
+                  <Playlist>
+                    <Name>default</Name>
+                    <FileName>master</FileName>
+                    <Options>
+                      <WebRtcAutoAbr>true</WebRtcAutoAbr>
+                      <HLSChunklistPathDepth>0</HLSChunklistPathDepth>
+                      <EnableTsPackaging>true</EnableTsPackaging>
+                    </Options>
+                    <RenditionTemplate>
+                      <Name>${Height}p</Name>
+                      <VideoTemplate>
+                        <EncodingType>all</EncodingType>
+                      </VideoTemplate>
+                      <AudioTemplate>
+                        <EncodingType>all</EncodingType>
+                      </AudioTemplate>
+                    </RenditionTemplate>
+                  </Playlist>
+                  <Encodes>
+                    <Video>
+                      <Name>bypass_video</Name>
+                      <Bypass>true</Bypass>
+                    </Video>
+                    <Audio>
+                      <Name>aac_audio</Name>
+                      <Codec>aac</Codec>
+                      <Bitrate>128000</Bitrate>
+                      <Samplerate>48000</Samplerate>
+                      <Channel>2</Channel>
+                      <BypassIfMatch>
+                        <Codec>eq</Codec>
+                      </BypassIfMatch>
+                    </Audio>
+                    <Audio>
+                      <Name>opus_audio</Name>
+                      <Codec>opus</Codec>
+                      <Bitrate>128000</Bitrate>
+                      <Samplerate>48000</Samplerate>
+                      <Channel>2</Channel>
+                      <BypassIfMatch>
+                        <Codec>eq</Codec>
+                      </BypassIfMatch>
+                    </Audio>
+                  </Encodes>
+                </OutputProfile>
+              </OutputProfiles>
+              <Providers>
+                {{- if .Values.ovt.enabled }}
+                <OVT />
+                {{- end }}
+                {{- if .Values.webrtc.enabled }}
+                <WebRTC>
+                  <Timeout>30000</Timeout>
+                  <CrossDomains>
+                    <Url>*</Url>
+                  </CrossDomains>
+                </WebRTC>
+                {{- end }}
+                {{- if .Values.rtmp.enabled }}
+                <RTMP />
+                {{- end }}
+                {{- if .Values.srt.enabled }}
+                <SRT />
+                {{- end }}
+                <RTSPPull />
+              </Providers>
+              <Publishers>
+                <AppWorkerCount>1</AppWorkerCount>
+                <StreamWorkerCount>8</StreamWorkerCount>
+                {{- if .Values.ovt.enabled }}
+                <OVT />
+                {{- end }}
+                {{- if .Values.srt.enabled }}
+                <SRT />
+                {{- end }}
+                {{- if .Values.webrtc.enabled }}
+                <WebRTC>
+                  <Timeout>30000</Timeout>
+                  <Rtx>false</Rtx>
+                  <Ulpfec>false</Ulpfec>
+                  <JitterBuffer>false</JitterBuffer>
+                  <CreateDefaultPlaylist>true</CreateDefaultPlaylist>
+                </WebRTC>
+                {{- end }}
+                {{- if .Values.llhls.enabled }}
+                <LLHLS>
+                  <OriginMode>true</OriginMode>
+                  <ChunkDuration>{{ .Values.llhls.chunkDuration | default "0.5" }}</ChunkDuration>
+                  <PartHoldBack>{{ .Values.llhls.partHoldBack | default "1.5" }}</PartHoldBack>
+                  <SegmentDuration>{{ .Values.llhls.segmentDuration | default 6 }}</SegmentDuration>
+                  <SegmentCount>{{ .Values.llhls.segmentCount | default 10 }}</SegmentCount>
+                  <CrossDomains>
+                    <Url>*</Url>
+                  </CrossDomains>
+                  <CreateDefaultPlaylist>true</CreateDefaultPlaylist>
+                </LLHLS>
+                {{- end }}
+                {{- if .Values.hls.enabled }}
+                <HLS>
+                  <SegmentCount>{{ .Values.hls.segmentCount | default 4 }}</SegmentCount>
+                  <SegmentDuration>{{ .Values.hls.segmentDuration | default 4 }}</SegmentDuration>
+                  <CrossDomains>
+                    <Url>*</Url>
+                  </CrossDomains>
+                  <CreateDefaultPlaylist>true</CreateDefaultPlaylist>
+                </HLS>
+                {{- end }}
+              </Publishers>
+            </Application>
+          </Applications>
+        </VirtualHost>
+      </VirtualHosts>
+    </Server>

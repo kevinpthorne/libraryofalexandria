@@ -1,0 +1,133 @@
+{{- $iceStart := int (.Values.webrtc.icePortRangeStart | default 10000) -}}
+{{- $iceEnd := int (.Values.webrtc.icePortRangeEnd | default 10003) -}}
+{{- if .Values.service.public.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ovenmediaengine.fullname" . }}
+  labels:
+    {{- include "ovenmediaengine.labels" . | nindent 4 }}
+  annotations:
+    external-dns.loa.internal/expose: "public"
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.domain | quote }}
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
+spec:
+  type: {{ .Values.service.public.type | default "LoadBalancer" }}
+  ports:
+    {{- if .Values.rtmps.enabled }}
+    - name: rtmps
+      port: {{ .Values.rtmps.port | default 1936 }}
+      targetPort: rtmps
+      protocol: TCP
+    {{- end }}
+    {{- if and .Values.srt.enabled .Values.srt.public }}
+    - name: srt
+      port: {{ .Values.srt.port | default 8890 }}
+      targetPort: srt
+      protocol: UDP
+    {{- end }}
+    {{- if and .Values.tls.enabled (or (and .Values.llhls.enabled .Values.llhls.public) (and .Values.webrtc.enabled .Values.webrtc.public)) }}
+    - name: https-stream
+      port: {{ .Values.llhls.tlsPort | default 3334 }}
+      targetPort: https-stream
+      protocol: TCP
+    {{- end }}
+    {{- if and .Values.webrtc.enabled .Values.webrtc.public }}
+    {{- range $port := untilStep $iceStart (add1 $iceEnd | int) 1 }}
+    - name: ice-udp-{{ $port }}
+      port: {{ $port }}
+      targetPort: ice-udp-{{ $port }}
+      protocol: UDP
+    {{- end }}
+    - name: ice-tcp
+      port: {{ .Values.webrtc.tcpIcePort | default 10000 }}
+      targetPort: ice-tcp
+      protocol: TCP
+    - name: turn-tcp
+      port: {{ .Values.webrtc.turnPort | default 3478 }}
+      targetPort: turn-tcp
+      protocol: TCP
+    {{- end }}
+  selector:
+    {{- include "ovenmediaengine.selectorLabels" . | nindent 4 }}
+{{- end }}
+{{- if .Values.service.internal.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ovenmediaengine.fullname" . }}-internal
+  labels:
+    {{- include "ovenmediaengine.labels" . | nindent 4 }}
+  {{- if .Values.internalDomain }}
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.internalDomain | quote }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.internal.type | default "LoadBalancer" }}
+  ports:
+    {{- if .Values.ui.enabled }}
+    - name: ui
+      port: {{ .Values.ui.servicePort | default 8080 }}
+      targetPort: ui
+      protocol: TCP
+    {{- end }}
+    {{- if or .Values.llhls.enabled .Values.hls.enabled .Values.webrtc.enabled }}
+    - name: http-stream
+      port: {{ .Values.llhls.port | default 3333 }}
+      targetPort: http-stream
+      protocol: TCP
+    {{- if .Values.tls.enabled }}
+    - name: https-stream
+      port: {{ .Values.llhls.tlsPort | default 3334 }}
+      targetPort: https-stream
+      protocol: TCP
+    {{- end }}
+    {{- end }}
+    {{- if .Values.rtmps.enabled }}
+    - name: rtmps
+      port: {{ .Values.rtmps.port | default 1936 }}
+      targetPort: rtmps
+      protocol: TCP
+    {{- end }}
+    {{- if .Values.rtmp.enabled }}
+    - name: rtmp
+      port: {{ .Values.rtmp.port | default 1935 }}
+      targetPort: rtmp
+      protocol: TCP
+    {{- end }}
+    {{- if .Values.srt.enabled }}
+    - name: srt
+      port: {{ .Values.srt.port | default 8890 }}
+      targetPort: srt
+      protocol: UDP
+    - name: srt-play
+      port: {{ .Values.srt.playbackPort | default 9998 }}
+      targetPort: srt-play
+      protocol: UDP
+    {{- end }}
+    {{- if .Values.webrtc.enabled }}
+    {{- range $port := untilStep $iceStart (add1 $iceEnd | int) 1 }}
+    - name: ice-udp-{{ $port }}
+      port: {{ $port }}
+      targetPort: ice-udp-{{ $port }}
+      protocol: UDP
+    {{- end }}
+    - name: ice-tcp
+      port: {{ .Values.webrtc.tcpIcePort | default 10000 }}
+      targetPort: ice-tcp
+      protocol: TCP
+    - name: turn-tcp
+      port: {{ .Values.webrtc.turnPort | default 3478 }}
+      targetPort: turn-tcp
+      protocol: TCP
+    {{- end }}
+    {{- if .Values.ovt.enabled }}
+    - name: ovt
+      port: {{ .Values.ovt.port | default 9000 }}
+      targetPort: ovt
+      protocol: TCP
+    {{- end }}
+  selector:
+    {{- include "ovenmediaengine.selectorLabels" . | nindent 4 }}
+{{- end }}

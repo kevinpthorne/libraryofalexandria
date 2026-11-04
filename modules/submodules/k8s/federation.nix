@@ -15,11 +15,13 @@ let
   caPath = "${root}/clusters/${thisCluster.name}/keys/p2p-vpn-ca.pub";
   sigPath = "${root}/clusters/${thisCluster.name}/keys/p2p-vpn-node.sig";
   whitelistPath = "${root}/clusters/${thisCluster.name}/keys/p2p-vpn-whitelist.txt";
+  manifestPath = "${root}/clusters/${thisCluster.name}/keys/anycast-origin-manifest.pb64";
 
   # Read files at evaluation/compile time if they exist
   caContent = if builtins.pathExists caPath then builtins.readFile caPath else "";
   sigContent = if builtins.pathExists sigPath then builtins.readFile sigPath else "";
   whitelistContent = if builtins.pathExists whitelistPath then builtins.readFile whitelistPath else "";
+  manifestBase64Content = if builtins.pathExists manifestPath then builtins.readFile manifestPath else "";
 
   # TODO Make systemd service to auto-install
   p2p-vpn-secret-install = pkgs.writeShellScriptBin "p2p-vpn-secret-install" ''
@@ -85,6 +87,15 @@ in
             ca = caContent;
             sig = sigContent;
             whitelist = whitelistContent;
+          };
+          namespace = "kube-system";
+        }
+        {
+          name = "p2p-anycast-config";
+          chart = "${pkgs.p2p-anycast-config-helm}/p2p-anycast-config-helm-0.1.0.tgz";
+          values = {
+            ca = caContent;
+            manifestBase64 = manifestBase64Content;
           };
           namespace = "kube-system";
         }

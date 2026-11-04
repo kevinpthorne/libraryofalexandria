@@ -1,0 +1,42 @@
+{
+  "serial_number": 2,
+  "subject_id": "k",
+  "role": "ORIGIN_NODE",
+  "libp2p_peer_id": "QmScQKzdvNVNVAR53DzpPSTbTTvHuhfPLXFJdMfwtL6eon",
+  "validity_days": 3650,
+  "capabilities": [
+    {
+      "service_pattern": "cilium-gateway-public-gateway",
+      "allowed_policies": ["CLUSTERED_RTT", "FAILOVER_STANDBY"],
+      "allowed_ports": [
+        {"start": 443, "end": 443}
+      ]
+    },
+    {
+      "service_pattern": "loa-voip-*",
+      "allowed_policies": ["STRICT_SINGLETON", "CLUSTERED_RTT"],
+      "allowed_ports": [
+        {"start": 5060, "end": 5061},
+        {"start": 10000, "end": 20000}
+      ]
+    },
+    {
+      "service_pattern": "minecraft-*",
+      "allowed_policies": ["STRICT_SINGLETON"],
+      "allowed_ports": [
+        {"start": 19132, "end": 19132},
+        {"start": 25565, "end": 25565}
+      ]
+    },
+    {
+      "service_pattern": "stalwart-*",
+      "allowed_policies": ["CLUSTERED_RTT", "STRICT_SINGLETON"],
+      "allowed_ports": [
+        {"start": 465, "end": 465},
+        {"start": 587, "end": 587},
+        {"start": 993, "end": 993},
+        {"start": 995, "end": 995}
+      ]
+    }
+  ]
+}

@@ -202,7 +202,6 @@ spec:
   secretKeys:
     - otpSecret
 ---
----
 apiVersion: generators.external-secrets.io/v1alpha1
 kind: Password
 metadata:
@@ -241,6 +240,7 @@ spec:
   allowRepeat: true
   secretKeys:
     - arPrimaryKey
+---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:

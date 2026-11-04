@@ -19,9 +19,13 @@ metadata:
     {{- end }}
 spec:
   parentRefs:
+    {{- if .Values.gateway.parentRefs }}
+    {{- toYaml .Values.gateway.parentRefs | nindent 4 }}
+    {{- else }}
     - name: {{ .Values.gateway.name | default "local-gateway" }}
       namespace: {{ .Values.gateway.namespace | default "kube-system" }}
       sectionName: {{ .Values.gateway.sectionName | default "tls-443" }}
+    {{- end }}
   {{- if or .Values.gateway.hostnames .Values.service.domains }}
   hostnames:
     {{- range (.Values.gateway.hostnames | default .Values.service.domains) }}

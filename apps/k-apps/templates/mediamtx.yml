@@ -1,7 +1,8 @@
-{{- if (index .Values "mediamtx" "enabled" | default true) -}}
+{{- $mediamtx := .Values.mediamtx | default dict -}}
+{{- if ($mediamtx.enabled | default false) -}}
 {{- $cluster := .Values.cluster | default dict -}}
-{{- $domain := (index .Values "mediamtx" "domain") | default (printf "catcher.%s.kpt.link" ($cluster.name | default "k")) -}}
-{{- $issuerName := (index .Values "mediamtx" "issuerName") | default "letsencrypt-prod" -}}
+{{- $domain := $mediamtx.domain | default (printf "catcher.%s.kpt.link" ($cluster.name | default "k")) -}}
+{{- $issuerName := $mediamtx.issuerName | default "letsencrypt-prod" -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -17,16 +18,16 @@ spec:
       valuesObject:
         domain: {{ $domain | quote }}
         rtmps:
-          port: {{ (index .Values "mediamtx" "rtmpsPort") | default 1936 }}
+          port: {{ $mediamtx.rtmpsPort | default 1936 }}
         tls:
           issuerName: {{ $issuerName | quote }}
-        {{- if hasKey (index .Values "mediamtx") "auth" }}
+        {{- if hasKey $mediamtx "auth" }}
         auth:
-          {{- toYaml (index .Values "mediamtx" "auth") | nindent 10 }}
+          {{- toYaml $mediamtx.auth | nindent 10 }}
         {{- end }}
-        {{- if hasKey (index .Values "mediamtx") "ui" }}
+        {{- if hasKey $mediamtx "ui" }}
         ui:
-          {{- toYaml (index .Values "mediamtx" "ui") | nindent 10 }}
+          {{- toYaml $mediamtx.ui | nindent 10 }}
         {{- end }}
   destination:
     server: https://kubernetes.default.svc

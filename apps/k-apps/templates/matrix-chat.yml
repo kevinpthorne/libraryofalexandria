@@ -81,6 +81,21 @@ spec:
               drop:
                 - ALL
             readOnlyRootFilesystem: false
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTPS
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTPS
           extraVolumes:
             - name: tls
               secret:
@@ -150,9 +165,6 @@ spec:
         {{- if $hasFederation }}
         redis:
           enabled: false
-        externalRedis:
-          host: "keydb-restricted-keydb-helm.keydb.svc.cluster.local"
-          port: 6379
         postgresql:
           enabled: false
         externalPostgresql:

@@ -36,3 +36,37 @@ data:
     key = /certs/keydb-client/tls.key
     {{- end }}
 {{- end }}
+{{- if and (or .Values.database.enabled .Values.redis.enabled) .Values.extraDeployments }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app-template.fullname" . }}-stunnel-client-conf
+  labels:
+    {{- include "app-template.labels" . | nindent 4 }}
+data:
+  stunnel.conf: |
+    foreground = yes
+    pid =
+    {{- if .Values.database.enabled }}
+    [postgres]
+    client = yes
+    protocol = pgsql
+    accept = 127.0.0.1:{{ .Values.database.port | default 5432 }}
+    connect = {{ .Values.database.host | default (printf "%s-%s-data-rw.pgedge.svc:5432" (.Values.database.appName | default "main") (.Values.cluster.name | default "k")) }}
+    verifyChain = yes
+    CAfile = /certs/cas/ca-bundle.crt
+    cert = /certs/db-client/tls.crt
+    key = /certs/db-client/tls.key
+    {{- end }}
+    {{- if .Values.redis.enabled }}
+    [redis]
+    client = yes
+    accept = 127.0.0.1:{{ .Values.redis.port | default 6379 }}
+    connect = {{ .Values.redis.host | default "keydb-restricted-keydb-helm.keydb.svc.cluster.local:6380" }}
+    verifyChain = yes
+    CAfile = /certs/cas/ca-bundle.crt
+    cert = /certs/keydb-client/tls.crt
+    key = /certs/keydb-client/tls.key
+    {{- end }}
+{{- end }}

@@ -10,12 +10,14 @@ metadata:
 spec:
   secretName: {{ .Values.tls.secretName | default (printf "%s-tls" (include "app-template.fullname" .)) }}
   dnsNames:
+    {{- if and (.Values.tls.internalDnsNames | default true) (eq (.Values.tls.issuerRef.name | default "pki-bootstrap") "pki-bootstrap") }}
     - {{ include "app-template.fullname" . }}
     - {{ include "app-template.fullname" . }}.{{ .Release.Namespace }}.svc
     - {{ include "app-template.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
     {{- if .Values.cluster.name }}
     - {{ include "app-template.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.{{ .Values.cluster.name }}
     - {{ include "app-template.fullname" . }}.{{ .Values.cluster.name }}.loa.internal
+    {{- end }}
     {{- end }}
     {{- range .Values.service.domains }}
     - {{ . }}

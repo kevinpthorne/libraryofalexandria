@@ -35,6 +35,8 @@ spec:
                      /var/www/html/storage/framework/sessions \
                      /var/www/html/storage/framework/views \
                      /var/www/html/storage/logs
+            sed -i "s/DBHelper::getTable('\([a-z_]*\)')/'\1'/g" /var/www/html/database/migrations/2017_06_07_173437_add_multiple_genders_choices.php || true
+            sed -i "s/\$table->integer('value')->change()->nullable();/DB::statement('ALTER TABLE gifts ALTER value TYPE INT USING NULL');/" /var/www/html/database/migrations/2020_04_24_212138_update_amount_format.php || true
             php /var/www/html/artisan storage:link || true
             php /var/www/html/artisan migrate --force
             rm -f /var/run/apache2/apache2.pid

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: p2p-vpn-config-helm
+description: A Helm chart for deploying the p2p-vpn public ConfigMap (CA, signatures, and whitelists)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

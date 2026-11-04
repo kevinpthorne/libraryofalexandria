@@ -44,6 +44,23 @@ spec:
             - --skip-auth-route=GET=^/assets/
         keycloak:
           enabled: {{ $hasFederation }}
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          runAsGroup: 1001
+          fsGroup: 1001
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1001
+          runAsGroup: 1001
+          capabilities:
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
         readinessProbe:
           httpGet:
             path: /health

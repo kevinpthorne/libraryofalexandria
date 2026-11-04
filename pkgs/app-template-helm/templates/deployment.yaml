@@ -52,9 +52,17 @@ spec:
               containerPort: {{ .targetPort | default .port }}
               protocol: {{ .protocol | default "TCP" }}
             {{- end }}
-          {{- if .Values.env }}
+          {{- if or .Values.env .Values.database.enabled }}
           env:
-            {{- toYaml .Values.env | nindent 12 }}
+            {{- if .Values.database.enabled }}
+            - name: PGSSLMODE
+              value: "disable"
+            - name: DB_SSLMODE
+              value: "disable"
+            {{- end }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           {{- end }}
           {{- if .Values.envFrom }}
           envFrom:
@@ -295,8 +303,14 @@ spec:
           ports:
             {{- toYaml .ports | nindent 12 }}
           {{- end }}
-          {{- if or $.Values.env .env }}
+          {{- if or $.Values.env .env $.Values.database.enabled }}
           env:
+            {{- if $.Values.database.enabled }}
+            - name: PGSSLMODE
+              value: "disable"
+            - name: DB_SSLMODE
+              value: "disable"
+            {{- end }}
             {{- if $.Values.env }}
             {{- toYaml $.Values.env | nindent 12 }}
             {{- end }}
@@ -381,7 +395,7 @@ spec:
         {{- if or $.Values.database.enabled $.Values.redis.enabled }}
         - name: stunnel-conf
           configMap:
-            name: {{ include "app-template.fullname" $ }}-stunnel-conf
+            name: {{ include "app-template.fullname" $ }}-stunnel-client-conf
         {{- if $.Values.database.enabled }}
         - name: db-client-cert
           secret:

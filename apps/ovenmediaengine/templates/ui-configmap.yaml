@@ -1,0 +1,636 @@
+{{- if .Values.ui.enabled }}
+{{- $apiToken := .Values.api.accessToken | default "ome-internal-api-token" -}}
+{{- $appName := .Values.appName | default "app" -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ovenmediaengine.fullname" . }}-ui
+  labels:
+    {{- include "ovenmediaengine.labels" . | nindent 4 }}
+data:
+  nginx.conf: |
+    server {
+        listen {{ .Values.ui.port | default 8080 }};
+        server_name _;
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /v1/ {
+            proxy_pass http://127.0.0.1:{{ .Values.api.port | default 8081 }}/v1/;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Authorization "Basic {{ $apiToken | b64enc }}";
+            proxy_read_timeout 15s;
+        }
+
+        location /llhls/ {
+            proxy_pass http://127.0.0.1:{{ .Values.llhls.port | default 3333 }}/;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+    }
+
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>OvenMediaEngine Dashboard</title>
+      <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+      <style>
+        :root {
+          --bg-main: #0b0f19;
+          --bg-card: #151d30;
+          --bg-card-hover: #1c2742;
+          --border-color: #24304f;
+          --text-main: #f3f4f6;
+          --text-muted: #9ca3af;
+          --accent-orange: #f97316;
+          --accent-blue: #3b82f6;
+          --accent-green: #10b981;
+          --accent-amber: #f59e0b;
+          --accent-red: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          background-color: var(--bg-main);
+          color: var(--text-main);
+          min-height: 100vh;
+          padding: 24px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-bottom: 24px;
+          border-bottom: 1px solid var(--border-color);
+          margin-bottom: 24px;
+          flex-wrap: wrap;
+          gap: 16px;
+        }
+        .title-group { display: flex; align-items: center; gap: 14px; }
+        .logo-badge {
+          background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
+          color: white;
+          padding: 8px 14px;
+          border-radius: 8px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+          font-size: 16px;
+        }
+        h1 { font-size: 22px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .server-domain { color: var(--text-muted); font-size: 13px; font-family: monospace; margin-top: 4px; }
+        .controls { display: flex; align-items: center; gap: 12px; }
+        .badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 10px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 500;
+          background: rgba(255, 255, 255, 0.08);
+        }
+        .badge-live { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-waiting { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .pulse-dot {
+          width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-green);
+          box-shadow: 0 0 8px var(--accent-green);
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        button, select {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          color: var(--text-main);
+          padding: 8px 14px;
+          border-radius: 6px;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        button:hover { background: var(--bg-card-hover); border-color: var(--accent-blue); }
+        button.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+        button.primary:hover { background: #2563eb; }
+        button.danger { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: var(--accent-red); }
+        button.danger:hover { background: var(--accent-red); color: #fff; }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 16px;
+          margin-bottom: 28px;
+        }
+        .stat-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 10px;
+          padding: 16px 20px;
+        }
+        .stat-label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .stat-value { font-size: 24px; font-weight: 700; color: #fff; }
+        .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-family: monospace; }
+
+        .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+        .section-title { font-size: 17px; font-weight: 600; }
+
+        .stream-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 18px;
+          margin-bottom: 32px;
+        }
+        .stream-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          padding: 22px;
+          transition: border-color 0.2s;
+        }
+        .stream-card.live { border-color: rgba(16, 185, 129, 0.4); }
+        .stream-card-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 14px;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+        .path-name { font-size: 18px; font-weight: 700; font-family: monospace; color: #60a5fa; }
+        .stream-details {
+          display: flex;
+          gap: 20px;
+          margin-bottom: 16px;
+          font-size: 13px;
+          color: var(--text-muted);
+          flex-wrap: wrap;
+        }
+        .stream-details span strong { color: var(--text-main); }
+        .tracks-info {
+          background: rgba(0, 0, 0, 0.25);
+          padding: 8px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-family: monospace;
+          margin-bottom: 18px;
+          color: #cbd5e1;
+          display: flex;
+          gap: 14px;
+          flex-wrap: wrap;
+        }
+        .url-box {
+          background: rgba(0, 0, 0, 0.35);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 12px;
+          margin-top: 10px;
+        }
+        .url-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 6px 0;
+          font-size: 12px;
+          font-family: monospace;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          gap: 10px;
+        }
+        .url-item:last-child { border-bottom: none; }
+        .url-tag { font-weight: 600; color: #93c5fd; min-width: 115px; }
+        .url-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e2e8f0; }
+        .btn-copy {
+          padding: 3px 8px;
+          font-size: 11px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .btn-copy:hover { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+
+        .modal-backdrop {
+          display: none;
+          position: fixed;
+          top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(0, 0, 0, 0.85);
+          backdrop-filter: blur(4px);
+          z-index: 1000;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+        }
+        .modal-content {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          width: 100%;
+          max-width: 900px;
+          overflow: hidden;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px;
+          border-bottom: 1px solid var(--border-color);
+        }
+        .modal-body {
+          padding: 20px;
+          background: #000;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 400px;
+        }
+        video { width: 100%; max-height: 520px; border-radius: 6px; outline: none; }
+        .toast {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          background: #10b981;
+          color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
+          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+          transform: translateY(100px);
+          opacity: 0;
+          transition: all 0.3s ease;
+          z-index: 2000;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .empty-state {
+          padding: 32px;
+          text-align: center;
+          color: var(--text-muted);
+          background: var(--bg-card);
+          border: 1px dashed var(--border-color);
+          border-radius: 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <header>
+          <div class="title-group">
+            <div class="logo-badge">OME</div>
+            <div>
+              <h1>OvenMediaEngine Dashboard <span id="conn-badge" class="badge badge-waiting">Connecting...</span></h1>
+              <div class="server-domain">Internal: {{ .Values.internalDomain | default "catcher.k.loa.internal" }} &bull; Public: {{ .Values.domain | default "catcher.k.kpt.link" }}</div>
+            </div>
+          </div>
+          <div class="controls">
+            <span id="version-tag" class="badge">v---</span>
+            <label style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+              <input type="checkbox" id="auto-refresh" checked> Auto-refresh
+            </label>
+            <select id="refresh-interval">
+              <option value="2000">2s</option>
+              <option value="5000" selected>5s</option>
+              <option value="10000">10s</option>
+            </select>
+            <button class="primary" id="btn-manual-refresh">Refresh</button>
+          </div>
+        </header>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Active Streams</div>
+            <div class="stat-value" id="stat-active-streams">0</div>
+            <div class="stat-sub" id="stat-app-name">App: /{{ $appName }}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Active Connections</div>
+            <div class="stat-value" id="stat-total-connections">0</div>
+            <div class="stat-sub" id="stat-conn-breakdown">WebRTC: 0 &bull; LLHLS: 0 &bull; SRT: 0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Throughput In / Out</div>
+            <div class="stat-value" id="stat-throughput">0 bps</div>
+            <div class="stat-sub" id="stat-throughput-out">Out: 0 bps</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Data In / Out</div>
+            <div class="stat-value" id="stat-bytes-in">0 B</div>
+            <div class="stat-sub" id="stat-bytes-out">Sent: 0 B</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <div class="section-title">Live Streams</div>
+        </div>
+        <div id="streams-container" class="stream-grid">
+          <div class="empty-state">Loading streams...</div>
+        </div>
+
+        <div class="section-header">
+          <div class="section-title">Quick Ingest Endpoints (Example stream: <code>live</code>)</div>
+        </div>
+        <div class="stream-card" style="margin-bottom: 32px;">
+          <div class="url-box" style="margin-top: 0;" id="ingest-guide-box"></div>
+        </div>
+      </div>
+
+      <div id="preview-modal" class="modal-backdrop">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="modal-stream-title" style="font-size: 16px; font-weight: 600;">Stream Preview</h3>
+            <button id="modal-close" class="btn-copy">&times; Close</button>
+          </div>
+          <div class="modal-body">
+            <video id="preview-video" controls autoplay muted playsinline></video>
+          </div>
+        </div>
+      </div>
+
+      <div id="toast" class="toast">URL copied to clipboard!</div>
+
+      <script>
+        const internalHost = "{{ .Values.internalDomain | default "catcher.k.loa.internal" }}";
+        const publicHost = "{{ .Values.domain | default "catcher.k.kpt.link" }}";
+        const appName = "{{ $appName }}";
+        const rtmpPort = "{{ .Values.rtmp.port | default 1935 }}";
+        const rtmpsPort = "{{ .Values.rtmps.port | default 1936 }}";
+        const srtPort = "{{ .Values.srt.port | default 8890 }}";
+        const srtPlayPort = "{{ .Values.srt.playbackPort | default 9998 }}";
+        const httpPort = "{{ .Values.llhls.port | default 3333 }}";
+        const tlsPort = "{{ .Values.llhls.tlsPort | default 3334 }}";
+
+        let currentHls = null;
+
+        function formatBytes(bytes) {
+          if (!bytes || bytes === 0) return '0 B';
+          const k = 1024;
+          const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatBits(bits) {
+          if (!bits || bits === 0) return '0 bps';
+          const k = 1000;
+          const sizes = ['bps', 'Kbps', 'Mbps', 'Gbps'];
+          const i = Math.floor(Math.log(bits) / Math.log(k));
+          return parseFloat((bits / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showToast(msg) {
+          const toast = document.getElementById('toast');
+          toast.textContent = msg;
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function copyText(text) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast('Copied: ' + text);
+          }).catch(() => {
+            prompt('Copy URL:', text);
+          });
+        }
+
+        function renderIngestGuide() {
+          const box = document.getElementById('ingest-guide-box');
+          const items = [
+            { tag: 'RTMPS Ingest', url: `rtmps://${publicHost}:${rtmpsPort}/${appName}/live` },
+            { tag: 'RTMP Ingest', url: `rtmp://${internalHost}:${rtmpPort}/${appName}/live` },
+            { tag: 'SRT Ingest', url: `srt://${publicHost}:${srtPort}?streamid=default/${appName}/live` },
+            { tag: 'WHIP Ingest', url: `https://${publicHost}:${tlsPort}/${appName}/live?direction=whip` }
+          ];
+          box.innerHTML = items.map(i => `
+            <div class="url-item">
+              <span class="url-tag">${i.tag}</span>
+              <span class="url-text">${i.url}</span>
+              <button class="btn-copy" onclick="copyText('${i.url}')">Copy</button>
+            </div>
+          `).join('');
+        }
+
+        async function fetchAPI(endpoint, options = {}) {
+          try {
+            const res = await fetch(endpoint, options);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.json();
+          } catch (e) {
+            console.error(`Error fetching ${endpoint}:`, e);
+            return null;
+          }
+        }
+
+        async function updateDashboard() {
+          const [verRes, statsRes, streamsRes] = await Promise.all([
+            fetchAPI('/v1/version'),
+            fetchAPI(`/v1/stats/current/vhosts/default/apps/${appName}`),
+            fetchAPI(`/v1/vhosts/default/apps/${appName}/streams`)
+          ]);
+
+          const connBadge = document.getElementById('conn-badge');
+          const versionTag = document.getElementById('version-tag');
+
+          if (verRes && verRes.response) {
+            connBadge.className = 'badge badge-live';
+            connBadge.innerHTML = '<span class="pulse-dot"></span> Online';
+            versionTag.textContent = verRes.response.gitVersion || ('v' + verRes.response.version);
+          } else {
+            connBadge.className = 'badge badge-waiting';
+            connBadge.textContent = 'Disconnected';
+          }
+
+          if (statsRes && statsRes.response) {
+            const s = statsRes.response;
+            const c = s.connections || {};
+            document.getElementById('stat-total-connections').textContent = s.totalConnections || 0;
+            document.getElementById('stat-conn-breakdown').innerHTML =
+              `WebRTC: ${c.webrtc || 0} &bull; LLHLS: ${c.llhls || 0} &bull; HLS: ${c.hlsv3 || 0} &bull; SRT: ${c.srt || 0}`;
+            document.getElementById('stat-throughput').textContent = formatBits(s.lastThroughputIn || 0);
+            document.getElementById('stat-throughput-out').textContent = 'Out: ' + formatBits(s.lastThroughputOut || 0);
+            document.getElementById('stat-bytes-in').textContent = formatBytes(s.totalBytesIn || 0);
+            document.getElementById('stat-bytes-out').textContent = 'Sent: ' + formatBytes(s.totalBytesOut || 0);
+          }
+
+          const streamNames = (streamsRes && Array.isArray(streamsRes.response)) ? streamsRes.response : [];
+          document.getElementById('stat-active-streams').textContent = streamNames.length;
+
+          const streamsContainer = document.getElementById('streams-container');
+          if (streamNames.length === 0) {
+            streamsContainer.innerHTML = '<div class="empty-state">No active streams right now. Push to RTMPS, RTMP, SRT, or WHIP to begin streaming.</div>';
+            return;
+          }
+
+          const streamDetails = await Promise.all(streamNames.map(async name => {
+            const [info, st] = await Promise.all([
+              fetchAPI(`/v1/vhosts/default/apps/${appName}/streams/${encodeURIComponent(name)}`),
+              fetchAPI(`/v1/stats/current/vhosts/default/apps/${appName}/streams/${encodeURIComponent(name)}`)
+            ]);
+            return { name, info: info && info.response, stats: st && st.response };
+          }));
+
+          streamsContainer.innerHTML = '';
+          streamDetails.forEach(({ name, info, stats }) => {
+            const input = (info && info.input) || {};
+            const sourceType = input.sourceType || 'Live';
+            const remoteAddr = (input.connection && input.connection.remoteAddress)
+              ? `${input.connection.remoteAddress}:${input.connection.remotePort || ''}`
+              : (input.sourceUrl || 'Connected');
+
+            let tracksDesc = 'Bypass / Passthrough';
+            if (Array.isArray(input.tracks) && input.tracks.length > 0) {
+              tracksDesc = input.tracks.map(t => {
+                if (t.type === 'Video' && t.video) {
+                  const fps = t.video.framerate ? Math.round(t.video.framerate) : '';
+                  return `Video: ${t.video.codec || 'Video'} (${t.video.width}x${t.video.height}${fps ? ' @ ' + fps + 'fps' : ''})`;
+                }
+                if (t.type === 'Audio' && t.audio) {
+                  return `Audio: ${t.audio.codec || 'Audio'} (${t.audio.samplerate || ''}Hz, ${t.audio.channel || ''}ch)`;
+                }
+                return t.type || 'Track';
+              }).join(' &bull; ');
+            }
+
+            const viewers = stats ? (stats.totalConnections || 0) : 0;
+            const bytesIn = stats ? formatBytes(stats.totalBytesIn || 0) : '0 B';
+            const bitrateIn = stats ? formatBits(stats.lastThroughputIn || 0) : '0 bps';
+
+            const llhlsInternal = `http://${internalHost}:${httpPort}/${appName}/${name}/llhls.m3u8`;
+            const llhlsPublic = `https://${publicHost}:${tlsPort}/${appName}/${name}/llhls.m3u8`;
+            const hlsInternal = `http://${internalHost}:${httpPort}/${appName}/${name}/ts:playlist.m3u8`;
+            const webrtcPlay = `wss://${publicHost}:${tlsPort}/${appName}/${name}`;
+            const srtPlay = `srt://${internalHost}:${srtPlayPort}?streamid=default/${appName}/${name}`;
+
+            const card = document.createElement('div');
+            card.className = 'stream-card live';
+            card.innerHTML = `
+              <div class="stream-card-top">
+                <div>
+                  <span class="path-name">/${appName}/${name}</span>
+                  <span style="margin-left: 10px;" class="badge badge-live"><span class="pulse-dot"></span> Live</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="primary" onclick="openPreview('${name}')">&#9658; Preview Stream</button>
+                  <button class="danger" onclick="terminateStream('${name}')">Terminate</button>
+                </div>
+              </div>
+              <div class="stream-details">
+                <span>Source: <strong>${sourceType}</strong> (${remoteAddr})</span>
+                <span>Viewers: <strong>${viewers}</strong></span>
+                <span>Bitrate In: <strong>${bitrateIn}</strong></span>
+                <span>Data In: <strong>${bytesIn}</strong></span>
+              </div>
+              <div class="tracks-info">${tracksDesc}</div>
+              <div class="url-box">
+                <div class="url-item">
+                  <span class="url-tag">LL-HLS (Internal)</span>
+                  <span class="url-text">${llhlsInternal}</span>
+                  <button class="btn-copy" onclick="copyText('${llhlsInternal}')">Copy</button>
+                </div>
+                <div class="url-item">
+                  <span class="url-tag">LL-HLS (HTTPS)</span>
+                  <span class="url-text">${llhlsPublic}</span>
+                  <button class="btn-copy" onclick="copyText('${llhlsPublic}')">Copy</button>
+                </div>
+                <div class="url-item">
+                  <span class="url-tag">HLS (MPEG-TS)</span>
+                  <span class="url-text">${hlsInternal}</span>
+                  <button class="btn-copy" onclick="copyText('${hlsInternal}')">Copy</button>
+                </div>
+                <div class="url-item">
+                  <span class="url-tag">WebRTC Play</span>
+                  <span class="url-text">${webrtcPlay}</span>
+                  <button class="btn-copy" onclick="copyText('${webrtcPlay}')">Copy</button>
+                </div>
+                <div class="url-item">
+                  <span class="url-tag">SRT Play</span>
+                  <span class="url-text">${srtPlay}</span>
+                  <button class="btn-copy" onclick="copyText('${srtPlay}')">Copy</button>
+                </div>
+              </div>
+            `;
+            streamsContainer.appendChild(card);
+          });
+        }
+
+        async function terminateStream(name) {
+          if (!confirm(`Terminate stream /${appName}/${name}?`)) return;
+          const res = await fetchAPI(`/v1/vhosts/default/apps/${appName}/streams/${encodeURIComponent(name)}`, { method: 'DELETE' });
+          if (res) {
+            showToast(`Terminated /${appName}/${name}`);
+            updateDashboard();
+          } else {
+            showToast('Failed to terminate stream');
+          }
+        }
+
+        function openPreview(name) {
+          const modal = document.getElementById('preview-modal');
+          const video = document.getElementById('preview-video');
+          const title = document.getElementById('modal-stream-title');
+          title.textContent = `Live Stream Preview: /${appName}/${name}`;
+          const streamUrl = `/llhls/${appName}/${name}/llhls.m3u8`;
+
+          if (Hls.isSupported()) {
+            if (currentHls) currentHls.destroy();
+            currentHls = new Hls({ enableWorker: true, lowLatencyMode: true });
+            currentHls.loadSource(streamUrl);
+            currentHls.attachMedia(video);
+            currentHls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = streamUrl;
+            video.play().catch(() => {});
+          }
+          modal.style.display = 'flex';
+        }
+
+        function closePreview() {
+          const modal = document.getElementById('preview-modal');
+          const video = document.getElementById('preview-video');
+          modal.style.display = 'none';
+          video.pause();
+          if (currentHls) {
+            currentHls.destroy();
+            currentHls = null;
+          }
+          video.src = '';
+        }
+
+        document.getElementById('modal-close').addEventListener('click', closePreview);
+        document.getElementById('preview-modal').addEventListener('click', (e) => {
+          if (e.target.id === 'preview-modal') closePreview();
+        });
+
+        let timer = null;
+        function scheduleRefresh() {
+          if (timer) clearInterval(timer);
+          const auto = document.getElementById('auto-refresh').checked;
+          const interval = parseInt(document.getElementById('refresh-interval').value, 10);
+          if (auto) timer = setInterval(updateDashboard, interval);
+        }
+
+        document.getElementById('auto-refresh').addEventListener('change', scheduleRefresh);
+        document.getElementById('refresh-interval').addEventListener('change', scheduleRefresh);
+        document.getElementById('btn-manual-refresh').addEventListener('click', () => {
+          updateDashboard();
+          showToast('Dashboard refreshed');
+        });
+
+        renderIngestGuide();
+        updateDashboard();
+        scheduleRefresh();
+      </script>
+    </body>
+    </html>
+{{- end }}

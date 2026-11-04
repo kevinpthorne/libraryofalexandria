@@ -1,0 +1,4 @@
+configMapName: "p2p-anycast-config"
+namespace: "kube-system"
+ca: ""
+manifestBase64: ""

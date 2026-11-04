@@ -1,0 +1,183 @@
+{{- $iceStart := int (.Values.webrtc.icePortRangeStart | default 10000) -}}
+{{- $iceEnd := int (.Values.webrtc.icePortRangeEnd | default 10003) -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ovenmediaengine.fullname" . }}
+  labels:
+    {{- include "ovenmediaengine.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "ovenmediaengine.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if .Values.ui.enabled }}
+        checksum/ui-config: {{ include (print $.Template.BasePath "/ui-configmap.yaml") . | sha256sum }}
+        {{- end }}
+      labels:
+        {{- include "ovenmediaengine.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: ovenmediaengine
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          ports:
+            {{- if .Values.rtmp.enabled }}
+            - name: rtmp
+              containerPort: {{ .Values.rtmp.port | default 1935 }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.srt.enabled }}
+            - name: srt
+              containerPort: {{ .Values.srt.port | default 8890 }}
+              protocol: UDP
+            - name: srt-play
+              containerPort: {{ .Values.srt.playbackPort | default 9998 }}
+              protocol: UDP
+            {{- end }}
+            {{- if or .Values.llhls.enabled .Values.hls.enabled .Values.webrtc.enabled }}
+            - name: http-stream
+              containerPort: {{ .Values.llhls.port | default 3333 }}
+              protocol: TCP
+            {{- if .Values.tls.enabled }}
+            - name: https-stream
+              containerPort: {{ .Values.llhls.tlsPort | default 3334 }}
+              protocol: TCP
+            {{- end }}
+            {{- end }}
+            {{- if .Values.webrtc.enabled }}
+            {{- range $port := untilStep $iceStart (add1 $iceEnd | int) 1 }}
+            - name: ice-udp-{{ $port }}
+              containerPort: {{ $port }}
+              protocol: UDP
+            {{- end }}
+            - name: ice-tcp
+              containerPort: {{ .Values.webrtc.tcpIcePort | default 10000 }}
+              protocol: TCP
+            - name: turn-tcp
+              containerPort: {{ .Values.webrtc.turnPort | default 3478 }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.ovt.enabled }}
+            - name: ovt
+              containerPort: {{ .Values.ovt.port | default 9000 }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.api.enabled }}
+            - name: api
+              containerPort: {{ .Values.api.port | default 8081 }}
+              protocol: TCP
+            {{- end }}
+          env:
+            - name: OME_API_ACCESS_TOKEN
+              value: {{ (.Values.api.accessToken | default "ome-internal-api-token") | quote }}
+            {{- if .Values.auth.secretName }}
+            - name: OME_STREAM_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.secretName }}
+                  key: {{ .Values.auth.secretKey | default "stream-key" }}
+                  optional: true
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /opt/ovenmediaengine/bin/origin_conf/Server.xml
+              subPath: Server.xml
+              readOnly: true
+            - name: config
+              mountPath: /opt/ovenmediaengine/bin/origin_conf/Logger.xml
+              subPath: Logger.xml
+              readOnly: true
+            - name: tls
+              mountPath: /certs
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+        {{- if and .Values.rtmps.enabled .Values.tls.enabled }}
+        - name: stunnel-rtmps
+          image: "{{ .Values.rtmps.stunnelImage.repository | default "cgr.dev/chainguard/stunnel" }}:{{ .Values.rtmps.stunnelImage.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.rtmps.stunnelImage.pullPolicy | default "IfNotPresent" }}
+          command: ["stunnel", "/etc/stunnel/stunnel.conf"]
+          ports:
+            - name: rtmps
+              containerPort: {{ .Values.rtmps.port | default 1936 }}
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: config
+              mountPath: /etc/stunnel/stunnel.conf
+              subPath: stunnel.conf
+              readOnly: true
+            - name: tls
+              mountPath: /certs
+              readOnly: true
+        {{- end }}
+        {{- if .Values.ui.enabled }}
+        - name: admin-ui
+          image: "{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"
+          imagePullPolicy: {{ .Values.ui.image.pullPolicy | default "IfNotPresent" }}
+          ports:
+            - name: ui
+              containerPort: {{ .Values.ui.port | default 8080 }}
+              protocol: TCP
+          {{- with .Values.ui.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.ui.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: ui
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: ui
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
+              readOnly: true
+        {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "ovenmediaengine.fullname" . }}-config
+        - name: tls
+          secret:
+            secretName: {{ .Values.tls.secretName | default "ovenmediaengine-tls" }}
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.ui.enabled }}
+        - name: ui
+          configMap:
+            name: {{ include "ovenmediaengine.fullname" . }}-ui
+        {{- end }}
