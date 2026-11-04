@@ -18,6 +18,9 @@ spec:
     metadata:
       labels:
         {{- include "app-template.selectorLabels" . | nindent 8 }}
+        {{- if .Values.extraDeployments }}
+        app.kubernetes.io/component: app
+        {{- end }}
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
