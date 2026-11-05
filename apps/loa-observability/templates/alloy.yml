@@ -9,8 +9,8 @@ spec:
   project: default
   source:
     repoURL: 'https://grafana.github.io/helm-charts'
-    chart: grafana-alloy
-    targetRevision: 0.x.x
+    chart: alloy
+    targetRevision: 1.x.x
     helm:
       values: |
         # Tolerate RKE2 Control Plane taints so Alloy runs on every node
@@ -27,8 +27,8 @@ spec:
                   name: trusted-ca-bundle
 
         alloy:
-          # Mount the custom CA bundle
           mounts:
+            varlog: true
             extra:
               - name: trusted-ca-bundle
                 mountPath: /etc/ssl/certs/trusted-ca-bundle.crt
@@ -74,6 +74,9 @@ spec:
               loki.write "local" {
                 endpoint {
                   url = "https://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+                  tls_config {
+                    ca_file = "/etc/ssl/certs/trusted-ca-bundle.crt"
+                  }
                 }
               }
               {{- end }}

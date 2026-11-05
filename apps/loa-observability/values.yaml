@@ -161,7 +161,7 @@ tolerations: []
 affinity: {}
 
 loki:
-  enabled: false
+  enabled: true
 
 alloy:
-  enabled: false
+  enabled: true

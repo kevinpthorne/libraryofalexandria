@@ -69,7 +69,7 @@ spec:
                   csi.cert-manager.io/issuer-name: "app-pki-bootstrap-issuer"
                   csi.cert-manager.io/issuer-kind: "ClusterIssuer"
                   csi.cert-manager.io/issuer-group: "cert-manager.io"
-                  csi.cert-manager.io/dns-names: "${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local,${POD_NAME}.${POD_NAMESPACE}.svc.cluster.{{ .Values.cluster.name }},${POD_NAME}.{{ .Values.cluster.name }}.loa.internal"
+                  csi.cert-manager.io/dns-names: "loki,loki.observability,loki.observability.svc,loki.observability.svc.cluster.local,${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local,${POD_NAME}.${POD_NAMESPACE}.svc.cluster.{{ .Values.cluster.name }},${POD_NAME}.{{ .Values.cluster.name }}.loa.internal"
                 
           extraVolumeMounts:
             - name: ca-bundle-volume
@@ -87,12 +87,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: loki-s3-creds
-                  key: access_key
+                  key: accessKey
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: loki-s3-creds
-                  key: secret_key
+                  key: secretKey
         read:
           replicas: 0
         backend:

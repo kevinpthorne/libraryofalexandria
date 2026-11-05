@@ -398,7 +398,9 @@ spec:
             gatewayName: public-gateway
             gatewayNamespace: public-gateway
             annotations:
+              p2p-anycast.io/expose: "true"
               external-dns.loa.internal/expose: "public"
+              external-dns.alpha.kubernetes.io/target: "k.kpt.link"
               external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
             hostnames:
               - "matrix.{{ $cluster.name | default "k" }}.kpt.link"
@@ -414,7 +416,9 @@ spec:
             gatewayName: public-gateway
             gatewayNamespace: public-gateway
             annotations:
+              p2p-anycast.io/expose: "true"
               external-dns.loa.internal/expose: "public"
+              external-dns.alpha.kubernetes.io/target: "k.kpt.link"
               external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
             hostnames:
               - "chat.kpt.link"

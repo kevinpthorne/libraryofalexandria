@@ -40,5 +40,3 @@ cloudflared:
   domains:
     - "immich.kpt.link"
     - "ident.kpt.link"
-    - "chat.kpt.link"
-    - "matrix.k.kpt.link"
