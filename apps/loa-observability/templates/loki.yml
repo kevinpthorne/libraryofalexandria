@@ -21,9 +21,11 @@ spec:
             http_tls_config:
               cert_file: /etc/loki/tls/tls.crt
               key_file: /etc/loki/tls/tls.key
-            grpc_tls_config:
-              cert_file: /etc/loki/tls/tls.crt
-              key_file: /etc/loki/tls/tls.key
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http-metrics
+              scheme: HTTPS
 
           commonConfig:
             replication_factor: 1
@@ -104,6 +106,8 @@ spec:
             enabled: false
             grafanaAgent:
               installOperator: false
+        gateway:
+          enabled: false
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: observability
