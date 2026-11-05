@@ -13,6 +13,8 @@ spec:
     targetRevision: 1.x.x
     helm:
       values: |
+        crds:
+          create: false
         # Tolerate RKE2 Control Plane taints so Alloy runs on every node
         controller:
           tolerations:
@@ -87,4 +89,7 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
 {{- end}}

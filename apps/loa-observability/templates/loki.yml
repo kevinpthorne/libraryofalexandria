@@ -99,6 +99,11 @@ spec:
           replicas: 0
         write:
           replicas: 0
+        monitoring:
+          selfMonitoring:
+            enabled: false
+            grafanaAgent:
+              installOperator: false
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: observability
@@ -106,4 +111,7 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
 {{- end }}
