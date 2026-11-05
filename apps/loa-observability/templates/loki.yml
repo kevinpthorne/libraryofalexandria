@@ -106,6 +106,8 @@ spec:
             enabled: false
             grafanaAgent:
               installOperator: false
+        test:
+          enabled: false
         gateway:
           enabled: false
   destination:
