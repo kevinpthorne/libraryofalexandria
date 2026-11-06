@@ -1,0 +1,210 @@
+{{- if ((.Values.wazuh | default dict).enabled | default true) }}
+{{- $cluster := .Values.cluster | default dict }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wazuh
+  namespace: {{ .Values.argoNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    chart: {{ .Values.wazuh.chart }}
+    repoURL: {{ .Values.wazuh.repoURL }}
+    targetRevision: {{ .Values.wazuh.targetRevision | quote }}
+    helm:
+      releaseName: wazuh
+      valuesObject:
+        cert-manager:
+          enabled: false
+        certificates:
+          enabled: true
+        indexer:
+          enabled: {{ .Values.wazuh.indexer.enabled | default false }}
+          replicas: {{ .Values.wazuh.indexer.replicas | default 1 }}
+          storageClass: {{ .Values.wazuh.storageClass | default "longhorn" | quote }}
+          storageSize: {{ .Values.wazuh.indexer.storageSize | default "25Gi" | quote }}
+          sysctlImage:
+            enabled: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccount:
+            automountServiceAccountToken: false
+          networkPolicy:
+            enabled: true
+          {{- if .Values.wazuh.indexer.resources }}
+          resources:
+            {{- toYaml .Values.wazuh.indexer.resources | nindent 12 }}
+          {{- end }}
+        wazuh:
+          serviceAccount:
+            automountServiceAccountToken: false
+          {{- if not .Values.wazuh.indexer.enabled }}
+          filebeat:
+            config: |
+              filebeat.modules:
+                - module: wazuh
+                  alerts:
+                    enabled: true
+                  archives:
+                    enabled: false
+              output.console:
+                pretty: false
+          {{- end }}
+          master:
+            storageClass: {{ .Values.wazuh.storageClass | default "longhorn" | quote }}
+            storageSize: {{ .Values.wazuh.master.storageSize | default "10Gi" | quote }}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+                add:
+                  - SYS_CHROOT
+              seccompProfile:
+                type: RuntimeDefault
+            networkPolicy:
+              enabled: true
+            {{- if .Values.wazuh.master.resources }}
+            resources:
+              {{- toYaml .Values.wazuh.master.resources | nindent 14 }}
+            {{- end }}
+          worker:
+            replicas: {{ .Values.wazuh.worker.replicas | default 1 }}
+            storageClass: {{ .Values.wazuh.storageClass | default "longhorn" | quote }}
+            storageSize: {{ .Values.wazuh.worker.storageSize | default "10Gi" | quote }}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+                add:
+                  - SYS_CHROOT
+              seccompProfile:
+                type: RuntimeDefault
+            networkPolicy:
+              enabled: true
+            {{- if .Values.wazuh.worker.resources }}
+            resources:
+              {{- toYaml .Values.wazuh.worker.resources | nindent 14 }}
+            {{- end }}
+        dashboard:
+          enabled: {{ .Values.wazuh.dashboard.enabled | default false }}
+          replicas: {{ .Values.wazuh.dashboard.replicas | default 1 }}
+          enable_ssl: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          extraSpec:
+            pod:
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 1000
+                runAsGroup: 1000
+                fsGroup: 1000
+                seccompProfile:
+                  type: RuntimeDefault
+          serviceAccount:
+            automountServiceAccountToken: false
+          networkPolicy:
+            enabled: true
+          {{- if .Values.wazuh.dashboard.resources }}
+          resources:
+            {{- toYaml .Values.wazuh.dashboard.resources | nindent 12 }}
+          {{- end }}
+        agent:
+          enabled: {{ .Values.wazuh.agent.enabled | default true }}
+          images:
+            repository: {{ .Values.wazuh.agent.images.repository | default "kinseii/wazuh-agent" | quote }}
+            tag: {{ .Values.wazuh.agent.images.tag | default "latest" | quote }}
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - DAC_READ_SEARCH
+                - SYS_CHROOT
+            seccompProfile:
+              type: RuntimeDefault
+          podSecurityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccount:
+            automountServiceAccountToken: false
+        {{- if .Values.wazuh.extraValues }}
+        {{- toYaml .Values.wazuh.extraValues | nindent 8 }}
+        {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.wazuh.namespace | default "wazuh" }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        zarf.dev/agent: "ignore"
+        pod-security.kubernetes.io/enforce: baseline
+        pod-security.kubernetes.io/audit: restricted
+        pod-security.kubernetes.io/warn: restricted
+{{- if .Values.wazuh.dashboard.enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wazuh-gateway
+  namespace: {{ .Values.argoNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    targetRevision: HEAD
+    path: pkgs/gateway-helm
+    helm:
+      valuesObject:
+        endpoints:
+          - name: wazuh
+            createGateway: false
+            gatewayName: local-gateway
+            gatewayNamespace: kube-system
+            hostnames:
+              - "wazuh.{{ $cluster.name | default "k" }}.loa.internal"
+              - "wazuh.loa.internal"
+            ports:
+              - name: https
+                port: 443
+                protocol: TLS
+                targetPort: 5601
+                targetService: wazuh-dashboard
+                tls:
+                  mode: Passthrough
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Values.wazuh.namespace | default "wazuh" }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+{{- end }}
+{{- end }}

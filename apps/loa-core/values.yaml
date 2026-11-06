@@ -36,3 +36,60 @@ publicGateway:
 
 acmeServer:
   enabled: true
+
+wazuh:
+  enabled: true
+  namespace: wazuh
+  chart: wazuh
+  repoURL: https://morgoved.github.io/wazuh-helm/
+  targetRevision: "2.5.1"
+  storageClass: "longhorn"
+  # Observability integration:
+  # By default, reuse existing Loki + Grafana in loa-observability.
+  # To deploy dedicated OpenSearch indexer and OpenSearch dashboard, set indexer.enabled=true and dashboard.enabled=true.
+  indexer:
+    enabled: false
+    replicas: 1
+    storageSize: 25Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+  dashboard:
+    enabled: false
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+  master:
+    storageSize: 10Gi
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+  worker:
+    replicas: 1
+    storageSize: 10Gi
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+  agent:
+    enabled: true
+    images:
+      repository: kinseii/wazuh-agent
+      tag: latest
+  extraValues: {}
