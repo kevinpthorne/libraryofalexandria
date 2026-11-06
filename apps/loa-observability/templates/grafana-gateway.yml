@@ -13,6 +13,15 @@ spec:
       valuesObject:
         endpoints:
           - name: grafana
+            createGateway: true
+            hostnames:
+              - "grafana.{{ .Values.cluster.name }}.loa.internal"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 443
+                targetService: prometheus-stack-grafana
+          - name: grafana-local
             createGateway: false
             gatewayName: local-gateway
             gatewayNamespace: kube-system
