@@ -50,9 +50,13 @@ spec:
               {{- if .Values.loki.enabled }}
               discovery.relabel "pod_logs" {
                 targets = discovery.kubernetes.pods.targets
-                
                 rule {
-                  source_labels = ["__meta_kubernetes_pod_namespace"]
+                  source_labels = ["__meta_kubernetes_pod_node_name"]
+                  action = "keep"
+                  regex = sys.env("K8S_NODE_NAME")
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_namespace"]
                   action = "replace"
                   target_label = "namespace"
                 }
@@ -65,6 +69,27 @@ spec:
                   source_labels = ["__meta_kubernetes_pod_container_name"]
                   action = "replace"
                   target_label = "container"
+                }
+                rule {
+                  action = "replace"
+                  replacement = "{{ .Values.cluster.name | default "k" }}"
+                  target_label = "cluster"
+                }
+                rule {
+                  source_labels = [
+                    "__meta_kubernetes_pod_label_app_kubernetes_io_name",
+                    "__meta_kubernetes_pod_label_app",
+                    "__meta_kubernetes_pod_container_name",
+                  ]
+                  regex = "^;*([^;]+)(;.*)?$"
+                  action = "replace"
+                  target_label = "app"
+                }
+                rule {
+                  source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_container_name"]
+                  separator = "/"
+                  action = "replace"
+                  target_label = "job"
                 }
               }
 
