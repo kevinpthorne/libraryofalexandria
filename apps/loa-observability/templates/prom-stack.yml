@@ -83,8 +83,18 @@ spec:
               initDatasources: true
               reloadURL: "https://127.0.0.1:3000/api/admin/provisioning/datasources/reload"
               url: https://prometheus-operated.observability.svc.cluster.local:9090
+              extraVolumeMounts:
+                - name: ca-bundle
+                  mountPath: /etc/ssl/certs/ca-certificates.crt
+                  subPath: ca-bundle.crt
+                  readOnly: true
             dashboards:
               reloadURL: "https://127.0.0.1:3000/api/admin/provisioning/dashboards/reload"
+              extraVolumeMounts:
+                - name: ca-bundle
+                  mountPath: /etc/ssl/certs/ca-certificates.crt
+                  subPath: ca-bundle.crt
+                  readOnly: true
           grafana.ini:
             server:
               protocol: https
@@ -145,23 +155,26 @@ spec:
               mountPath: /etc/grafana-tls
               readOnly: true
             - name: ca-bundle
-              mountPath: /etc/ssl/certs/custom-ca
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+              subPath: ca-bundle.crt
               readOnly: true
           # Instruct Prometheus to scrape Grafana via HTTPS
           serviceMonitor:
             scheme: https
             tlsConfig:
-              caFile: /etc/ssl/certs/custom-ca/ca-bundle.crt
+              caFile: /etc/ssl/certs/ca-certificates.crt
               serverName: grafana.observability.svc
           # Pre-wire Loki into Grafana
           additionalDataSources:
             - name: Loki
               type: loki
+              uid: loki
               url: https://loki.observability.svc.cluster.local:3100
               access: proxy
               isDefault: false
               jsonData:
                 tlsAuthWithCACert: true
+                maxLines: 1000
           # Strict Security Context for Grafana
           containerSecurityContext:
             allowPrivilegeEscalation: false
