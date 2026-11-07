@@ -83,6 +83,9 @@ spec:
               initDatasources: true
               reloadURL: "https://127.0.0.1:3000/api/admin/provisioning/datasources/reload"
               url: http://vmselect-vm.observability.svc.cluster.local:8481/select/0/prometheus
+              env:
+                REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+                SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
               extraVolumeMounts:
                 - name: ca-bundle
                   mountPath: /etc/ssl/certs/ca-certificates.crt
@@ -90,6 +93,9 @@ spec:
                   readOnly: true
             dashboards:
               reloadURL: "https://127.0.0.1:3000/api/admin/provisioning/dashboards/reload"
+              env:
+                REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+                SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
               extraVolumeMounts:
                 - name: ca-bundle
                   mountPath: /etc/ssl/certs/ca-certificates.crt
@@ -113,7 +119,7 @@ spec:
               port: 3000
               scheme: HTTPS
           env:
-            SSL_CERT_FILE: /etc/ssl/certs/custom-ca/ca-bundle.crt
+            SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
           envValueFrom:
             DISCORD_WEBHOOK_URL:
               secretKeyRef:
@@ -147,6 +153,7 @@ spec:
                   csi.cert-manager.io/issuer-kind: ClusterIssuer
                   csi.cert-manager.io/issuer-name: "app-pki-bootstrap-issuer"
                   csi.cert-manager.io/dns-names: "grafana.observability.svc,grafana.observability.svc.cluster.local,grafana.{{ .Values.cluster.name }}.loa.internal"
+                  csi.cert-manager.io/ip-addresses: "127.0.0.1"
             - name: ca-bundle
               configMap:
                 name: trusted-ca-bundle
