@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seaweedfs-dashboard
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  seaweedfs.json: |-
+{{ .Files.Get "dashboards/seaweedfs.json" | indent 4 }}
