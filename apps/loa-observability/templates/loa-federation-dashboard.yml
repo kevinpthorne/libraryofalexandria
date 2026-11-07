@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loa-federation-dashboard
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  loa-federation.json: |-
+{{ .Files.Get "dashboards/loa-federation.json" | indent 4 }}

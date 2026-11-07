@@ -55,6 +55,10 @@ spec:
                   - "-b=seaweed-cluster-filer.seaweedfs-system.svc.cluster.${schema.spec.targetCluster}:8888"
                   - "-a.path=${schema.spec.path}"
                   - "-b.path=${schema.spec.path}"
+                  - "-metricsPort=9326"
+                ports:
+                  - name: metrics
+                    containerPort: 9326
                 securityContext:
                   allowPrivilegeEscalation: false
                   capabilities:

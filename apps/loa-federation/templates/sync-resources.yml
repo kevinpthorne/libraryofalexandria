@@ -1,7 +1,8 @@
 {{- $local := .Values.cluster.name }}
+{{- $peers := or $.Values.cluster.peers (dig "federation" "peers" dict $.Values.cluster) }}
 
 {{- range $folder := .Values.syncFolders }}
-  {{- range $peer, $peerConfig := $.Values.cluster.peers }}
+  {{- range $peer, $peerConfig := $peers }}
     {{- $syncDecision := false }}
     
     {{- $first := $local }}
@@ -44,7 +45,7 @@ spec:
 {{- end }}
 
 {{- range $bucket := .Values.syncBuckets }}
-  {{- range $peer, $peerConfig := $.Values.cluster.peers }}
+  {{- range $peer, $peerConfig := $peers }}
     {{- $syncDecision := false }}
     
     {{- $first := $local }}
