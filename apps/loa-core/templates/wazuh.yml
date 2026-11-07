@@ -43,7 +43,7 @@ spec:
           serviceAccount:
             automountServiceAccountToken: false
           networkPolicy:
-            enabled: true
+            enabled: false
           {{- if .Values.wazuh.indexer.resources }}
           resources:
             {{- toYaml .Values.wazuh.indexer.resources | nindent 12 }}
@@ -62,6 +62,13 @@ spec:
                     enabled: false
               output.console:
                 pretty: false
+              logging.metrics.enabled: false
+              seccomp:
+                default_action: allow
+                syscalls:
+                  - action: allow
+                    names:
+                      - rseq
           {{- end }}
           master:
             storageClass: {{ .Values.wazuh.storageClass | default "longhorn" | quote }}
@@ -84,7 +91,7 @@ spec:
               seccompProfile:
                 type: RuntimeDefault
             networkPolicy:
-              enabled: true
+              enabled: false
             {{- if .Values.wazuh.master.resources }}
             resources:
               {{- toYaml .Values.wazuh.master.resources | nindent 14 }}
@@ -111,7 +118,7 @@ spec:
               seccompProfile:
                 type: RuntimeDefault
             networkPolicy:
-              enabled: true
+              enabled: false
             {{- if .Values.wazuh.worker.resources }}
             resources:
               {{- toYaml .Values.wazuh.worker.resources | nindent 14 }}
@@ -142,7 +149,7 @@ spec:
           serviceAccount:
             automountServiceAccountToken: false
           networkPolicy:
-            enabled: true
+            enabled: false
           {{- if .Values.wazuh.dashboard.resources }}
           resources:
             {{- toYaml .Values.wazuh.dashboard.resources | nindent 12 }}
@@ -175,6 +182,50 @@ spec:
               type: RuntimeDefault
           serviceAccount:
             automountServiceAccountToken: false
+          volumes:
+            - name: sys
+              hostPath:
+                path: /sys
+            - name: proc
+              hostPath:
+                path: /proc
+            - name: etc
+              hostPath:
+                path: /etc
+            - name: boot
+              hostPath:
+                path: /boot
+            - name: usr
+              hostPath:
+                path: /usr
+            - name: modules
+              hostPath:
+                path: /lib/modules
+            - name: log
+              hostPath:
+                path: /var/log
+          volumeMounts:
+            - mountPath: /host/sys
+              name: sys
+              readOnly: true
+            - mountPath: /host/proc
+              name: proc
+              readOnly: true
+            - mountPath: /host/etc
+              name: etc
+              readOnly: true
+            - mountPath: /host/boot
+              name: boot
+              readOnly: true
+            - mountPath: /host/usr
+              name: usr
+              readOnly: true
+            - mountPath: /host/lib/modules
+              name: modules
+              readOnly: true
+            - mountPath: /host/var/log
+              name: log
+              readOnly: true
         {{- if .Values.wazuh.extraValues }}
         {{- toYaml .Values.wazuh.extraValues | nindent 8 }}
         {{- end }}
