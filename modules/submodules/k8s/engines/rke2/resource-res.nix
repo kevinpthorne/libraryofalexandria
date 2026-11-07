@@ -33,7 +33,6 @@ in
             # Keep eviction-hard (550Mi) and eviction-soft (750Mi) well above kernel
             # min/low watermarks so kubelet evicts pods before page-cache thrashing begins.
             kubelet-arg:
-              - "fail-swap-on=false"
               - "kube-reserved=cpu=350m,memory=1200Mi"
               - "system-reserved=cpu=250m,memory=500Mi"
               - "eviction-hard=memory.available<550Mi,nodefs.available<10%"
@@ -43,7 +42,6 @@ in
         else
           ''
             kubelet-arg:
-              - "fail-swap-on=false"
               - "kube-reserved=cpu=250m,memory=500Mi"
               - "system-reserved=cpu=250m,memory=500Mi"
               - "eviction-hard=memory.available<550Mi,nodefs.available<10%"

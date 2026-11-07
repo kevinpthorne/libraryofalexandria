@@ -69,13 +69,6 @@
       # writes from starving etcd fsync, iSCSI pings, and page-fault reads.
       ACTION=="add|change", KERNEL=="nvme*", ATTR{queue/scheduler}="bfq"
     '';
-    # Enable in-RAM compressed zram swap so cold anonymous pages can be compressed
-    # instead of evicting active executable (.text) pages from page cache under pressure.
-    zramSwap = {
-      enable = true;
-      algorithm = "zstd";
-      memoryPercent = 50;
-    };
 
     # Tune VM watermarks for 16K-page kernel (which otherwise defaults min_free_kbytes
     # to 408 MiB and triggers direct-reclaim thrashing above kubelet's eviction threshold).
@@ -83,7 +76,7 @@
       "vm.min_free_kbytes" = 131072; # 128 MiB (down from 408 MiB 16K-page default)
       "vm.watermark_boost_factor" = 0; # Prevent 1.5x watermark spikes during fragmentation
       "vm.watermark_scale_factor" = 30; # Smooth background kswapd reclaim before direct reclaim
-      "vm.swappiness" = 100; # Prefer compressing cold anon pages into zram over evicting code pages
+      "vm.swappiness" = 0; # Never swap anonymous pages on Kubernetes nodes (protects etcd & apiserver)
     };
 
     # Arm BCM2712 hardware watchdog (/dev/watchdog0, max 15s timeout) so hard kernel/PID1

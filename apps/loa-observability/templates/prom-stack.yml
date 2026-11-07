@@ -26,6 +26,14 @@ spec:
           enabled: false
         kubeProxy:
           enabled: false
+        kubelet:
+          enabled: true
+          namespace: kube-system
+          serviceMonitor:
+            cAdvisorMetricRelabelings:
+              - sourceLabels: [__name__, interface]
+                action: drop
+                regex: 'container_network_.+;(lxc.*|cilium.*|nodelocaldns.*|tun.*|wlan.*|wlo.*|enp.*|end.*|clustermgmt.*|lo)'
         coreDns:
           enabled: true
           service:
