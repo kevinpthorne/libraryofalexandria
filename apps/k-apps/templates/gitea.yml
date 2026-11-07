@@ -17,6 +17,8 @@ spec:
           type: Recreate
         global:
           storageClass: "longhorn"
+        persistence:
+          size: 50Gi
         gitea:
           admin:
             existingSecret: gitea-admin-secret
