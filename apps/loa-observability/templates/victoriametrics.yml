@@ -57,6 +57,10 @@ spec:
               cluster: "{{ .Values.cluster.name | default "k" }}"
             extraArgs:
               promscrape.streamParse: "true"
+            inlineRelabelConfig:
+              - source_labels: ["__name__", "interface"]
+                action: drop
+                regex: 'container_network_.+;(lxc.*|cilium.*|nodelocaldns.*|tun.*|wlan.*|wlo.*|enp.*|end.*|clustermgmt.*|lo)'
             volumes:
               - name: ca-bundle
                 configMap:
