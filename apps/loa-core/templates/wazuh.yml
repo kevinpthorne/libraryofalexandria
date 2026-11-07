@@ -57,6 +57,19 @@ spec:
         wazuh:
           serviceAccount:
             automountServiceAccountToken: false
+          agentGroupConf:
+            - name: default
+              agent: |
+                <agent_config>
+                  <localfile>
+                    <location>journald</location>
+                    <log_format>journald</log_format>
+                  </localfile>
+                  <localfile>
+                    <location>/host/var/log/*.log</location>
+                    <log_format>syslog</log_format>
+                  </localfile>
+                </agent_config>
           {{- if not .Values.wazuh.indexer.enabled }}
           filebeat:
             config: |
@@ -67,6 +80,8 @@ spec:
                   archives:
                     enabled: false
               output.console:
+                codec.format:
+                  string: '%{[message]}'
                 pretty: false
               logging.metrics.enabled: false
               seccomp:
