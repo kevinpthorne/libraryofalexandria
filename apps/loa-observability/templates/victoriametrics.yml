@@ -1,0 +1,131 @@
+---
+# VICTORIA METRICS HA CLUSTER
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: victoria-metrics
+  namespace: {{ .Values.argoNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: 'https://victoriametrics.github.io/helm-charts/'
+    chart: victoria-metrics-k8s-stack
+    targetRevision: 0.97.x
+    helm:
+      values: |
+        fullnameOverride: vm
+        vmsingle:
+          enabled: false
+        vmcluster:
+          enabled: true
+          spec:
+            retentionPeriod: "14d"
+            replicationFactor: 2
+            vmstorage:
+              replicaCount: 2
+              storageDataPath: /vm-data
+              extraArgs:
+                dedup.minScrapeInterval: "20s"
+              storage:
+                volumeClaimTemplate:
+                  spec:
+                    storageClassName: longhorn
+                    resources:
+                      requests:
+                        storage: 15Gi
+            vmselect:
+              enabled: true
+              port: "8481"
+              replicaCount: 2
+              cacheMountPath: /select-cache
+              storage: null
+              extraArgs:
+                dedup.minScrapeInterval: "20s"
+            vminsert:
+              enabled: true
+              port: "8480"
+              replicaCount: 2
+        vmagent:
+          enabled: true
+          spec:
+            replicaCount: 2
+            selectAllByDefault: true
+            scrapeInterval: 20s
+            externalLabels:
+              cluster: "{{ .Values.cluster.name | default "k" }}"
+            extraArgs:
+              promscrape.streamParse: "true"
+            volumes:
+              - name: ca-bundle
+                configMap:
+                  name: trusted-ca-bundle
+            volumeMounts:
+              - name: ca-bundle
+                mountPath: /etc/ssl/certs/custom-ca
+                readOnly: true
+              - name: ca-bundle
+                mountPath: /etc/ssl/certs/ca-certificates.crt
+                subPath: ca-bundle.crt
+                readOnly: true
+        vmalert:
+          enabled: true
+          spec:
+            replicaCount: 2
+            selectAllByDefault: true
+            notifier:
+              url: "http://prometheus-stack-kube-prom-alertmanager.observability.svc:9093"
+        victoria-metrics-operator:
+          enabled: true
+          crds:
+            plain: true
+            cleanup:
+              enabled: false
+          serviceMonitor:
+            enabled: true
+        syncJob:
+          enabled: false
+        alertmanager:
+          enabled: false
+        grafana:
+          enabled: false
+        prometheus-node-exporter:
+          enabled: false
+        kube-state-metrics:
+          enabled: false
+        kubelet:
+          enabled: false
+        kubeApiServer:
+          enabled: false
+        kubeControllerManager:
+          enabled: false
+        kubeDns:
+          enabled: false
+        coreDns:
+          enabled: false
+        kubeEtcd:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+        kubeProxy:
+          enabled: false
+        defaultRules:
+          create: false
+        defaultDashboards:
+          enabled: false
+        defaultDatasources:
+          victoriametrics:
+            datasources: []
+          alertmanager:
+            datasources: []
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

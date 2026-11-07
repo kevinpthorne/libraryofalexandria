@@ -102,6 +102,11 @@ spec:
         write:
           replicas: 0
         monitoring:
+          dashboards:
+            enabled: false
+          rules:
+            labels:
+              release: prometheus-stack
           selfMonitoring:
             enabled: false
             grafanaAgent:

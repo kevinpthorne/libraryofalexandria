@@ -82,7 +82,7 @@ spec:
             datasources:
               initDatasources: true
               reloadURL: "https://127.0.0.1:3000/api/admin/provisioning/datasources/reload"
-              url: https://prometheus-operated.observability.svc.cluster.local:9090
+              url: http://vmselect-vm.observability.svc.cluster.local:8481/select/0/prometheus
               extraVolumeMounts:
                 - name: ca-bundle
                   mountPath: /etc/ssl/certs/ca-certificates.crt
@@ -166,6 +166,15 @@ spec:
               serverName: grafana.observability.svc
           # Pre-wire Loki into Grafana
           additionalDataSources:
+            - name: VictoriaMetrics
+              type: prometheus
+              uid: victoriametrics
+              url: http://vmselect-vm.observability.svc.cluster.local:8481/select/0/prometheus
+              access: proxy
+              isDefault: false
+              jsonData:
+                httpMethod: POST
+                timeInterval: 20s
             - name: Loki
               type: loki
               uid: loki
@@ -198,69 +207,7 @@ spec:
         # PROMETHEUS
         # ---------------------------------------------------------
         prometheus:
-          # Instruct Prometheus to scrape itself via HTTPS
-          serviceMonitor:
-            scheme: https
-            tlsConfig:
-              caFile: /etc/ssl/certs/custom-ca/ca-bundle.crt
-              serverName: prometheus-operated.observability.svc
-          prometheusSpec:
-            retention: 14d
-            retentionSize: 18GB
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  storageClassName: longhorn
-                  accessModes: ["ReadWriteOnce"]
-                  resources:
-                    requests:
-                      storage: 20Gi
-            # Tell Prometheus to serve HTTPS on its UI/API
-            web:
-              tlsConfig:
-                cert:
-                  secret:
-                    name: prometheus-tls
-                    key: tls.crt
-                keySecret:
-                  name: prometheus-tls
-                  key: tls.key
-
-            volumes:
-              - name: ca-bundle
-                configMap:
-                  name: trusted-ca-bundle
-            volumeMounts:
-              - name: ca-bundle
-                mountPath: /etc/ssl/certs/custom-ca
-                readOnly: true
-            containers:
-              - name: prometheus
-                env:
-                  - name: SSL_CERT_FILE
-                    value: /etc/ssl/certs/custom-ca/ca-bundle.crt
-                livenessProbe:
-                  httpGet:
-                    path: /-/healthy
-                    port: 9090
-                    scheme: HTTPS
-                readinessProbe:
-                  httpGet:
-                    path: /-/ready
-                    port: 9090
-                    scheme: HTTPS
-            # Strict Security Context for Prometheus
-            securityContext:
-              runAsNonRoot: true
-              runAsUser: 1000
-              fsGroup: 2000
-              seccompProfile:
-                type: RuntimeDefault
-            containerSecurityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities:
-                drop: ["ALL"]
+          enabled: false
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: observability
