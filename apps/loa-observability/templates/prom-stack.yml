@@ -86,7 +86,7 @@ spec:
               env:
                 REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
                 SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
-              extraVolumeMounts:
+              extraMounts:
                 - name: ca-bundle
                   mountPath: /etc/ssl/certs/ca-certificates.crt
                   subPath: ca-bundle.crt
@@ -96,7 +96,7 @@ spec:
               env:
                 REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
                 SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
-              extraVolumeMounts:
+              extraMounts:
                 - name: ca-bundle
                   mountPath: /etc/ssl/certs/ca-certificates.crt
                   subPath: ca-bundle.crt
