@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-default-dashboards-1
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  alertmanager-overview.json: |-
+{{ .Files.Get "dashboards/alertmanager-overview.json" | indent 4 }}
+  apiserver.json: |-
+{{ .Files.Get "dashboards/apiserver.json" | indent 4 }}
+  cluster-total.json: |-
+{{ .Files.Get "dashboards/cluster-total.json" | indent 4 }}
+  controller-manager.json: |-
+{{ .Files.Get "dashboards/controller-manager.json" | indent 4 }}
+  etcd.json: |-
+{{ .Files.Get "dashboards/etcd.json" | indent 4 }}
+  grafana-overview.json: |-
+{{ .Files.Get "dashboards/grafana-overview.json" | indent 4 }}
+  k8s-coredns.json: |-
+{{ .Files.Get "dashboards/k8s-coredns.json" | indent 4 }}
+  k8s-resources-cluster.json: |-
+{{ .Files.Get "dashboards/k8s-resources-cluster.json" | indent 4 }}
+  k8s-resources-multicluster.json: |-
+{{ .Files.Get "dashboards/k8s-resources-multicluster.json" | indent 4 }}
+  k8s-resources-namespace.json: |-
+{{ .Files.Get "dashboards/k8s-resources-namespace.json" | indent 4 }}
+  k8s-resources-node.json: |-
+{{ .Files.Get "dashboards/k8s-resources-node.json" | indent 4 }}
+  k8s-resources-pod.json: |-
+{{ .Files.Get "dashboards/k8s-resources-pod.json" | indent 4 }}
+  k8s-resources-workload.json: |-
+{{ .Files.Get "dashboards/k8s-resources-workload.json" | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-default-dashboards-2
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  k8s-resources-workloads-namespace.json: |-
+{{ .Files.Get "dashboards/k8s-resources-workloads-namespace.json" | indent 4 }}
+  kubelet.json: |-
+{{ .Files.Get "dashboards/kubelet.json" | indent 4 }}
+  namespace-by-pod.json: |-
+{{ .Files.Get "dashboards/namespace-by-pod.json" | indent 4 }}
+  namespace-by-workload.json: |-
+{{ .Files.Get "dashboards/namespace-by-workload.json" | indent 4 }}
+  node-cluster-rsrc-use.json: |-
+{{ .Files.Get "dashboards/node-cluster-rsrc-use.json" | indent 4 }}
+  node-rsrc-use.json: |-
+{{ .Files.Get "dashboards/node-rsrc-use.json" | indent 4 }}
+  nodes-darwin.json: |-
+{{ .Files.Get "dashboards/nodes-darwin.json" | indent 4 }}
+  nodes.json: |-
+{{ .Files.Get "dashboards/nodes.json" | indent 4 }}
+  persistentvolumesusage.json: |-
+{{ .Files.Get "dashboards/persistentvolumesusage.json" | indent 4 }}
+  pod-total.json: |-
+{{ .Files.Get "dashboards/pod-total.json" | indent 4 }}
+  prometheus.json: |-
+{{ .Files.Get "dashboards/prometheus.json" | indent 4 }}
+  proxy.json: |-
+{{ .Files.Get "dashboards/proxy.json" | indent 4 }}
+  scheduler.json: |-
+{{ .Files.Get "dashboards/scheduler.json" | indent 4 }}
+  workload-total.json: |-
+{{ .Files.Get "dashboards/workload-total.json" | indent 4 }}

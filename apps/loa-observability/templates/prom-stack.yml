@@ -83,6 +83,7 @@ spec:
         # ---------------------------------------------------------
         grafana:
           enabled: true
+          defaultDashboardsEnabled: false
           service:
             port: 443
             targetPort: 3000
