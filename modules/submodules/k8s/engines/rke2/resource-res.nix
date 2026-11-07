@@ -11,8 +11,8 @@ in
           ''
             # 2. Hard limits for static pods
             control-plane-resource-limits:
-              - kube-apiserver-memory=2048Mi
-              - etcd-memory=1500Mi
+              - kube-apiserver-memory=1792Mi
+              - etcd-memory=1024Mi
               - kube-controller-manager-memory=512Mi
 
             # 3. Aggressive Component Tuning
@@ -20,7 +20,7 @@ in
               # Lower the DB quota (default is 2G). 1G is plenty for 5 nodes.
               - "quota-backend-bytes=1073741824"  # TODO scale per node count
             kube-apiserver-extra-env:
-              - "GOMEMLIMIT=1537MiB"
+              - "GOMEMLIMIT=1400MiB"
             kube-apiserver-arg:
               # Throttle read requests (LIST/WATCH from ArgoCD/Longhorn)
               - "max-requests-inflight=150"     # Default is 400
@@ -30,17 +30,25 @@ in
               - "default-watch-cache-size=50"
 
             # 4. OS and Kubelet Protection
+            # Keep eviction-hard (550Mi) and eviction-soft (750Mi) well above kernel
+            # min/low watermarks so kubelet evicts pods before page-cache thrashing begins.
             kubelet-arg:
-              - "kube-reserved=cpu=250m,memory=300Mi"
+              - "fail-swap-on=false"
+              - "kube-reserved=cpu=350m,memory=1200Mi"
               - "system-reserved=cpu=250m,memory=500Mi"
-              - "eviction-hard=memory.available<300Mi,nodefs.available<10%"
+              - "eviction-hard=memory.available<550Mi,nodefs.available<10%"
+              - "eviction-soft=memory.available<750Mi"
+              - "eviction-soft-grace-period=memory.available=30s"
           ''
         else
           ''
             kubelet-arg:
-              - "kube-reserved=cpu=250m,memory=300Mi"
+              - "fail-swap-on=false"
+              - "kube-reserved=cpu=250m,memory=500Mi"
               - "system-reserved=cpu=250m,memory=500Mi"
-              - "eviction-hard=memory.available<300Mi,nodefs.available<10%"
+              - "eviction-hard=memory.available<550Mi,nodefs.available<10%"
+              - "eviction-soft=memory.available<750Mi"
+              - "eviction-soft-grace-period=memory.available=30s"
               - "pod-max-pids=1024"
           ''
       );

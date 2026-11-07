@@ -5,9 +5,6 @@
   pkgs,
   ...
 }:
-let
-  isMaster = config.libraryofalexandria.node.type == "master";
-in
 {
   imports = [ ../helm ];
 
@@ -57,15 +54,9 @@ in
       }
     ];
 
-    boot.kernelModules = [ 
+    boot.kernelModules = [
       "iscsi_tcp" # v1 longhorn data engine requirement
-    ] ++ (lib.optionals isMaster [
-      "bfq" # etcd needs fast fsync. Can't let longhorn stall fsync
-    ]);
-    services.udev.extraRules = lib.mkIf isMaster ''
-      # Enable the BFQ I/O scheduler for NVMe drives to protect etcd fsync latency
-      ACTION=="add|change", KERNEL=="nvme*", ATTR{queue/scheduler}="bfq"
-    '';
+    ];
 
     environment.systemPackages = with pkgs; [
       openiscsi # v1 longhorn data engine requirement
@@ -82,11 +73,21 @@ in
       # v1 longhorn data engine requirement
       enable = true;
       name = config.networking.hostName;
+      extraConfig = ''
+        node.conn[0].timeo.noop_out_interval = 10
+        node.conn[0].timeo.noop_out_timeout = 30
+        node.session.timeo.replacement_timeout = 120
+      '';
     };
     systemd.services.iscsid.serviceConfig = {
       # workaround https://github.com/longhorn/longhorn/issues/2166#issuecomment-2994323945
       PrivateMounts = "yes";
       BindPaths = "/run/current-system/sw/bin:/bin";
+      OOMScoreAdjust = -1000;
+      CPUSchedulingPolicy = "rr";
+      CPUSchedulingPriority = 50;
+      IOSchedulingClass = "realtime";
+      IOSchedulingPriority = 0;
     };
   };
 }
