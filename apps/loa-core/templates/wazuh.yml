@@ -48,6 +48,12 @@ spec:
           resources:
             {{- toYaml .Values.wazuh.indexer.resources | nindent 12 }}
           {{- end }}
+        {{- if not .Values.wazuh.indexer.enabled }}
+        externalIndexer:
+          enabled: true
+          host: "127.0.0.1"
+          port: 9200
+        {{- end }}
         wazuh:
           serviceAccount:
             automountServiceAccountToken: false
@@ -73,6 +79,31 @@ spec:
           master:
             storageClass: {{ .Values.wazuh.storageClass | default "longhorn" | quote }}
             storageSize: {{ .Values.wazuh.master.storageSize | default "10Gi" | quote }}
+            {{- if not .Values.wazuh.indexer.enabled }}
+            extraConf: |
+              <vulnerability-detection>
+                <enabled>no</enabled>
+                <index-status>no</index-status>
+              </vulnerability-detection>
+              <indexer>
+                <enabled>no</enabled>
+                <hosts>
+                  <host>https://127.0.0.1:9200</host>
+                </hosts>
+              </indexer>
+            {{- end }}
+            readinessProbe:
+              tcpSocket:
+                port: 55000
+              initialDelaySeconds: 20
+              periodSeconds: 10
+              failureThreshold: 12
+            livenessProbe:
+              tcpSocket:
+                port: 55000
+              initialDelaySeconds: 90
+              periodSeconds: 15
+              failureThreshold: 6
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
@@ -100,6 +131,31 @@ spec:
             replicas: {{ .Values.wazuh.worker.replicas | default 1 }}
             storageClass: {{ .Values.wazuh.storageClass | default "longhorn" | quote }}
             storageSize: {{ .Values.wazuh.worker.storageSize | default "10Gi" | quote }}
+            {{- if not .Values.wazuh.indexer.enabled }}
+            extraConf: |
+              <vulnerability-detection>
+                <enabled>no</enabled>
+                <index-status>no</index-status>
+              </vulnerability-detection>
+              <indexer>
+                <enabled>no</enabled>
+                <hosts>
+                  <host>https://127.0.0.1:9200</host>
+                </hosts>
+              </indexer>
+            {{- end }}
+            readinessProbe:
+              tcpSocket:
+                port: 1514
+              initialDelaySeconds: 20
+              periodSeconds: 10
+              failureThreshold: 12
+            livenessProbe:
+              tcpSocket:
+                port: 1514
+              initialDelaySeconds: 90
+              periodSeconds: 15
+              failureThreshold: 6
             securityContext:
               allowPrivilegeEscalation: false
               capabilities:
