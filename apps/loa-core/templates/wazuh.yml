@@ -24,6 +24,10 @@ spec:
           enabled: true
         indexer:
           enabled: {{ .Values.wazuh.indexer.enabled | default false }}
+          {{- if not .Values.wazuh.indexer.enabled }}
+          cred:
+            existingSecret: wazuh-api-cred
+          {{- end }}
           replicas: {{ .Values.wazuh.indexer.replicas | default 1 }}
           storageClass: {{ .Values.wazuh.storageClass | default "longhorn" | quote }}
           storageSize: {{ .Values.wazuh.indexer.storageSize | default "25Gi" | quote }}
@@ -68,6 +72,14 @@ spec:
                 drop:
                   - ALL
                 add:
+                  - CHOWN
+                  - DAC_OVERRIDE
+                  - FOWNER
+                  - FSETID
+                  - KILL
+                  - NET_BIND_SERVICE
+                  - SETGID
+                  - SETUID
                   - SYS_CHROOT
               seccompProfile:
                 type: RuntimeDefault
@@ -87,6 +99,14 @@ spec:
                 drop:
                   - ALL
                 add:
+                  - CHOWN
+                  - DAC_OVERRIDE
+                  - FOWNER
+                  - FSETID
+                  - KILL
+                  - NET_BIND_SERVICE
+                  - SETGID
+                  - SETUID
                   - SYS_CHROOT
               seccompProfile:
                 type: RuntimeDefault
@@ -139,7 +159,14 @@ spec:
               drop:
                 - ALL
               add:
+                - CHOWN
+                - DAC_OVERRIDE
                 - DAC_READ_SEARCH
+                - FOWNER
+                - FSETID
+                - KILL
+                - SETGID
+                - SETUID
                 - SYS_CHROOT
             seccompProfile:
               type: RuntimeDefault
@@ -163,9 +190,9 @@ spec:
     managedNamespaceMetadata:
       labels:
         zarf.dev/agent: "ignore"
-        pod-security.kubernetes.io/enforce: baseline
-        pod-security.kubernetes.io/audit: restricted
-        pod-security.kubernetes.io/warn: restricted
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
 {{- if .Values.wazuh.dashboard.enabled }}
 ---
 apiVersion: argoproj.io/v1alpha1
