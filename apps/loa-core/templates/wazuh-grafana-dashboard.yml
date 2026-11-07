@@ -29,7 +29,7 @@ data:
           },
           "id": 1,
           "panels": [],
-          "title": "Security Posture Summary",
+          "title": "Security Posture Overview",
           "type": "row"
         },
         {
@@ -85,7 +85,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json [$__range]))",
+              "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | rule_level != \"\" [$__range]))",
               "queryType": "range",
               "refId": "A"
             }
@@ -150,7 +150,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json | rule_level >= 12 [$__range]))",
+              "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | rule_level >= 12 [$__range]))",
               "queryType": "range",
               "refId": "A"
             }
@@ -215,7 +215,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json | rule_level >= 8 and rule_level < 12 [$__range]))",
+              "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | rule_level >= 8 and rule_level < 12 [$__range]))",
               "queryType": "range",
               "refId": "A"
             }
@@ -280,7 +280,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json | rule_level >= 4 and rule_level < 8 [$__range]))",
+              "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | rule_level >= 4 and rule_level < 8 [$__range]))",
               "queryType": "range",
               "refId": "A"
             }
@@ -341,7 +341,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json | rule_level < 4 [$__range]))",
+              "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | rule_level < 4 [$__range]))",
               "queryType": "range",
               "refId": "A"
             }
@@ -406,7 +406,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "count(count by (agent_name) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json | agent_name != \"\" [$__range])))",
+              "expr": "count(count by (agent_name) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | agent_name != \"\" [$__range])))",
               "queryType": "range",
               "refId": "A"
             }
@@ -423,6 +423,237 @@ data:
             "y": 5
           },
           "id": 8,
+          "panels": [],
+          "title": "Security Alerts Explorer & Events Feed",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": true
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 4
+                  },
+                  {
+                    "color": "orange",
+                    "value": 8
+                  },
+                  {
+                    "color": "red",
+                    "value": 12
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Level"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "mode": "gradient",
+                      "type": "color-background"
+                    }
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 75
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "center"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Rule ID"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 85
+                  },
+                  {
+                    "id": "custom.align",
+                    "value": "center"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Agent"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 130
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Alert Description"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 360
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Source Location"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 170
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Full Event Log"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "auto"
+                    }
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 550
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 14,
+            "w": 24,
+            "x": 0,
+            "y": 6
+          },
+          "id": 9,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Time"
+              }
+            ]
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "{namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | rule_level != \"\"",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Recent Wazuh Security Alerts (Structured Table)",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Line": true,
+                  "app": true,
+                  "container": true,
+                  "id": true,
+                  "job": true,
+                  "namespace": true,
+                  "pod": true,
+                  "stream": true,
+                  "timestamp": true,
+                  "agent_id": true,
+                  "agent_ip": true,
+                  "manager_name": true,
+                  "decoder_name": true,
+                  "data_srcip": true,
+                  "data_srcuser": true
+                },
+                "indexByName": {
+                  "Time": 0,
+                  "rule_level": 1,
+                  "rule_description": 2,
+                  "rule_id": 3,
+                  "agent_name": 4,
+                  "location": 5,
+                  "full_log": 6
+                },
+                "renameByName": {
+                  "agent_name": "Agent",
+                  "full_log": "Full Event Log",
+                  "location": "Source Location",
+                  "rule_description": "Alert Description",
+                  "rule_id": "Rule ID",
+                  "rule_level": "Level"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 20
+          },
+          "id": 10,
           "panels": [],
           "title": "Alert Activity & Severity Breakdown",
           "type": "row"
@@ -455,9 +686,9 @@ data:
             "h": 8,
             "w": 14,
             "x": 0,
-            "y": 6
+            "y": 21
           },
-          "id": 9,
+          "id": 11,
           "options": {
             "legend": {
               "calcs": [
@@ -479,7 +710,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "sum by (rule_level) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json | rule_level != \"\" [$__interval]))",
+              "expr": "sum by (rule_level) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | rule_level != \"\" [$__interval]))",
               "legendFormat": "Level {{ "{{" }}rule_level{{ "}}" }}",
               "queryType": "range",
               "refId": "A"
@@ -507,9 +738,9 @@ data:
             "h": 8,
             "w": 10,
             "x": 14,
-            "y": 6
+            "y": 21
           },
-          "id": 10,
+          "id": 12,
           "options": {
             "legend": {
               "displayMode": "table",
@@ -540,7 +771,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "sum by (rule_level) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json | rule_level != \"\" [$__range]))",
+              "expr": "sum by (rule_level) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | rule_level != \"\" [$__range]))",
               "legendFormat": "Level {{ "{{" }}rule_level{{ "}}" }}",
               "queryType": "range",
               "refId": "A"
@@ -555,11 +786,11 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 14
+            "y": 29
           },
-          "id": 11,
+          "id": 13,
           "panels": [],
-          "title": "Threat Intelligence & MITRE ATT&CK",
+          "title": "Threat Intelligence & Fleet Insights",
           "type": "row"
         },
         {
@@ -581,9 +812,9 @@ data:
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 15
+            "y": 30
           },
-          "id": 12,
+          "id": 14,
           "options": {
             "displayMode": "gradient",
             "minVizHeight": 10,
@@ -607,7 +838,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "topk(10, sum by (tactic) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json tactic=\"rule.mitre.tactic[0]\" | tactic != \"\" [$__range])))",
+              "expr": "topk(10, sum by (tactic) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json tactic=\"rule.mitre.tactic[0]\" | tactic != \"\" [$__range])))",
               "legendFormat": "{{ "{{" }}tactic{{ "}}" }}",
               "queryType": "range",
               "refId": "A"
@@ -635,74 +866,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 15
-          },
-          "id": 13,
-          "options": {
-            "displayMode": "gradient",
-            "minVizHeight": 10,
-            "minVizWidth": 0,
-            "namePlacement": "auto",
-            "orientation": "horizontal",
-            "reduceOptions": {
-              "calcs": [
-                "sum"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "showUnfilled": true,
-            "valueMode": "color"
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "loki",
-                "uid": "loki"
-              },
-              "editorMode": "code",
-              "expr": "topk(10, sum by (rule_description) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json | rule_description != \"\" [$__range])))",
-              "legendFormat": "{{ "{{" }}rule_description{{ "}}" }}",
-              "queryType": "range",
-              "refId": "A"
-            }
-          ],
-          "title": "Top 10 Security Rules Triggered",
-          "type": "bargauge"
-        },
-        {
-          "collapsed": false,
-          "gridPos": {
-            "h": 1,
-            "w": 24,
-            "x": 0,
-            "y": 23
-          },
-          "id": 14,
-          "panels": [],
-          "title": "Fleet Insights & Event Sources",
-          "type": "row"
-        },
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "mappings": [],
-              "noValue": "0"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 8,
-            "x": 0,
-            "y": 24
+            "y": 30
           },
           "id": 15,
           "options": {
@@ -728,7 +892,61 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "topk(10, sum by (agent_name) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json | agent_name != \"\" [$__range])))",
+              "expr": "topk(10, sum by (rule_description) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | rule_description != \"\" [$__range])))",
+              "legendFormat": "{{ "{{" }}rule_description{{ "}}" }}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Top 10 Security Rules Triggered",
+          "type": "bargauge"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "mappings": [],
+              "noValue": "0"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 38
+          },
+          "id": 16,
+          "options": {
+            "displayMode": "gradient",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "namePlacement": "auto",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "sum"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showUnfilled": true,
+            "valueMode": "color"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "editorMode": "code",
+              "expr": "topk(10, sum by (agent_name) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | agent_name != \"\" [$__range])))",
               "legendFormat": "{{ "{{" }}agent_name{{ "}}" }}",
               "queryType": "range",
               "refId": "A"
@@ -756,9 +974,9 @@ data:
             "h": 8,
             "w": 8,
             "x": 8,
-            "y": 24
+            "y": 38
           },
-          "id": 16,
+          "id": 17,
           "options": {
             "displayMode": "gradient",
             "minVizHeight": 10,
@@ -782,7 +1000,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "topk(10, sum by (location) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json | location != \"\" [$__range])))",
+              "expr": "topk(10, sum by (location) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json | location != \"\" [$__range])))",
               "legendFormat": "{{ "{{" }}location{{ "}}" }}",
               "queryType": "range",
               "refId": "A"
@@ -810,9 +1028,9 @@ data:
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 24
+            "y": 38
           },
-          "id": 17,
+          "id": 18,
           "options": {
             "legend": {
               "displayMode": "table",
@@ -842,7 +1060,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "topk(10, sum by (decoder_name) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json decoder_name=\"decoder.name\" | decoder_name != \"\" [$__range])))",
+              "expr": "topk(10, sum by (decoder_name) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json decoder_name=\"decoder.name\" | decoder_name != \"\" [$__range])))",
               "legendFormat": "{{ "{{" }}decoder_name{{ "}}" }}",
               "queryType": "range",
               "refId": "A"
@@ -857,9 +1075,9 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 32
+            "y": 46
           },
-          "id": 18,
+          "id": 19,
           "panels": [],
           "title": "Live Security Alerts Stream",
           "type": "row"
@@ -873,9 +1091,9 @@ data:
             "h": 12,
             "w": 24,
             "x": 0,
-            "y": 33
+            "y": 47
           },
-          "id": 19,
+          "id": 20,
           "options": {
             "dedupStrategy": "none",
             "enableLogDetails": true,
@@ -893,7 +1111,7 @@ data:
                 "uid": "loki"
               },
               "editorMode": "code",
-              "expr": "{namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |~ \"\\\"rule\\\":\" | json",
+              "expr": "{namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= \"\\\"rule\\\"\" | json",
               "queryType": "range",
               "refId": "A"
             }
@@ -921,6 +1139,6 @@ data:
       "timezone": "",
       "title": "Wazuh Security Overview",
       "uid": "wazuh-security-overview",
-      "version": 2
+      "version": 3
     }
 {{- end }}
