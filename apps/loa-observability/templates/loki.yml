@@ -30,12 +30,6 @@ spec:
           commonConfig:
             replication_factor: 1
 
-          limits_config:
-            max_outstanding_requests_per_tenant: 4096
-            query_timeout: 3m
-            max_query_parallelism: 32
-            max_query_series: 10000
-
           storage:
             type: s3
             bucketNames:
