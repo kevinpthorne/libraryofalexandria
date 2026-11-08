@@ -70,7 +70,7 @@ data:
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -86,7 +86,7 @@ data:
               },
               "editorMode": "code",
               "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` [$__range]))",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -135,7 +135,7 @@ data:
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -151,7 +151,7 @@ data:
               },
               "editorMode": "code",
               "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json rule_level=\"rule.level\" | rule_level >= 12 [$__range]))",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -200,7 +200,7 @@ data:
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -216,7 +216,7 @@ data:
               },
               "editorMode": "code",
               "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json rule_level=\"rule.level\" | rule_level >= 8 and rule_level < 12 [$__range]))",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -265,7 +265,7 @@ data:
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -281,7 +281,7 @@ data:
               },
               "editorMode": "code",
               "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json rule_level=\"rule.level\" | rule_level >= 4 and rule_level < 8 [$__range]))",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -326,7 +326,7 @@ data:
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -342,7 +342,7 @@ data:
               },
               "editorMode": "code",
               "expr": "sum(count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json rule_level=\"rule.level\" | rule_level < 4 [$__range]))",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -407,7 +407,7 @@ data:
               },
               "editorMode": "code",
               "expr": "count(count by (agent_name) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json agent_name=\"agent.name\" | agent_name != \"\" [$__range])))",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -597,7 +597,7 @@ data:
               },
               "editorMode": "code",
               "expr": "{namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json rule_level=\"rule.level\", rule_description=\"rule.description\", rule_id=\"rule.id\", agent_name=\"agent.name\", location=\"location\", full_log=\"full_log\"",
-              "queryType": "range",
+              "maxLines": 500,
               "refId": "A"
             }
           ],
@@ -758,7 +758,7 @@ data:
             "pieType": "donut",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -777,7 +777,7 @@ data:
               "editorMode": "code",
               "expr": "sum by (rule_level) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json rule_level=\"rule.level\" [$__range]))",
               "legendFormat": "Level {{ "{{" }}rule_level{{ "}}" }}",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -827,7 +827,7 @@ data:
             "orientation": "horizontal",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -844,7 +844,7 @@ data:
               "editorMode": "code",
               "expr": "topk(10, sum by (tactic) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json tactic=\"rule.mitre.tactic[0]\" | tactic != \"\" [$__range])))",
               "legendFormat": "{{ "{{" }}tactic{{ "}}" }}",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -881,7 +881,7 @@ data:
             "orientation": "horizontal",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -898,12 +898,25 @@ data:
               "editorMode": "code",
               "expr": "topk(10, sum by (rule_description) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json rule_description=\"rule.description\" | rule_description != \"\" [$__range])))",
               "legendFormat": "{{ "{{" }}rule_description{{ "}}" }}",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
           "title": "Top 10 Security Rules Triggered",
           "type": "bargauge"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 38
+          },
+          "id": 16,
+          "panels": [],
+          "title": "Fleet Insights & Sources",
+          "type": "row"
         },
         {
           "datasource": {
@@ -924,9 +937,9 @@ data:
             "h": 8,
             "w": 8,
             "x": 0,
-            "y": 38
+            "y": 39
           },
-          "id": 16,
+          "id": 17,
           "options": {
             "displayMode": "gradient",
             "minVizHeight": 10,
@@ -935,7 +948,7 @@ data:
             "orientation": "horizontal",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -952,7 +965,7 @@ data:
               "editorMode": "code",
               "expr": "topk(10, sum by (agent_name) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json agent_name=\"agent.name\" | agent_name != \"\" [$__range])))",
               "legendFormat": "{{ "{{" }}agent_name{{ "}}" }}",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -978,9 +991,9 @@ data:
             "h": 8,
             "w": 8,
             "x": 8,
-            "y": 38
+            "y": 39
           },
-          "id": 17,
+          "id": 18,
           "options": {
             "displayMode": "gradient",
             "minVizHeight": 10,
@@ -989,7 +1002,7 @@ data:
             "orientation": "horizontal",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -1006,7 +1019,7 @@ data:
               "editorMode": "code",
               "expr": "topk(10, sum by (location) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json location=\"location\" | location != \"\" [$__range])))",
               "legendFormat": "{{ "{{" }}location{{ "}}" }}",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -1032,9 +1045,9 @@ data:
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 38
+            "y": 39
           },
-          "id": 18,
+          "id": 19,
           "options": {
             "legend": {
               "displayMode": "table",
@@ -1047,7 +1060,7 @@ data:
             "pieType": "donut",
             "reduceOptions": {
               "calcs": [
-                "sum"
+                "lastNotNull"
               ],
               "fields": "",
               "values": false
@@ -1066,7 +1079,7 @@ data:
               "editorMode": "code",
               "expr": "topk(10, sum by (decoder_name) (count_over_time({namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json decoder_name=\"decoder.name\" | decoder_name != \"\" [$__range])))",
               "legendFormat": "{{ "{{" }}decoder_name{{ "}}" }}",
-              "queryType": "range",
+              "queryType": "instant",
               "refId": "A"
             }
           ],
@@ -1079,9 +1092,9 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 46
+            "y": 47
           },
-          "id": 19,
+          "id": 20,
           "panels": [],
           "title": "Live Security Alerts Stream",
           "type": "row"
@@ -1095,9 +1108,9 @@ data:
             "h": 12,
             "w": 24,
             "x": 0,
-            "y": 47
+            "y": 48
           },
-          "id": 20,
+          "id": 21,
           "options": {
             "dedupStrategy": "none",
             "enableLogDetails": true,
@@ -1116,7 +1129,7 @@ data:
               },
               "editorMode": "code",
               "expr": "{namespace=\"{{ .Values.wazuh.namespace | default "wazuh" }}\"} |= `\"rule\":` | json",
-              "queryType": "range",
+              "maxLines": 500,
               "refId": "A"
             }
           ],
@@ -1143,6 +1156,6 @@ data:
       "timezone": "",
       "title": "Wazuh Security Overview",
       "uid": "wazuh-security-overview",
-      "version": 5
+      "version": 6
     }
 {{- end }}
