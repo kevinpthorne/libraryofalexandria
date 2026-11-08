@@ -8,6 +8,14 @@ spec:
   {{- if ne (.Values.controllerType | default "Deployment") "DaemonSet" }}
   replicas: {{ .Values.replicaCount | default 1 }}
   {{- end }}
+  {{- if eq (.Values.controllerType | default "Deployment") "Deployment" }}
+  strategy:
+    {{- if .Values.strategy }}
+    {{- toYaml .Values.strategy | nindent 4 }}
+    {{- else if .Values.persistence.data.enabled }}
+    type: Recreate
+    {{- end }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "app-template.selectorLabels" . | nindent 6 }}

@@ -65,6 +65,8 @@ spec:
                   - ALL
               readOnlyRootFilesystem: true
         synapse:
+          strategy:
+            type: Recreate
           podSecurityContext:
             runAsNonRoot: true
             runAsUser: 666
