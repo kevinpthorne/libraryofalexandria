@@ -16,6 +16,10 @@
         chart = "${pkgs.service-tls-helm}/service-tls-helm-0.1.0.tgz";
         values = {
           svcName = "radar";
+          cluster.name = config.libraryofalexandria.cluster.name;
+          cert.sans = [
+            "cluster.${config.libraryofalexandria.cluster.name}.loa.internal"
+          ];
         };
         namespace = "radar";
       }
