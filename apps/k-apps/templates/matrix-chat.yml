@@ -171,6 +171,8 @@ spec:
         redis:
           enabled: true
           master:
+            nodeSelector:
+              kubernetes.io/arch: amd64
             podSecurityContext:
               enabled: true
               fsGroup: 1001
