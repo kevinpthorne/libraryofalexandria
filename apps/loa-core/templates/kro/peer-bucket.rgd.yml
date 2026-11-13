@@ -81,8 +81,8 @@ spec:
                     readOnly: true
               volumes:
                 - name: sw-security
-                  configMap:
-                    name: seaweed-cluster-security-config
+                  secret:
+                    secretName: seaweed-cluster-security-config
                 - name: sw-tls
                   secret:
                     secretName: seaweed-cluster-server-tls
