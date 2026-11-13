@@ -51,3 +51,6 @@ Below is a directory of all available documentation pages covering system archit
 
 * **[XRD Lessons Learned (Deprecated)](xrd-lessons-learned.md)**  
   Historical notes on Crossplane Custom Resource Definitions (replaced by KRO).
+
+* **[Cluster Root CA Migration Runbook](migration/ca-migration.md)**  
+  Runbook for zero-downtime or maintenance-window migration of `app-pki-bootstrap` root CA and dependent certificates across clusters.
