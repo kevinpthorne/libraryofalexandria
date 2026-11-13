@@ -153,7 +153,7 @@ spec:
                 mountPath: /etc/nginx/nginx.conf
                 subPath: nginx.conf
                 readOnly: true
-              - name: web-content
+              - name: web-rendered
                 mountPath: /usr/share/nginx/html
                 readOnly: true
         extraConfigMaps:
