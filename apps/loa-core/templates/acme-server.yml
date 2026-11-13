@@ -62,6 +62,12 @@ spec:
               secretName: app-pki-bootstrap-secret
           - name: db-data
             emptyDir: {}
+          - name: nginx-config
+            configMap:
+              name: acme-server-nginx-config
+          - name: web-content
+            configMap:
+              name: acme-server-web-content
         extraVolumeMounts:
           - name: step-config
             mountPath: /etc/step-ca
@@ -71,6 +77,31 @@ spec:
             readOnly: true
           - name: db-data
             mountPath: /home/step/db
+        extraContainers:
+          - name: web-proxy
+            image: "nginxinc/nginx-unprivileged:alpine"
+            imagePullPolicy: IfNotPresent
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              capabilities:
+                drop:
+                  - ALL
+              seccompProfile:
+                type: RuntimeDefault
+            volumeMounts:
+              - name: ca-secret
+                mountPath: /certs
+                readOnly: true
+              - name: nginx-config
+                mountPath: /etc/nginx/nginx.conf
+                subPath: nginx.conf
+                readOnly: true
+              - name: web-content
+                mountPath: /usr/share/nginx/html
+                readOnly: true
         extraConfigMaps:
           - name: acme-server-config
             data:
@@ -80,13 +111,15 @@ spec:
                   "root": "/certs/tls.crt",
                   "crt": "/certs/tls.crt",
                   "key": "/certs/tls.key",
-                  "address": ":9000",
+                  "address": "127.0.0.1:9001",
                   "dnsNames": [
                     "acme.{{ $cluster.name | default "k" }}.loa.internal",
                     "acme.loa.internal",
                     "acme-server",
                     "acme-server.cert-manager.svc",
-                    "acme-server.cert-manager.svc.cluster.local"
+                    "acme-server.cert-manager.svc.cluster.local",
+                    "localhost",
+                    "127.0.0.1"
                   ],
                   "logger": {"format": "text"},
                   "db": {
@@ -111,6 +144,383 @@ spec:
                     "maxVersion": 1.3
                   }
                 }
+          - name: acme-server-nginx-config
+            data:
+              nginx.conf: |
+                pid /tmp/nginx.pid;
+                events {
+                  worker_connections 1024;
+                }
+                http {
+                  include /etc/nginx/mime.types;
+                  default_type application/octet-stream;
+                  client_body_temp_path /tmp/client_temp;
+                  proxy_temp_path /tmp/proxy_temp;
+                  fastcgi_temp_path /tmp/fastcgi_temp;
+                  uwsgi_temp_path /tmp/uwsgi_temp;
+                  scgi_temp_path /tmp/scgi_temp;
+
+                  server {
+                    listen 9000 ssl;
+                    server_name _;
+
+                    ssl_certificate /certs/tls.crt;
+                    ssl_certificate_key /certs/tls.key;
+                    ssl_protocols TLSv1.2 TLSv1.3;
+
+                    location = / {
+                      root /usr/share/nginx/html;
+                      try_files /index.html =404;
+                    }
+
+                    location = /index.html {
+                      root /usr/share/nginx/html;
+                    }
+
+                    location = /ca.crt {
+                      alias /certs/tls.crt;
+                      default_type application/x-pem-file;
+                      add_header Content-Disposition 'attachment; filename="loa-root-ca.crt"';
+                    }
+
+                    location = /roots.pem {
+                      alias /certs/tls.crt;
+                      default_type application/x-pem-file;
+                    }
+
+                    location / {
+                      proxy_pass https://127.0.0.1:9001;
+                      proxy_ssl_verify off;
+                      proxy_set_header Host $host;
+                      proxy_set_header X-Real-IP $remote_addr;
+                      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                      proxy_set_header X-Forwarded-Proto https;
+                    }
+                  }
+                }
+          - name: acme-server-web-content
+            data:
+              index.html: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>Library of Alexandria Root CA</title>
+                  <style>
+                    :root {
+                      --bg: #0d1117;
+                      --card-bg: #161b22;
+                      --card-border: #30363d;
+                      --text: #e6edf3;
+                      --muted: #8b949e;
+                      --accent: #58a6ff;
+                      --accent-hover: #1f6feb;
+                      --code-bg: #0b0e14;
+                      --success: #3fb950;
+                      --tag-bg: rgba(56, 139, 253, 0.15);
+                      --tag-border: rgba(56, 139, 253, 0.4);
+                    }
+                    @media (prefers-color-scheme: light) {
+                      :root {
+                        --bg: #f6f8fa;
+                        --card-bg: #ffffff;
+                        --card-border: #d0d7de;
+                        --text: #1f2328;
+                        --muted: #656d76;
+                        --accent: #0969da;
+                        --accent-hover: #0550ae;
+                        --code-bg: #f6f8fa;
+                        --success: #1a7f37;
+                        --tag-bg: #ddf4ff;
+                        --tag-border: #54aeff;
+                      }
+                    }
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body {
+                      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                      background: var(--bg);
+                      color: var(--text);
+                      line-height: 1.6;
+                      padding: 2rem 1rem;
+                    }
+                    .container { max-width: 900px; margin: 0 auto; }
+                    header {
+                      margin-bottom: 2rem;
+                      padding-bottom: 1.5rem;
+                      border-bottom: 1px solid var(--card-border);
+                    }
+                    h1 { font-size: 2rem; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+                    .subtitle { color: var(--muted); font-size: 1.1rem; }
+                    .badge {
+                      display: inline-block;
+                      padding: 0.2rem 0.6rem;
+                      border-radius: 9999px;
+                      font-size: 0.8rem;
+                      font-weight: 600;
+                      background: var(--tag-bg);
+                      color: var(--accent);
+                      border: 1px solid var(--tag-border);
+                    }
+                    .card {
+                      background: var(--card-bg);
+                      border: 1px solid var(--card-border);
+                      border-radius: 8px;
+                      padding: 1.5rem;
+                      margin-bottom: 1.5rem;
+                    }
+                    .card-title {
+                      font-size: 1.25rem;
+                      font-weight: 600;
+                      margin-bottom: 1rem;
+                      display: flex;
+                      align-items: center;
+                      gap: 0.5rem;
+                    }
+                    .recommended-badge {
+                      background: rgba(63, 185, 80, 0.15);
+                      color: var(--success);
+                      border: 1px solid rgba(63, 185, 80, 0.4);
+                      font-size: 0.75rem;
+                      padding: 0.15rem 0.5rem;
+                      border-radius: 9999px;
+                      text-transform: uppercase;
+                      letter-spacing: 0.05em;
+                    }
+                    .info-grid {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                      gap: 1rem;
+                      margin-bottom: 1.5rem;
+                    }
+                    .info-item {
+                      background: var(--code-bg);
+                      padding: 0.75rem 1rem;
+                      border-radius: 6px;
+                      border: 1px solid var(--card-border);
+                    }
+                    .info-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+                    .info-val { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9rem; word-break: break-all; }
+                    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+                    .btn {
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 0.5rem;
+                      background: var(--accent);
+                      color: #ffffff;
+                      text-decoration: none;
+                      font-weight: 600;
+                      padding: 0.6rem 1.2rem;
+                      border-radius: 6px;
+                      transition: background 0.2s;
+                    }
+                    .btn:hover { background: var(--accent-hover); }
+                    .btn-secondary {
+                      background: transparent;
+                      color: var(--text);
+                      border: 1px solid var(--card-border);
+                    }
+                    .btn-secondary:hover { background: var(--code-bg); }
+                    pre {
+                      background: var(--code-bg);
+                      border: 1px solid var(--card-border);
+                      border-radius: 6px;
+                      padding: 1rem;
+                      overflow-x: auto;
+                      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                      font-size: 0.875rem;
+                      margin: 0.75rem 0 1rem 0;
+                    }
+                    code {
+                      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                      font-size: 0.875em;
+                      background: var(--code-bg);
+                      padding: 0.15em 0.35em;
+                      border-radius: 4px;
+                      border: 1px solid var(--card-border);
+                    }
+                    pre code { border: none; padding: 0; background: transparent; }
+                    details {
+                      margin-bottom: 0.75rem;
+                      border: 1px solid var(--card-border);
+                      border-radius: 6px;
+                      background: var(--code-bg);
+                    }
+                    details summary {
+                      padding: 0.75rem 1rem;
+                      font-weight: 600;
+                      cursor: pointer;
+                      user-select: none;
+                    }
+                    details[open] summary { border-bottom: 1px solid var(--card-border); }
+                    .details-body { padding: 1rem; background: var(--card-bg); }
+                    footer {
+                      text-align: center;
+                      margin-top: 3rem;
+                      color: var(--muted);
+                      font-size: 0.85rem;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <header>
+                      <h1>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent);">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                          <path d="m9 12 2 2 4-4"/>
+                        </svg>
+                        Library of Alexandria Internal CA
+                      </h1>
+                      <p class="subtitle">Step-CA Root Certificate Authority &amp; Automated Certificate Management Environment</p>
+                    </header>
+
+                    <div class="card">
+                      <div class="info-grid">
+                        <div class="info-item">
+                          <div class="info-label">Certificate Authority</div>
+                          <div class="info-val">app-pki-bootstrap</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="info-label">ACME Directory URL</div>
+                          <div class="info-val">https://acme.loa.internal/acme/acme/directory</div>
+                        </div>
+                        <div class="info-item" style="grid-column: 1 / -1;">
+                          <div class="info-label">SHA-256 Root Fingerprint</div>
+                          <div class="info-val">f362b450d6e19a2a0260321525f3570f17610acfb92d73b4714381618708c8d9</div>
+                        </div>
+                      </div>
+                      <div class="actions">
+                        <a href="/ca.crt" class="btn">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          Download Root CA (.crt)
+                        </a>
+                        <a href="/roots.pem" class="btn btn-secondary">Download PEM (.pem)</a>
+                      </div>
+                    </div>
+
+                    <div class="card">
+                      <div class="card-title">
+                        <span>Method 1: Smallstep CLI (`step`)</span>
+                        <span class="recommended-badge">Recommended</span>
+                      </div>
+                      <p>The Smallstep CLI automatically fetches the root CA certificate from this server, verifies its cryptographic fingerprint, and installs it into your operating system and browser trust stores.</p>
+                      
+                      <h4 style="margin-top: 1rem; font-size: 0.95rem;">1. Install Step CLI</h4>
+                      <pre><code># macOS (Homebrew)
+                brew install step
+
+                # Linux (Debian / Ubuntu / RHEL / Arch)
+                curl -sLO https://dl.smallstep.com/cli/install.sh && bash install.sh
+
+                # Windows (winget)
+                winget install Smallstep.Step</code></pre>
+
+                      <h4 style="margin-top: 1rem; font-size: 0.95rem;">2. Bootstrap and Trust CA in One Step</h4>
+                      <pre><code>step ca bootstrap --ca-url https://acme.loa.internal \
+                  --fingerprint f362b450d6e19a2a0260321525f3570f17610acfb92d73b4714381618708c8d9 \
+                  --install</code></pre>
+
+                      <h4 style="margin-top: 1rem; font-size: 0.95rem;">3. Verify Installed Certificate</h4>
+                      <pre><code>step certificate inspect $(step path)/certs/root_ca.crt</code></pre>
+                    </div>
+
+                    <div class="card">
+                      <div class="card-title">Method 2: Manual OS Trust Store Installation</div>
+                      <p style="margin-bottom: 1rem;">If you cannot use the Smallstep CLI, download the root certificate above (<code>loa-root-ca.crt</code>) and install it into your operating system's trust store:</p>
+
+                      <details>
+                        <summary>macOS</summary>
+                        <div class="details-body">
+                          <pre><code>curl -k -o loa-root-ca.crt https://acme.loa.internal/ca.crt
+                sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain loa-root-ca.crt</code></pre>
+                        </div>
+                      </details>
+
+                      <details>
+                        <summary>Linux (Debian / Ubuntu / Raspberry Pi OS)</summary>
+                        <div class="details-body">
+                          <pre><code>sudo curl -k -o /usr/local/share/ca-certificates/loa-root-ca.crt https://acme.loa.internal/ca.crt
+                sudo update-ca-certificates</code></pre>
+                        </div>
+                      </details>
+
+                      <details>
+                        <summary>Linux (Fedora / RHEL / Rocky / CentOS)</summary>
+                        <div class="details-body">
+                          <pre><code>sudo curl -k -o /etc/pki/ca-trust/source/anchors/loa-root-ca.crt https://acme.loa.internal/ca.crt
+                sudo update-ca-trust</code></pre>
+                        </div>
+                      </details>
+
+                      <details>
+                        <summary>Linux (Arch Linux)</summary>
+                        <div class="details-body">
+                          <pre><code>sudo curl -k -o /etc/ca-certificates/trust-source/anchors/loa-root-ca.crt https://acme.loa.internal/ca.crt
+                sudo trust extract-compat</code></pre>
+                        </div>
+                      </details>
+
+                      <details>
+                        <summary>NixOS</summary>
+                        <div class="details-body">
+                          <p>Add the certificate URL to your <code>configuration.nix</code>:</p>
+                          <pre><code>security.pki.certificateFiles = [
+                  (builtins.fetchurl {
+                    url = "https://acme.loa.internal/ca.crt";
+                    sha256 = "f362b450d6e19a2a0260321525f3570f17610acfb92d73b4714381618708c8d9";
+                  })
+                ];</code></pre>
+                        </div>
+                      </details>
+
+                      <details>
+                        <summary>Windows (PowerShell Admin)</summary>
+                        <div class="details-body">
+                          <pre><code>Invoke-WebRequest -Uri "https://acme.loa.internal/ca.crt" -OutFile "loa-root-ca.crt" -SkipCertificateCheck
+                Import-Certificate -FilePath "loa-root-ca.crt" -CertStoreLocation Cert:\LocalMachine\Root</code></pre>
+                        </div>
+                      </details>
+                    </div>
+
+                    <div class="card">
+                      <div class="card-title">Method 3: Developer &amp; Application Trust</div>
+                      <p style="margin-bottom: 0.5rem;">For language runtimes and CLI tools that maintain independent trust stores:</p>
+                      <pre><code># cURL / Wget / Git
+                export SSL_CERT_FILE=/path/to/loa-root-ca.crt
+                git config --global http.sslCAInfo /path/to/loa-root-ca.crt
+
+                # Node.js
+                export NODE_EXTRA_CA_CERTS=/path/to/loa-root-ca.crt
+
+                # Python (Requests / Urllib3)
+                export REQUESTS_CA_BUNDLE=/path/to/loa-root-ca.crt
+
+                # Docker Daemon (/etc/docker/certs.d/acme.loa.internal/ca.crt)
+                sudo mkdir -p /etc/docker/certs.d/acme.loa.internal
+                sudo cp loa-root-ca.crt /etc/docker/certs.d/acme.loa.internal/ca.crt</code></pre>
+                    </div>
+
+                    <div class="card">
+                      <div class="card-title">ACME Client Configuration</div>
+                      <p>Issue TLS certificates automatically using any standard ACME client against our internal Step-CA provisioner:</p>
+                      <pre><code># Certbot
+                certbot certonly --standalone -d myservice.loa.internal \
+                  --server https://acme.loa.internal/acme/acme/directory
+
+                # Caddyfile
+                {
+                  acme_ca https://acme.loa.internal/acme/acme/directory
+                  acme_ca_root /path/to/loa-root-ca.crt
+                }</code></pre>
+                    </div>
+
+                    <footer>
+                      Library of Alexandria Infrastructure &bull; Automated Public Key Infrastructure
+                    </footer>
+                  </div>
+                </body>
+                </html>
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
