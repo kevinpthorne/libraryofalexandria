@@ -53,6 +53,46 @@ spec:
               - NET_BIND_SERVICE
           seccompProfile:
             type: RuntimeDefault
+        initContainers:
+          - name: generate-tls
+            image: smallstep/step-ca:latest
+            command:
+              - step
+              - certificate
+              - create
+              - "acme.{{ $cluster.name | default "k" }}.loa.internal"
+              - /tls/server.crt
+              - /tls/server.key
+              - --ca=/certs/tls.crt
+              - --ca-key=/certs/tls.key
+              - --bundle
+              - --not-after=87600h
+              - --san=acme.{{ $cluster.name | default "k" }}.loa.internal
+              - --san=acme.loa.internal
+              - --san=acme-server
+              - --san=acme-server.cert-manager.svc
+              - --san=acme-server.cert-manager.svc.cluster.local
+              - --san=acme-server.cert-manager.svc.cluster.{{ $cluster.name | default "k" }}
+              - --san=localhost
+              - --san=127.0.0.1
+              - --insecure
+              - --no-password
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              capabilities:
+                drop:
+                  - ALL
+              seccompProfile:
+                type: RuntimeDefault
+            volumeMounts:
+              - name: ca-secret
+                mountPath: /certs
+                readOnly: true
+              - name: tls-server
+                mountPath: /tls
         extraVolumes:
           - name: step-config
             configMap:
@@ -61,6 +101,8 @@ spec:
             secret:
               secretName: app-pki-bootstrap-secret
           - name: db-data
+            emptyDir: {}
+          - name: tls-server
             emptyDir: {}
           - name: nginx-config
             configMap:
@@ -94,6 +136,9 @@ spec:
             volumeMounts:
               - name: ca-secret
                 mountPath: /certs
+                readOnly: true
+              - name: tls-server
+                mountPath: /tls
                 readOnly: true
               - name: nginx-config
                 mountPath: /etc/nginx/nginx.conf
@@ -165,8 +210,8 @@ spec:
                     listen 9000 ssl;
                     server_name _;
 
-                    ssl_certificate /certs/tls.crt;
-                    ssl_certificate_key /certs/tls.key;
+                    ssl_certificate /tls/server.crt;
+                    ssl_certificate_key /tls/server.key;
                     ssl_protocols TLSv1.2 TLSv1.3;
 
                     location = / {
