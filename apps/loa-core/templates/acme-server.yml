@@ -57,26 +57,28 @@ spec:
           - name: generate-tls
             image: smallstep/step-ca:latest
             command:
-              - step
-              - certificate
-              - create
-              - "acme.{{ $cluster.name | default "k" }}.loa.internal"
-              - /tls/server.crt
-              - /tls/server.key
-              - --ca=/certs/tls.crt
-              - --ca-key=/certs/tls.key
-              - --bundle
-              - --not-after=87600h
-              - --san=acme.{{ $cluster.name | default "k" }}.loa.internal
-              - --san=acme.loa.internal
-              - --san=acme-server
-              - --san=acme-server.cert-manager.svc
-              - --san=acme-server.cert-manager.svc.cluster.local
-              - --san=acme-server.cert-manager.svc.cluster.{{ $cluster.name | default "k" }}
-              - --san=localhost
-              - --san=127.0.0.1
-              - --insecure
-              - --no-password
+              - sh
+              - -c
+              - |
+                step certificate create "acme.{{ $cluster.name | default "k" }}.loa.internal" \
+                  /tls/server.crt /tls/server.key \
+                  --ca=/certs/tls.crt --ca-key=/certs/tls.key \
+                  --bundle --not-after=87600h \
+                  --san=acme.{{ $cluster.name | default "k" }}.loa.internal \
+                  --san=acme.loa.internal \
+                  --san=acme-server \
+                  --san=acme-server.cert-manager.svc \
+                  --san=acme-server.cert-manager.svc.cluster.local \
+                  --san=acme-server.cert-manager.svc.cluster.{{ $cluster.name | default "k" }} \
+                  --san=localhost \
+                  --san=127.0.0.1 \
+                  --insecure \
+                  --no-password
+
+                FP=$(step certificate fingerprint /certs/tls.crt)
+                CN=$(step certificate inspect /certs/tls.crt --format json | jq -r '.subject.common_name[0] // .subject.common_name // "app-pki-bootstrap"')
+
+                sed -e "s|__CA_FINGERPRINT__|$FP|g" -e "s|__CA_COMMON_NAME__|$CN|g" /web-template/index.html > /web-rendered/index.html
             securityContext:
               allowPrivilegeEscalation: false
               runAsNonRoot: true
@@ -93,6 +95,11 @@ spec:
                 readOnly: true
               - name: tls-server
                 mountPath: /tls
+              - name: web-content
+                mountPath: /web-template
+                readOnly: true
+              - name: web-rendered
+                mountPath: /web-rendered
         extraVolumes:
           - name: step-config
             configMap:
@@ -103,6 +110,8 @@ spec:
           - name: db-data
             emptyDir: {}
           - name: tls-server
+            emptyDir: {}
+          - name: web-rendered
             emptyDir: {}
           - name: nginx-config
             configMap:
@@ -425,7 +434,7 @@ spec:
                       <div class="info-grid">
                         <div class="info-item">
                           <div class="info-label">Certificate Authority</div>
-                          <div class="info-val">app-pki-bootstrap</div>
+                          <div class="info-val">__CA_COMMON_NAME__</div>
                         </div>
                         <div class="info-item">
                           <div class="info-label">ACME Directory URL</div>
@@ -433,7 +442,7 @@ spec:
                         </div>
                         <div class="info-item" style="grid-column: 1 / -1;">
                           <div class="info-label">SHA-256 Root Fingerprint</div>
-                          <div class="info-val">f362b450d6e19a2a0260321525f3570f17610acfb92d73b4714381618708c8d9</div>
+                          <div class="info-val">__CA_FINGERPRINT__</div>
                         </div>
                       </div>
                       <div class="actions">
@@ -464,7 +473,7 @@ spec:
 
                       <h4 style="margin-top: 1rem; font-size: 0.95rem;">2. Bootstrap and Trust CA in One Step</h4>
                       <pre><code>step ca bootstrap --ca-url https://acme.{{ $cluster.name | default "k" }}.loa.internal \
-                  --fingerprint f362b450d6e19a2a0260321525f3570f17610acfb92d73b4714381618708c8d9 \
+                  --fingerprint __CA_FINGERPRINT__ \
                   --install</code></pre>
 
                       <h4 style="margin-top: 1rem; font-size: 0.95rem;">3. Verify Installed Certificate</h4>
@@ -514,7 +523,7 @@ spec:
                           <pre><code>security.pki.certificateFiles = [
                   (builtins.fetchurl {
                     url = "https://acme.{{ $cluster.name | default "k" }}.loa.internal/ca.crt";
-                    sha256 = "f362b450d6e19a2a0260321525f3570f17610acfb92d73b4714381618708c8d9";
+                    sha256 = "__CA_FINGERPRINT__";
                   })
                 ];</code></pre>
                         </div>
