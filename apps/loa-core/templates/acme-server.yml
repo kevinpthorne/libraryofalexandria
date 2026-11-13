@@ -383,7 +383,7 @@ spec:
                         </div>
                         <div class="info-item">
                           <div class="info-label">ACME Directory URL</div>
-                          <div class="info-val">https://acme.loa.internal/acme/acme/directory</div>
+                          <div class="info-val">https://acme.{{ $cluster.name | default "k" }}.loa.internal/acme/acme/directory</div>
                         </div>
                         <div class="info-item" style="grid-column: 1 / -1;">
                           <div class="info-label">SHA-256 Root Fingerprint</div>
@@ -417,7 +417,7 @@ spec:
                 winget install Smallstep.Step</code></pre>
 
                       <h4 style="margin-top: 1rem; font-size: 0.95rem;">2. Bootstrap and Trust CA in One Step</h4>
-                      <pre><code>step ca bootstrap --ca-url https://acme.loa.internal \
+                      <pre><code>step ca bootstrap --ca-url https://acme.{{ $cluster.name | default "k" }}.loa.internal \
                   --fingerprint f362b450d6e19a2a0260321525f3570f17610acfb92d73b4714381618708c8d9 \
                   --install</code></pre>
 
@@ -432,7 +432,7 @@ spec:
                       <details>
                         <summary>macOS</summary>
                         <div class="details-body">
-                          <pre><code>curl -k -o loa-root-ca.crt https://acme.loa.internal/ca.crt
+                          <pre><code>curl -k -o loa-root-ca.crt https://acme.{{ $cluster.name | default "k" }}.loa.internal/ca.crt
                 sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain loa-root-ca.crt</code></pre>
                         </div>
                       </details>
@@ -440,7 +440,7 @@ spec:
                       <details>
                         <summary>Linux (Debian / Ubuntu / Raspberry Pi OS)</summary>
                         <div class="details-body">
-                          <pre><code>sudo curl -k -o /usr/local/share/ca-certificates/loa-root-ca.crt https://acme.loa.internal/ca.crt
+                          <pre><code>sudo curl -k -o /usr/local/share/ca-certificates/loa-root-ca.crt https://acme.{{ $cluster.name | default "k" }}.loa.internal/ca.crt
                 sudo update-ca-certificates</code></pre>
                         </div>
                       </details>
@@ -448,7 +448,7 @@ spec:
                       <details>
                         <summary>Linux (Fedora / RHEL / Rocky / CentOS)</summary>
                         <div class="details-body">
-                          <pre><code>sudo curl -k -o /etc/pki/ca-trust/source/anchors/loa-root-ca.crt https://acme.loa.internal/ca.crt
+                          <pre><code>sudo curl -k -o /etc/pki/ca-trust/source/anchors/loa-root-ca.crt https://acme.{{ $cluster.name | default "k" }}.loa.internal/ca.crt
                 sudo update-ca-trust</code></pre>
                         </div>
                       </details>
@@ -456,7 +456,7 @@ spec:
                       <details>
                         <summary>Linux (Arch Linux)</summary>
                         <div class="details-body">
-                          <pre><code>sudo curl -k -o /etc/ca-certificates/trust-source/anchors/loa-root-ca.crt https://acme.loa.internal/ca.crt
+                          <pre><code>sudo curl -k -o /etc/ca-certificates/trust-source/anchors/loa-root-ca.crt https://acme.{{ $cluster.name | default "k" }}.loa.internal/ca.crt
                 sudo trust extract-compat</code></pre>
                         </div>
                       </details>
@@ -467,7 +467,7 @@ spec:
                           <p>Add the certificate URL to your <code>configuration.nix</code>:</p>
                           <pre><code>security.pki.certificateFiles = [
                   (builtins.fetchurl {
-                    url = "https://acme.loa.internal/ca.crt";
+                    url = "https://acme.{{ $cluster.name | default "k" }}.loa.internal/ca.crt";
                     sha256 = "f362b450d6e19a2a0260321525f3570f17610acfb92d73b4714381618708c8d9";
                   })
                 ];</code></pre>
@@ -477,7 +477,7 @@ spec:
                       <details>
                         <summary>Windows (PowerShell Admin)</summary>
                         <div class="details-body">
-                          <pre><code>Invoke-WebRequest -Uri "https://acme.loa.internal/ca.crt" -OutFile "loa-root-ca.crt" -SkipCertificateCheck
+                          <pre><code>Invoke-WebRequest -Uri "https://acme.{{ $cluster.name | default "k" }}.loa.internal/ca.crt" -OutFile "loa-root-ca.crt" -SkipCertificateCheck
                 Import-Certificate -FilePath "loa-root-ca.crt" -CertStoreLocation Cert:\LocalMachine\Root</code></pre>
                         </div>
                       </details>
@@ -497,20 +497,19 @@ spec:
                 export REQUESTS_CA_BUNDLE=/path/to/loa-root-ca.crt
 
                 # Docker Daemon (/etc/docker/certs.d/acme.loa.internal/ca.crt)
-                sudo mkdir -p /etc/docker/certs.d/acme.loa.internal
-                sudo cp loa-root-ca.crt /etc/docker/certs.d/acme.loa.internal/ca.crt</code></pre>
+                sudo mkdir -p /etc/docker/certs.d/acme.{{ $cluster.name | default "k" }}.loa.internal
+                sudo cp loa-root-ca.crt /etc/docker/certs.d/acme.{{ $cluster.name | default "k" }}.loa.internal/ca.crt</code></pre>
                     </div>
 
                     <div class="card">
                       <div class="card-title">ACME Client Configuration</div>
                       <p>Issue TLS certificates automatically using any standard ACME client against our internal Step-CA provisioner:</p>
                       <pre><code># Certbot
-                certbot certonly --standalone -d myservice.loa.internal \
-                  --server https://acme.loa.internal/acme/acme/directory
-
+                certbot certonly --standalone -d myservice.{{ $cluster.name | default "k" }}.loa.internal \
+                  --server https://acme.{{ $cluster.name | default "k" }}.loa.internal/acme/acme/directory
                 # Caddyfile
                 {
-                  acme_ca https://acme.loa.internal/acme/acme/directory
+                  acme_ca https://acme.{{ $cluster.name | default "k" }}.loa.internal/acme/acme/directory
                   acme_ca_root /path/to/loa-root-ca.crt
                 }</code></pre>
                     </div>
@@ -520,6 +519,15 @@ spec:
                     </footer>
                   </div>
                 </body>
+                    <script>
+                      // Dynamically adjust domain if visited via alternative hostname or IP
+                      const currentHost = window.location.host;
+                      if (currentHost && currentHost !== "acme.{{ $cluster.name | default "k" }}.loa.internal") {
+                        document.querySelectorAll(".info-val, pre code").forEach(el => {
+                          el.textContent = el.textContent.replaceAll("acme.{{ $cluster.name | default "k" }}.loa.internal", currentHost);
+                        });
+                      }
+                    </script>
                 </html>
   destination:
     server: https://kubernetes.default.svc
