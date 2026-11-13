@@ -13,7 +13,7 @@ metadata:
   name: app-{{ .Release.Name }}
 spec:
   isCA: true
-  commonName: app-{{ .Release.Name }}
+  commonName: app-{{ .Release.Name }}-{{ .Values.cluster.name | default "k" }}
   secretName: app-{{ .Release.Name }}-secret
   duration: 87600h0m0s  # 10 years
   renewBefore: 8760h0m0s  # 1 year

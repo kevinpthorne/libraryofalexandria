@@ -30,6 +30,9 @@
       {
         name = "pki-bootstrap";
         chart = "${pkgs.pki-bootstrap-helm}/pki-bootstrap-helm-0.1.0.tgz";
+        values = {
+          cluster.name = config.libraryofalexandria.cluster.name;
+        };
         namespace = "cert-manager";
       }
     ];
