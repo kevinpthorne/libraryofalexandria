@@ -118,6 +118,7 @@ spec:
                     "acme-server",
                     "acme-server.cert-manager.svc",
                     "acme-server.cert-manager.svc.cluster.local",
+                    "acme-server.cert-manager.svc.cluster.{{ $cluster.name | default "k" }}",
                     "localhost",
                     "127.0.0.1"
                   ],
@@ -206,7 +207,7 @@ spec:
                 <head>
                   <meta charset="UTF-8">
                   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <title>Library of Alexandria Root CA</title>
+                  <title>Library of Alexandria (Cluster {{ $cluster.name | default "k" | upper }}) Root CA</title>
                   <style>
                     :root {
                       --bg: #0d1117;
@@ -370,7 +371,7 @@ spec:
                           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                           <path d="m9 12 2 2 4-4"/>
                         </svg>
-                        Library of Alexandria Internal CA
+                        Library of Alexandria Internal CA (Cluster {{ $cluster.name | default "k" | upper }})
                       </h1>
                       <p class="subtitle">Step-CA Root Certificate Authority &amp; Automated Certificate Management Environment</p>
                     </header>
