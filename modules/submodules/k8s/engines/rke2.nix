@@ -213,7 +213,7 @@ in
                           }
                           {
                             name = "rewrite";
-                            parameters = "stop name suffix cluster.${thisCluster.name} .cluster.local";
+                            parameters = "stop name suffix .cluster.${thisCluster.name} .cluster.local";
                           }
                           {
                             name = "kubernetes";
