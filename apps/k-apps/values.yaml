@@ -207,7 +207,7 @@ letsencrypt:
   email: "admin@kpt.link"
 
 mediamtx:
-  enabled: true
+  enabled: false
   domain: "catcher.k.kpt.link"
   rtmpsPort: 1936
   issuerName: "letsencrypt-prod"
