@@ -401,7 +401,7 @@ spec:
             annotations:
               p2p-anycast.io/expose: "true"
               external-dns.loa.internal/expose: "public"
-              external-dns.kubernetes.io/target: "gateway.kpt.link"
+              external-dns.alpha.kubernetes.io/target: "gateway.kpt.link"
               external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
             hostnames:
               - "matrix.{{ $cluster.name | default "k" }}.kpt.link"
@@ -419,7 +419,7 @@ spec:
             annotations:
               p2p-anycast.io/expose: "true"
               external-dns.loa.internal/expose: "public"
-              external-dns.kubernetes.io/target: "gateway.kpt.link"
+              external-dns.alpha.kubernetes.io/target: "gateway.kpt.link"
               external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
             hostnames:
               - "chat.kpt.link"
