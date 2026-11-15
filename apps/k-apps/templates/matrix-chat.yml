@@ -373,7 +373,6 @@ spec:
             gatewayName: local-gateway
             gatewayNamespace: kube-system
             hostnames:
-              - "matrix.{{ $cluster.name | default "k" }}.kpt.link"
               - "matrix.{{ $cluster.name | default "k" }}.loa.internal"
             ports:
               - port: 443
@@ -387,9 +386,7 @@ spec:
             gatewayName: local-gateway
             gatewayNamespace: kube-system
             hostnames:
-              - "chat.kpt.link"
               - "chat.{{ $cluster.name | default "k" }}.loa.internal"
-              - "chat.{{ $cluster.name | default "k" }}.kpt.link"
             ports:
               - port: 443
                 protocol: TLS
