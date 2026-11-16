@@ -371,7 +371,18 @@ spec:
                   "external-dns.loa.internal/federate": "true"
           - name: immich-public
             createGateway: false
-            gatewayName: public-gateway
+            gatewayName: cloudflare-gateway
+            gatewayNamespace: public-gateway
+            hostnames:
+              - "immich.kpt.link"
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 8443
+                targetService: immich-tls
+          - name: immich-anycast
+            createGateway: false
+            gatewayName: anycast-gateway
             gatewayNamespace: public-gateway
             hostnames:
               - "immich.kpt.link"

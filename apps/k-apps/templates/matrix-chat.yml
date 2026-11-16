@@ -396,12 +396,11 @@ spec:
                   mode: Passthrough
           - name: matrix-synapse-public
             createGateway: false
-            gatewayName: public-gateway
+            gatewayName: anycast-gateway
             gatewayNamespace: public-gateway
             annotations:
               p2p-anycast.io/expose: "true"
               external-dns.loa.internal/expose: "public"
-              external-dns.alpha.kubernetes.io/target: "gateway.kpt.link"
               external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
             hostnames:
               - "matrix.{{ $cluster.name | default "k" }}.kpt.link"
@@ -414,12 +413,11 @@ spec:
                   mode: Passthrough
           - name: element-web-public
             createGateway: false
-            gatewayName: public-gateway
+            gatewayName: anycast-gateway
             gatewayNamespace: public-gateway
             annotations:
               p2p-anycast.io/expose: "true"
               external-dns.loa.internal/expose: "public"
-              external-dns.alpha.kubernetes.io/target: "gateway.kpt.link"
               external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
             hostnames:
               - "chat.kpt.link"

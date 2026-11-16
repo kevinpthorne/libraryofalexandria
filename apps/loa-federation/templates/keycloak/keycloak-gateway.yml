@@ -30,7 +30,20 @@ spec:
                 "external-dns.loa.internal/federate": "true"
         - name: keycloak-app-public
           createGateway: false
-          gatewayName: public-gateway
+          gatewayName: cloudflare-gateway
+          gatewayNamespace: public-gateway
+          hostnames:
+          - ident.kpt.link
+          ports:
+            - port: 443
+              targetPort: 8443
+              protocol: TLS
+              tls:
+                mode: Passthrough
+              targetService: keycloak
+        - name: keycloak-app-anycast
+          createGateway: false
+          gatewayName: anycast-gateway
           gatewayNamespace: public-gateway
           hostnames:
           - ident.kpt.link

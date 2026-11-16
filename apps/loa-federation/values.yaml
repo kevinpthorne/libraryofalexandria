@@ -40,3 +40,6 @@ cloudflared:
   domains:
     - "immich.kpt.link"
     - "ident.kpt.link"
+
+anycast:
+  gatewayDomain: "gateway.kpt.link"
