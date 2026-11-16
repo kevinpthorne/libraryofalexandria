@@ -17,6 +17,8 @@ spec:
           apiKeySecret: cf-key
           apiKeySecretKey: api-key
         external-dns:
+          policy: sync
+          registry: txt
           txtOwnerId: {{ .Values.cluster.name }}
           extraArgs:
             - "--default-targets={{ .Values.cluster.externalDomain }}"
