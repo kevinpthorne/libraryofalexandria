@@ -11,6 +11,8 @@ cluster: {}
 endpoints: []
 # - name: example-app
 #   className: cilium # Default gateway class; optional
+#   annotations:
+#     example.com/owner: platform # Optional: annotations added to the generated Gateway
 #   hostnames:
 #     - "example.com"
 #   addresses:

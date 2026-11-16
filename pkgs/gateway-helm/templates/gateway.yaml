@@ -7,6 +7,10 @@ kind: Gateway
 metadata:
   name: {{ $endpoint.name }}
   namespace: {{ $endpoint.namespace | default $.Release.Namespace }}
+  {{- with (index $endpoint "annotations") }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   gatewayClassName: {{ $endpoint.className | default "cilium" }}
   {{- if $endpoint.addresses }}
