@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "llm-proxy.fullname" . }}-script
+  labels:
+    {{- include "llm-proxy.labels" . | nindent 4 }}
+data:
+  proxy.py: |
+    import asyncio
+    import hmac
+    import os
+    import socket
+    import ssl
+    from aiohttp import web, ClientSession, ClientTimeout
+
+    TARGET_IP = os.environ["TARGET_IP"]
+    TARGET_PORT = int(os.environ.get("TARGET_PORT", "{{ .Values.target.defaultPort }}"))
+    TARGET_MAC = os.environ["TARGET_MAC"]
+    BROADCAST_IP = os.environ.get("BROADCAST_IP", "{{ .Values.target.defaultBroadcastIp }}")
+    WOL_RETRIES = int(os.environ.get("WOL_RETRIES", "{{ .Values.target.wolRetries }}"))
+    WOL_INTERVAL = float(os.environ.get("WOL_INTERVAL", "{{ .Values.target.wolInterval }}"))
+    CLIENT_TIMEOUT = int(os.environ.get("CLIENT_TIMEOUT", "{{ .Values.target.clientTimeout }}"))
+    MAX_CLIENT_SIZE_MB = int(os.environ.get("MAX_CLIENT_SIZE_MB", "{{ .Values.target.clientMaxSizeMb }}"))
+    EXPECTED_HEADER = f"Bearer {os.environ['API_KEY']}"
+
+    CERT_PATH = os.environ.get("CERT_PATH", "{{ .Values.tls.certPath }}")
+    KEY_PATH = os.environ.get("KEY_PATH", "{{ .Values.tls.keyPath }}")
+
+    async def healthz(request: web.Request):
+        return web.Response(text="OK", status=200)
+
+    def verify_key(request: web.Request):
+        auth = request.headers.get("Authorization", "")
+        if not hmac.compare_digest(auth, EXPECTED_HEADER):
+            raise web.HTTPUnauthorized(text="Invalid or missing API key")
+
+    def send_wol(mac: str):
+        mac_bytes = bytes.fromhex(mac.replace(":", "").replace("-", ""))
+        magic = b"\xff" * 6 + mac_bytes * 16
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            s.sendto(magic, (BROADCAST_IP, 9))
+
+    async def is_awake() -> bool:
+        try:
+            _, writer = await asyncio.wait_for(
+                asyncio.open_connection(TARGET_IP, TARGET_PORT), timeout=1.0
+            )
+            writer.close()
+            await writer.wait_closed()
+            return True
+        except Exception:
+            return False
+
+    async def ensure_awake():
+        if await is_awake():
+            return
+        print(f"Valid API key! Waking {TARGET_IP} ({TARGET_MAC})...", flush=True)
+        for _ in range(WOL_RETRIES):
+            send_wol(TARGET_MAC)
+            await asyncio.sleep(WOL_INTERVAL)
+            if await is_awake():
+                print(f"Desktop GPU ({TARGET_IP}) is awake!", flush=True)
+                return
+        raise web.HTTPGatewayTimeout(text="GPU desktop failed to wake up.")
+
+    async def handle(request: web.Request):
+        verify_key(request)
+        await ensure_awake()
+        url = f"http://{TARGET_IP}:{TARGET_PORT}{request.rel_url}"
+        body = await request.read()
+        headers = {k: v for k, v in request.headers.items() if k.lower() not in ("host", "authorization")}
+
+        timeout = ClientTimeout(total=CLIENT_TIMEOUT)
+        async with ClientSession(timeout=timeout) as session:
+            async with session.request(request.method, url, headers=headers, data=body) as resp:
+                stream = web.StreamResponse(status=resp.status, headers=resp.headers)
+                await stream.prepare(request)
+                async for chunk in resp.content.iter_any():
+                    await stream.write(chunk)
+                await stream.write_eof()
+                return stream
+
+    ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    ssl_ctx.load_cert_chain(CERT_PATH, KEY_PATH)
+
+    app = web.Application(client_max_size=MAX_CLIENT_SIZE_MB * 1024 * 1024)
+    app.router.add_get("/healthz", healthz)
+    app.router.add_route("*", "/{tail:.*}", handle)
+    web.run_app(app, host="0.0.0.0", port={{ .Values.service.targetPort }}, ssl_context=ssl_ctx)

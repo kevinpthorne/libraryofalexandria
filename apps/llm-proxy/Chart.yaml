@@ -1,0 +1,6 @@
+apiVersion: v2
+name: llm-proxy
+description: Authenticated Wake-on-LAN proxy and external endpoint for desktop GPU LLM
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

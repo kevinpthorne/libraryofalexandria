@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "llm-proxy.fullname" . }}
+  labels:
+    {{- include "llm-proxy.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "llm-proxy.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "llm-proxy.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: proxy
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sh", "-c", "pip install --no-cache-dir aiohttp && python -u /app/proxy.py"]
+          env:
+            - name: TARGET_IP
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.targetSecret.name | quote }}
+                  key: {{ .Values.targetSecret.ipKey | quote }}
+            - name: TARGET_MAC
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.targetSecret.name | quote }}
+                  key: {{ .Values.targetSecret.macKey | quote }}
+            - name: BROADCAST_IP
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.targetSecret.name | quote }}
+                  key: {{ .Values.targetSecret.broadcastIpKey | quote }}
+                  optional: true
+            - name: TARGET_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.targetSecret.name | quote }}
+                  key: {{ .Values.targetSecret.portKey | quote }}
+                  optional: true
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "llm-proxy.apiKeySecretName" . | quote }}
+                  key: {{ .Values.apiKey.secretKey | quote }}
+            - name: CERT_PATH
+              value: {{ .Values.tls.certPath | quote }}
+            - name: KEY_PATH
+              value: {{ .Values.tls.keyPath | quote }}
+          ports:
+            - name: https
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.service.targetPort }}
+              scheme: HTTPS
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.service.targetPort }}
+              scheme: HTTPS
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          {{- end }}
+          volumeMounts:
+            - name: script
+              mountPath: /app
+            - name: tls-certs
+              mountPath: /certs
+              readOnly: true
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: script
+          configMap:
+            name: {{ include "llm-proxy.fullname" . }}-script
+        - name: tls-certs
+          secret:
+            secretName: {{ include "llm-proxy.tlsSecretName" . }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

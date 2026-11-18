@@ -13,3 +13,12 @@ metadata:
   labels:
     pod-security.kubernetes.io/enforce: privileged
     zarf.dev/agent: "ignore"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: llm-proxy
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    zarf.dev/agent: "ignore"
+

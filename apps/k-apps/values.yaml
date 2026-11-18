@@ -228,3 +228,13 @@ ovenmediaengine:
     secretKey: "stream-key"
     userKey: "stream-user"
     defaultUser: "publisher"
+
+llmProxy:
+  enabled: true
+  domain: "llm.k.kpt.link"
+  targetSecret:
+    name: "llm-desktop-target"
+    ipKey: "target-ip"
+    macKey: "target-mac"
+    broadcastIpKey: "broadcast-ip"
+    portKey: "target-port"

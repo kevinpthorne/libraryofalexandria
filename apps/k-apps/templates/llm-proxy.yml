@@ -1,0 +1,120 @@
+{{- $llmProxy := .Values.llmProxy | default dict -}}
+{{- if ($llmProxy.enabled | default false) -}}
+{{- $cluster := .Values.cluster | default dict -}}
+{{- $domain := $llmProxy.domain | default (printf "llm.%s.kpt.link" ($cluster.name | default "k")) -}}
+{{- $internalDomain := printf "llm-proxy.%s.loa.internal" ($cluster.name | default "k") -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: llm-proxy
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: apps/llm-proxy
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        {{- if hasKey $llmProxy "targetSecret" }}
+        targetSecret:
+          {{- toYaml $llmProxy.targetSecret | nindent 10 }}
+        {{- end }}
+        {{- if hasKey $llmProxy "target" }}
+        target:
+          {{- toYaml $llmProxy.target | nindent 10 }}
+        {{- end }}
+        {{- if hasKey $llmProxy "apiKey" }}
+        apiKey:
+          {{- toYaml $llmProxy.apiKey | nindent 10 }}
+        {{- end }}
+        {{- if hasKey $llmProxy "tls" }}
+        tls:
+          {{- toYaml $llmProxy.tls | nindent 10 }}
+        {{- end }}
+        {{- if hasKey $llmProxy "resources" }}
+        resources:
+          {{- toYaml $llmProxy.resources | nindent 10 }}
+        {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: llm-proxy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        zarf.dev/agent: "ignore"
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: llm-proxy-tls
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/service-tls-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        svcName: "llm-proxy"
+        cluster:
+          name: {{ $cluster.name | default "k" }}
+        cert:
+          secretName: "llm-proxy-tls"
+          sans:
+            - {{ $domain | quote }}
+            - {{ $internalDomain | quote }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: llm-proxy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: llm-proxy-gateway
+  namespace: {{ .Values.argoNamespace }}
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/kevinpthorne/libraryofalexandria.git
+    path: pkgs/gateway-helm
+    targetRevision: HEAD
+    helm:
+      valuesObject:
+        endpoints:
+          - name: llm-proxy-anycast
+            namespace: llm-proxy
+            createGateway: false
+            gatewayName: anycast-gateway
+            gatewayNamespace: public-gateway
+            annotations:
+              p2p-anycast.io/expose: "true"
+              external-dns.loa.internal/expose: "public"
+            hostnames:
+              - {{ $domain | quote }}
+            ports:
+              - port: 443
+                protocol: TLS
+                targetPort: 8443
+                targetService: llm-proxy
+                tls:
+                  mode: Passthrough
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: llm-proxy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+{{- end }}

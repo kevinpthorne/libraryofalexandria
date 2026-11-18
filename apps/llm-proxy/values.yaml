@@ -1,0 +1,91 @@
+replicaCount: 1
+
+image:
+  repository: python
+  tag: "3.12-alpine"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Secret containing the desktop target IP and MAC address
+targetSecret:
+  # Name of the pre-created Kubernetes Secret
+  name: "llm-desktop-target"
+  # Key inside targetSecret for target desktop IP
+  ipKey: "target-ip"
+  # Key inside targetSecret for target desktop MAC address
+  macKey: "target-mac"
+  # Key inside targetSecret for broadcast IP (optional, falls back to target.defaultBroadcastIp)
+  broadcastIpKey: "broadcast-ip"
+  # Key inside targetSecret for target port (optional, falls back to target.defaultPort)
+  portKey: "target-port"
+
+target:
+  # Default port for target service (e.g. Ollama default: 11434, vLLM default: 8000)
+  defaultPort: 11434
+  # Default broadcast IP for sending Wake-on-LAN packets
+  defaultBroadcastIp: "192.168.1.255"
+  # Max retries to wake desktop before failing
+  wolRetries: 30
+  # Interval in seconds between WOL packets
+  wolInterval: 2
+  # Timeout in seconds for upstream HTTP client requests
+  clientTimeout: 600
+  # Maximum client request payload size in MB
+  clientMaxSizeMb: 100
+
+apiKey:
+  # Whether to auto-generate an API key using External Secrets Operator
+  generate: true
+  # Secret name where the API key will reside (defaults to {{ fullname }}-apikey if empty)
+  secretName: ""
+  # Key inside the secret holding the API token
+  secretKey: "api-key"
+  # Length of the generated password
+  length: 32
+  # Number of digits to include in the generated password
+  digits: 10
+  # Number of symbols to include
+  symbols: 0
+  allowRepeat: true
+  # Name of an existing secret if not using auto-generation
+  existingSecret: ""
+
+tls:
+  # Name of secret containing TLS certificate and key (e.g. provisioned by service-tls-helm)
+  # Defaults to {{ fullname }}-tls if empty
+  secretName: ""
+  certPath: "/certs/tls.crt"
+  keyPath: "/certs/tls.key"
+
+service:
+  type: ClusterIP
+  port: 8443
+  targetPort: 8443
+
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 15
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 2
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
