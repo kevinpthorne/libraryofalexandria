@@ -1,11 +1,12 @@
 {{- $iceStart := int (.Values.webrtc.icePortRangeStart | default 10000) -}}
 {{- $iceEnd := int (.Values.webrtc.icePortRangeEnd | default 10003) -}}
 {{- $httpsPublic := and .Values.tls.enabled (or (and .Values.llhls.enabled .Values.llhls.public) (and .Values.webrtc.enabled .Values.webrtc.public)) -}}
+{{- $httpsDirect := and $httpsPublic (not .Values.gateway.enabled) -}}
 {{- $sniPorts := list -}}
 {{- if .Values.rtmps.enabled -}}
 {{- $sniPorts = append $sniPorts (.Values.rtmps.port | toString) -}}
 {{- end -}}
-{{- if $httpsPublic -}}
+{{- if $httpsDirect -}}
 {{- $sniPorts = append $sniPorts (.Values.llhls.tlsPort | toString) -}}
 {{- end -}}
 {{- if .Values.service.public.enabled }}
@@ -27,13 +28,11 @@ metadata:
     {{- if .Values.rtmps.enabled }}
     p2p-anycast.io/target.{{ .Values.rtmps.port }}: {{ printf "%s.%s.svc.cluster.local:%v" (include "ovenmediaengine.fullname" .) .Release.Namespace .Values.rtmps.port | quote }}
     {{- end }}
-    {{- if $httpsPublic }}
-    {{- if .Values.gateway.enabled }}
-    p2p-anycast.io/target.{{ .Values.llhls.tlsPort }}: {{ printf "%s.%s.svc.cluster.local:%v" .Values.gateway.serviceName .Values.gateway.namespace .Values.gateway.port | quote }}
-    {{- else }}
+    {{- if $httpsDirect }}
     p2p-anycast.io/target.{{ .Values.llhls.tlsPort }}: {{ printf "%s.%s.svc.cluster.local:%v" (include "ovenmediaengine.fullname" .) .Release.Namespace .Values.llhls.tlsPort | quote }}
     {{- end }}
     {{- end }}
+    {{- if or .Values.rtmps.enabled $httpsPublic }}
     external-dns.alpha.kubernetes.io/target: "gateway.kpt.link"
     {{- end }}
 spec:

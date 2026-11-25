@@ -7,7 +7,10 @@ metadata:
     {{- include "ovenmediaengine.labels" . | nindent 4 }}
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-    # The Service advertises public port 3334; this route must not advertise port 443.
+    p2p-anycast.io/expose: "true"
+    p2p-anycast.io/policy: "STRICT_SINGLETON"
+    p2p-anycast.io/public-port: {{ .Values.llhls.tlsPort | quote }}
+    p2p-anycast.io/target: {{ printf "%s.%s.svc.cluster.local:%v" .Values.gateway.serviceName .Values.gateway.namespace .Values.gateway.port | quote }}
 spec:
   parentRefs:
     - name: {{ .Values.gateway.name }}

@@ -129,11 +129,12 @@ This requires a NetworkPolicy-enforcing CNI (the cluster uses Cilium).
 
 RTMPS and HTTPS/WHIP anycast use `STRICT_SINGLETON` on TCP 1936 and 3334. The origin manifest authorizes `*.k.kpt.link`;
 the discovered SNI routes use the concrete `catcher.k.kpt.link`, because edges match SNI hostnames exactly.
-The origin image is pinned to multi-architecture `1.2.1`, with no origin architecture selector. Its comma-separated public ports have distinct targets:
-1936 goes directly to the OME Service; 3334 goes to `cilium-gateway-anycast-gateway.public-gateway.svc.cluster.local:443`.
-A catcher-specific TLSRoute on `anycast-gateway` forwards that passthrough TLS connection to OME port 3334.
+The origin image is pinned to multi-architecture `1.2.1`, with no origin architecture selector.
+The OME Service advertises public port 1936 and targets its own RTMPS port directly.
+The catcher-specific TLSRoute advertises public port 3334 and explicitly targets
+`cilium-gateway-anycast-gateway.public-gateway.svc.cluster.local:443`; its backend remains OME Service port 3334.
 TLS is not terminated at the gateway; WHIP publishing signatures and keyless HTTPS playback keep the same public URL.
-Upgrade/sync `federation-p2p-anycast` before syncing the new OME annotations; old origins do not understand a port list.
+With the gateway enabled, the Service must not also advertise port 3334. With it disabled, HTTPS anycast targets the Service directly.
 The policy schema uses `allowed_sni_patterns`; `allowed_sni_hostnames` is not consumed by the manifest signer.
 The signed public manifest is `clusters/k/keys/anycast-origin-manifest.pb64`.
 After changing the policy, re-sign with the matching trusted CA. To install the new manifest without replacing the origin's identity or master key:
