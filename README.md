@@ -129,7 +129,7 @@ This requires a NetworkPolicy-enforcing CNI (the cluster uses Cilium).
 
 RTMPS and HTTPS/WHIP anycast use `STRICT_SINGLETON` on TCP 1936 and 3334. The origin manifest authorizes `*.k.kpt.link`;
 the discovered SNI routes use the concrete `catcher.k.kpt.link`, because edges match SNI hostnames exactly.
-The origin image is pinned to `1.2.0` with amd64 placement. Its comma-separated public ports have distinct targets:
+The origin image is pinned to multi-architecture `1.2.1`, with no origin architecture selector. Its comma-separated public ports have distinct targets:
 1936 goes directly to the OME Service; 3334 goes to `cilium-gateway-anycast-gateway.public-gateway.svc.cluster.local:443`.
 A catcher-specific TLSRoute on `anycast-gateway` forwards that passthrough TLS connection to OME port 3334.
 TLS is not terminated at the gateway; WHIP publishing signatures and keyless HTTPS playback keep the same public URL.
