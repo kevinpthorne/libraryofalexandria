@@ -6,6 +6,9 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
+# Cluster-specific compatibility constraints are supplied by the parent application.
+nodeSelector: {}
+
 domain: catcher.k.kpt.link
 internalDomain: catcher.k.loa.internal
 

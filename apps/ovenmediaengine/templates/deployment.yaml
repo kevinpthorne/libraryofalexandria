@@ -8,6 +8,12 @@ metadata:
     {{- include "ovenmediaengine.labels" . | nindent 4 }}
 spec:
   replicas: 1
+  minReadySeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       {{- include "ovenmediaengine.selectorLabels" . | nindent 6 }}
@@ -22,6 +28,10 @@ spec:
       labels:
         {{- include "ovenmediaengine.selectorLabels" . | nindent 8 }}
     spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -30,6 +40,14 @@ spec:
         - name: ovenmediaengine
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          {{- if .Values.api.enabled }}
+          readinessProbe:
+            tcpSocket:
+              port: api
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 1
+          {{- end }}
           ports:
             {{- if .Values.rtmps.enabled }}
             - name: rtmp-backend

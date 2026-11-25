@@ -223,6 +223,8 @@ ovenmediaengine:
   internalDomain: "catcher.k.loa.internal"
   rtmpsPort: 1936
   issuerName: "letsencrypt-prod"
+  nodeSelector:
+    kubernetes.io/arch: amd64
   auth:
     secretName: "ovenmediaengine-access"
     secretKey: "stream-key"

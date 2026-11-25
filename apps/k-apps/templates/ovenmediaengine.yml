@@ -19,6 +19,10 @@ spec:
       valuesObject:
         domain: {{ $domain | quote }}
         internalDomain: {{ $internalDomain | quote }}
+        {{- with $ome.nodeSelector }}
+        nodeSelector:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         rtmps:
           port: {{ $ome.rtmpsPort | default 1936 }}
         tls:

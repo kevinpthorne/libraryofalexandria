@@ -142,6 +142,12 @@ kubectl -n kube-system rollout restart deployment \
   -l app.kubernetes.io/instance=federation-p2p-anycast
 ```
 
+**Placement and rollouts:** cluster k requires `kubernetes.io/arch: amd64` for OME.
+If its compatible node is unavailable, the pod stays Pending rather than starting on a Raspberry Pi.
+Rolling updates retain the old pod until the replacement's OME API listener is ready for at least 10 seconds.
+This uses a one-pod surge, so the x86 host needs capacity for two OME pods during updates.
+The single compatible host is still a single point of failure; a successful cutover still disconnects active publishing sessions.
+
 **Migration:** syncing this change restarts OME and interrupts existing streams.
 Old unsigned sender URLs no longer work; sign in and generate replacements before reconnecting.
 ArgoCD creates the credential generators, ExternalSecret, internal dashboard certificate, and NetworkPolicy with the deployment.
