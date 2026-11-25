@@ -15,3 +15,21 @@ spec:
     name: {{ .Values.tls.issuerName | default "letsencrypt-prod" }}
     kind: {{ .Values.tls.issuerKind | default "ClusterIssuer" }}
 {{- end }}
+{{- if .Values.ui.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "ovenmediaengine.fullname" . }}-dashboard-tls
+  labels:
+    {{- include "ovenmediaengine.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  secretName: {{ .Values.ui.tls.secretName }}
+  dnsNames:
+    - {{ required "internalDomain is required for dashboard TLS" .Values.internalDomain | quote }}
+  issuerRef:
+    name: {{ .Values.ui.tls.issuerName }}
+    kind: {{ .Values.ui.tls.issuerKind }}
+{{- end }}

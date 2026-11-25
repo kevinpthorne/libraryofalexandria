@@ -11,31 +11,29 @@ internalDomain: catcher.k.loa.internal
 
 appName: app
 
-# Stream & API authentication
+# Required publishing, dashboard, API, and SRT transport credentials.
 auth:
-  secretName: "ovenmediaengine-auth"
+  secretName: "ovenmediaengine-access"
   secretKey: "stream-key"
-  userKey: "stream-user"
-  defaultUser: "publisher"
-  autoGenerate: false
+  dashboardUser: "admin"
+  dashboardPasswordKey: "dashboard-password"
+  apiTokenKey: "api-token"
+  srtPassphraseKey: "srt-passphrase"
+  autoGenerate: true
   signedPolicy:
-    enabled: false
     policyQueryKeyName: "policy"
     signatureQueryKeyName: "signature"
 
 api:
   enabled: true
   port: 8081
-  accessToken: "ome-internal-api-token"
-
-rtmp:
-  enabled: true
-  port: 1935
-  ertmp: true
 
 rtmps:
   enabled: true
   port: 1936
+  # Plain RTMP is used only by the TLS terminator within the pod.
+  backendPort: 1935
+  ertmp: true
   stunnelImage:
     repository: cgr.dev/chainguard/stunnel
     tag: latest
@@ -73,10 +71,6 @@ webrtc:
   public: true
   stunServer: "stun.ovenmediaengine.com:13478"
 
-ovt:
-  enabled: true
-  port: 9000
-
 ui:
   enabled: true
   port: 8080
@@ -85,6 +79,14 @@ ui:
     repository: nginxinc/nginx-unprivileged
     tag: alpine
     pullPolicy: IfNotPresent
+  authImage:
+    repository: python
+    tag: "3.13-alpine"
+    pullPolicy: IfNotPresent
+  tls:
+    secretName: ovenmediaengine-dashboard-tls
+    issuerName: app-pki-bootstrap-issuer
+    issuerKind: ClusterIssuer
   securityContext:
     runAsUser: 101
     runAsGroup: 101
@@ -98,11 +100,11 @@ ui:
   resources: {}
 
 service:
-  # Public internet-facing service (RTMPS, SRT, WebRTC/LLHLS TLS)
+  # Public encrypted media transports only.
   public:
     enabled: true
     type: LoadBalancer
-  # Internal cluster/LAN service (UI, LLHLS/HLS, WebRTC, RTMPS, RTMP, SRT)
+  # Internal HTTPS dashboard and encrypted media transports only.
   internal:
     enabled: true
     type: LoadBalancer

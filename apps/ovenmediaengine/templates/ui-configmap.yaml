@@ -1,5 +1,4 @@
 {{- if .Values.ui.enabled }}
-{{- $apiToken := .Values.api.accessToken | default "ome-internal-api-token" -}}
 {{- $appName := .Values.appName | default "app" -}}
 apiVersion: v1
 kind: ConfigMap
@@ -10,8 +9,43 @@ metadata:
 data:
   nginx.conf: |
     server {
-        listen {{ .Values.ui.port | default 8080 }};
+        listen {{ .Values.ui.port | default 8080 }} ssl;
         server_name _;
+        ssl_certificate /ui-certs/tls.crt;
+        ssl_certificate_key /ui-certs/tls.key;
+        ssl_protocols TLSv1.2 TLSv1.3;
+
+        auth_request /_auth;
+        auth_request_set $ome_authorization $upstream_http_x_ome_authorization;
+        add_header Cache-Control "no-store" always;
+        add_header Pragma "no-cache" always;
+        add_header Referrer-Policy "no-referrer" always;
+        access_log off;
+        proxy_cache off;
+        proxy_no_cache 1;
+        proxy_cache_bypass 1;
+        proxy_hide_header Cache-Control;
+        proxy_hide_header Access-Control-Allow-Origin;
+        proxy_hide_header Access-Control-Allow-Credentials;
+        proxy_hide_header Expires;
+        proxy_hide_header X-OME-Authorization;
+
+        location = /_auth {
+            internal;
+            auth_request off;
+            proxy_pass http://127.0.0.1:8082/auth;
+            proxy_pass_request_body off;
+            proxy_set_header Content-Length "";
+            proxy_set_header Authorization $http_authorization;
+            proxy_set_header Host $http_host;
+        }
+
+        location = /ingest {
+            client_max_body_size 4096;
+            proxy_pass http://127.0.0.1:8082/ingest;
+            proxy_set_header Authorization $http_authorization;
+            proxy_set_header Host $http_host;
+        }
 
         location / {
             root /usr/share/nginx/html;
@@ -25,7 +59,7 @@ data:
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header Authorization "Basic {{ $apiToken | b64enc }}";
+            proxy_set_header Authorization $ome_authorization;
             proxy_read_timeout 15s;
         }
 
@@ -44,7 +78,7 @@ data:
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>OvenMediaEngine Dashboard</title>
-      <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js" integrity="sha384-xLhS5rbIdhv65H3GLX+caQgMSiEK/Hkw8Z6HITolgRxvXs0omcbeYD639tkJ2Wu6" crossorigin="anonymous"></script>
       <style>
         :root {
           --bg-main: #0b0f19;
@@ -109,7 +143,7 @@ data:
           animation: pulse 2s infinite;
         }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        button, select {
+        button, select, input[type="text"] {
           background: var(--bg-card);
           border: 1px solid var(--border-color);
           color: var(--text-main);
@@ -122,6 +156,12 @@ data:
         button:hover { background: var(--bg-card-hover); border-color: var(--accent-blue); }
         button.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
         button.primary:hover { background: #2563eb; }
+        button:disabled { opacity: 0.6; cursor: wait; }
+        .ingest-form { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
+        .ingest-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--text-muted); }
+        .ingest-status { margin-top: 14px; color: var(--text-muted); font-size: 13px; }
+        .ingest-status.error { color: var(--accent-red); }
+        #ingest-results .url-text { white-space: normal; overflow-wrap: anywhere; }
         button.danger { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: var(--accent-red); }
         button.danger:hover { background: var(--accent-red); color: #fff; }
 
@@ -291,7 +331,7 @@ data:
             <div class="logo-badge">OME</div>
             <div>
               <h1>OvenMediaEngine Dashboard <span id="conn-badge" class="badge badge-waiting">Connecting...</span></h1>
-              <div class="server-domain">Internal: {{ .Values.internalDomain | default "catcher.k.loa.internal" }} &bull; Public: {{ .Values.domain | default "catcher.k.kpt.link" }}</div>
+              <div class="server-domain">Dashboard: https://{{ .Values.internalDomain | default "catcher.k.loa.internal" }}:{{ .Values.ui.port | default 8080 }} &bull; Public: {{ .Values.domain | default "catcher.k.kpt.link" }}</div>
             </div>
           </div>
           <div class="controls">
@@ -339,10 +379,25 @@ data:
         </div>
 
         <div class="section-header">
-          <div class="section-title">Quick Ingest Endpoints (Example stream: <code>live</code>)</div>
+          <div class="section-title">Signed Ingest URLs</div>
         </div>
         <div class="stream-card" style="margin-bottom: 32px;">
-          <div class="url-box" style="margin-top: 0;" id="ingest-guide-box"></div>
+          <form id="ingest-form" class="ingest-form">
+            <label for="ingest-stream">Stream name
+              <input id="ingest-stream" type="text" value="live" pattern="[A-Za-z0-9_-]{1,64}" maxlength="64" required autocomplete="off" spellcheck="false">
+            </label>
+            <label for="ingest-ttl">Valid for new connections
+              <select id="ingest-ttl">
+                <option value="1">1 hour</option>
+                <option value="24" selected>24 hours</option>
+                <option value="168">7 days</option>
+              </select>
+            </label>
+            <button id="ingest-generate" class="primary" type="submit">Generate signed URLs</button>
+          </form>
+          <p id="ingest-status" class="ingest-status" role="status" aria-live="polite">Generate URLs to authorize publishing. Treat generated URLs and stream keys as secrets.</p>
+          <p class="ingest-status">Expiry applies to new connections only. Established streams continue; reconnecting after expiry requires newly generated URLs.</p>
+          <div id="ingest-results" hidden></div>
         </div>
       </div>
 
@@ -361,15 +416,10 @@ data:
       <div id="toast" class="toast">URL copied to clipboard!</div>
 
       <script>
-        const internalHost = "{{ .Values.internalDomain | default "catcher.k.loa.internal" }}";
-        const publicHost = "{{ .Values.domain | default "catcher.k.kpt.link" }}";
-        const appName = "{{ $appName }}";
-        const rtmpPort = "{{ .Values.rtmp.port | default 1935 }}";
-        const rtmpsPort = "{{ .Values.rtmps.port | default 1936 }}";
-        const srtPort = "{{ .Values.srt.port | default 8890 }}";
-        const srtPlayPort = "{{ .Values.srt.playbackPort | default 9998 }}";
-        const httpPort = "{{ .Values.llhls.port | default 3333 }}";
-        const tlsPort = "{{ .Values.llhls.tlsPort | default 3334 }}";
+        const publicHost = {{ .Values.domain | default "catcher.k.kpt.link" | toJson }};
+        const appName = {{ $appName | toJson }};
+        const appPath = encodeURIComponent(appName);
+        const tlsPort = {{ .Values.llhls.tlsPort | default 3334 | toJson }};
 
         let currentHls = null;
 
@@ -400,14 +450,14 @@ data:
           if (navigator.clipboard && navigator.clipboard.writeText) {
             try {
               await navigator.clipboard.writeText(text);
-              showToast('Copied: ' + text);
+              showToast('Copied to clipboard');
               return;
             } catch {
               // Permissions may block the Clipboard API; try the user-initiated copy below.
             }
           }
 
-          // The internal HTTP dashboard has no Clipboard API.
+          // Retain copying when the Clipboard API is unavailable or denied.
           const field = document.createElement('textarea');
           const focused = document.activeElement;
           field.value = text;
@@ -427,32 +477,94 @@ data:
             if (focused) focused.focus({ preventScroll: true });
           }
           if (copied) {
-            showToast('Copied: ' + text);
+            showToast('Copied to clipboard');
           } else {
             prompt('Copy URL:', text);
           }
         }
 
-        function renderIngestGuide() {
-          const box = document.getElementById('ingest-guide-box');
-          const items = [
-            { tag: 'RTMPS Ingest', url: `rtmps://${publicHost}:${rtmpsPort}/${appName}/live` },
-            { tag: 'RTMP Ingest', url: `rtmp://${internalHost}:${rtmpPort}/${appName}/live` },
-            { tag: 'SRT Ingest', url: `srt://${publicHost}:${srtPort}?streamid=default/${appName}/live` },
-            { tag: 'WHIP Ingest', url: `https://${publicHost}:${tlsPort}/${appName}/live?direction=whip` }
-          ];
-          box.innerHTML = items.map(i => `
-            <div class="url-item">
-              <span class="url-tag">${i.tag}</span>
-              <span class="url-text">${i.url}</span>
-              <button class="btn-copy" onclick="copyText('${i.url}')">Copy</button>
-            </div>
-          `).join('');
+        function textElement(tag, className, text) {
+          const element = document.createElement(tag);
+          element.className = className;
+          element.textContent = text;
+          return element;
         }
+
+        function appendUrlRow(container, tag, value) {
+          const row = document.createElement('div');
+          row.className = 'url-item';
+          const copy = textElement('button', 'btn-copy', 'Copy');
+          copy.type = 'button';
+          copy.addEventListener('click', () => copyText(value));
+          row.append(textElement('span', 'url-tag', tag), textElement('span', 'url-text', value), copy);
+          container.appendChild(row);
+        }
+
+        const ingestForm = document.getElementById('ingest-form');
+        const ingestStream = document.getElementById('ingest-stream');
+        const ingestTtl = document.getElementById('ingest-ttl');
+        const ingestButton = document.getElementById('ingest-generate');
+        const ingestStatus = document.getElementById('ingest-status');
+        const ingestResults = document.getElementById('ingest-results');
+
+        function clearIngestResults() {
+          ingestResults.replaceChildren();
+          ingestResults.hidden = true;
+          ingestStatus.className = 'ingest-status';
+          ingestStatus.textContent = 'Settings changed. Generate new signed URLs to use these settings.';
+        }
+
+        ingestStream.addEventListener('input', clearIngestResults);
+        ingestTtl.addEventListener('change', clearIngestResults);
+        ingestForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          if (!ingestForm.reportValidity()) return;
+          const request = { stream: ingestStream.value, ttlHours: Number(ingestTtl.value) };
+          ingestResults.replaceChildren();
+          ingestResults.hidden = true;
+          ingestStatus.className = 'ingest-status';
+          ingestStatus.textContent = 'Generating signed URLs…';
+          ingestButton.disabled = ingestStream.disabled = ingestTtl.disabled = true;
+          ingestButton.textContent = 'Generating…';
+          try {
+            const response = await fetch('/ingest', {
+              method: 'POST',
+              credentials: 'same-origin',
+              cache: 'no-store',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(request)
+            });
+            if (!response.ok) throw new Error('Generation failed');
+            const result = await response.json();
+            if (!Number.isFinite(result.expiresAt) || !Array.isArray(result.items) || result.items.length === 0 ||
+                !result.items.every(item => typeof item.tag === 'string' && typeof item.url === 'string')) {
+              throw new Error('Invalid response');
+            }
+            for (const item of result.items) {
+              const box = document.createElement('div');
+              box.className = 'url-box';
+              appendUrlRow(box, item.tag, item.url);
+              if (typeof item.server === 'string' && typeof item.streamKey === 'string') {
+                appendUrlRow(box, 'OBS Server', item.server);
+                appendUrlRow(box, 'OBS Stream Key', item.streamKey);
+              }
+              ingestResults.appendChild(box);
+            }
+            ingestResults.hidden = false;
+            ingestStatus.textContent = 'New connections allowed until ' + new Date(result.expiresAt).toLocaleString() + '.';
+          } catch {
+            ingestResults.replaceChildren();
+            ingestStatus.className = 'ingest-status error';
+            ingestStatus.textContent = 'Unable to generate signed URLs. Check your dashboard sign-in and try again.';
+          } finally {
+            ingestButton.disabled = ingestStream.disabled = ingestTtl.disabled = false;
+            ingestButton.textContent = 'Generate signed URLs';
+          }
+        });
 
         async function fetchAPI(endpoint, options = {}) {
           try {
-            const res = await fetch(endpoint, options);
+            const res = await fetch(endpoint, { ...options, credentials: 'same-origin', cache: 'no-store' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return await res.json();
           } catch (e) {
@@ -464,8 +576,8 @@ data:
         async function updateDashboard() {
           const [verRes, statsRes, streamsRes] = await Promise.all([
             fetchAPI('/v1/version'),
-            fetchAPI(`/v1/stats/current/vhosts/default/apps/${appName}`),
-            fetchAPI(`/v1/vhosts/default/apps/${appName}/streams`)
+            fetchAPI(`/v1/stats/current/vhosts/default/apps/${appPath}`),
+            fetchAPI(`/v1/vhosts/default/apps/${appPath}/streams`)
           ]);
 
           const connBadge = document.getElementById('conn-badge');
@@ -484,8 +596,8 @@ data:
             const s = statsRes.response;
             const c = s.connections || {};
             document.getElementById('stat-total-connections').textContent = s.totalConnections || 0;
-            document.getElementById('stat-conn-breakdown').innerHTML =
-              `WebRTC: ${c.webrtc || 0} &bull; LLHLS: ${c.llhls || 0} &bull; HLS: ${c.hlsv3 || 0} &bull; SRT: ${c.srt || 0}`;
+            document.getElementById('stat-conn-breakdown').textContent =
+              `WebRTC: ${c.webrtc || 0} • LLHLS: ${c.llhls || 0} • HLS: ${c.hlsv3 || 0} • SRT: ${c.srt || 0}`;
             document.getElementById('stat-throughput').textContent = formatBits(s.lastThroughputIn || 0);
             document.getElementById('stat-throughput-out').textContent = 'Out: ' + formatBits(s.lastThroughputOut || 0);
             document.getElementById('stat-bytes-in').textContent = formatBytes(s.totalBytesIn || 0);
@@ -497,14 +609,14 @@ data:
 
           const streamsContainer = document.getElementById('streams-container');
           if (streamNames.length === 0) {
-            streamsContainer.innerHTML = '<div class="empty-state">No active streams right now. Push to RTMPS, RTMP, SRT, or WHIP to begin streaming.</div>';
+            streamsContainer.innerHTML = '<div class="empty-state">No active streams right now. Generate signed URLs below to publish using RTMPS, encrypted SRT, or WHIP.</div>';
             return;
           }
 
           const streamDetails = await Promise.all(streamNames.map(async name => {
             const [info, st] = await Promise.all([
-              fetchAPI(`/v1/vhosts/default/apps/${appName}/streams/${encodeURIComponent(name)}`),
-              fetchAPI(`/v1/stats/current/vhosts/default/apps/${appName}/streams/${encodeURIComponent(name)}`)
+              fetchAPI(`/v1/vhosts/default/apps/${appPath}/streams/${encodeURIComponent(name)}`),
+              fetchAPI(`/v1/stats/current/vhosts/default/apps/${appPath}/streams/${encodeURIComponent(name)}`)
             ]);
             return { name, info: info && info.response, stats: st && st.response };
           }));
@@ -528,74 +640,59 @@ data:
                   return `Audio: ${t.audio.codec || 'Audio'} (${t.audio.samplerate || ''}Hz, ${t.audio.channel || ''}ch)`;
                 }
                 return t.type || 'Track';
-              }).join(' &bull; ');
+              }).join(' • ');
             }
 
             const viewers = stats ? (stats.totalConnections || 0) : 0;
             const bytesIn = stats ? formatBytes(stats.totalBytesIn || 0) : '0 B';
             const bitrateIn = stats ? formatBits(stats.lastThroughputIn || 0) : '0 bps';
 
-            const llhlsInternal = `http://${internalHost}:${httpPort}/${appName}/${name}/master.m3u8`;
-            const llhlsPublic = `https://${publicHost}:${tlsPort}/${appName}/${name}/master.m3u8`;
-            const hlsInternal = `http://${internalHost}:${httpPort}/${appName}/${name}/ts:playlist.m3u8`;
-            const webrtcPlay = `wss://${publicHost}:${tlsPort}/${appName}/${name}`;
-            const srtPlay = `srt://${internalHost}:${srtPlayPort}?streamid=default/${appName}/${name}`;
+            const streamPath = `${appPath}/${encodeURIComponent(name)}`;
+            const llhlsPublic = `https://${publicHost}:${tlsPort}/${streamPath}/master.m3u8`;
+            const hlsPublic = `https://${publicHost}:${tlsPort}/${streamPath}/ts:playlist.m3u8`;
+            const webrtcPlay = `wss://${publicHost}:${tlsPort}/${streamPath}`;
 
             const card = document.createElement('div');
             card.className = 'stream-card live';
             card.innerHTML = `
               <div class="stream-card-top">
                 <div>
-                  <span class="path-name">/${appName}/${name}</span>
+                  <span class="path-name"></span>
                   <span style="margin-left: 10px;" class="badge badge-live"><span class="pulse-dot"></span> Live</span>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                  <button class="primary" onclick="openPreview('${name}')">&#9658; Preview Stream</button>
-                  <button class="danger" onclick="terminateStream('${name}')">Terminate</button>
+                  <button class="primary" data-action="preview">&#9658; Preview Stream</button>
+                  <button class="danger" data-action="terminate">Terminate</button>
                 </div>
               </div>
               <div class="stream-details">
-                <span>Source: <strong>${sourceType}</strong> (${remoteAddr})</span>
-                <span>Viewers: <strong>${viewers}</strong></span>
-                <span>Bitrate In: <strong>${bitrateIn}</strong></span>
-                <span>Data In: <strong>${bytesIn}</strong></span>
+                <span data-detail="source"></span>
+                <span data-detail="viewers"></span>
+                <span data-detail="bitrate"></span>
+                <span data-detail="bytes"></span>
               </div>
-              <div class="tracks-info">${tracksDesc}</div>
-              <div class="url-box">
-                <div class="url-item">
-                  <span class="url-tag">LL-HLS (Internal)</span>
-                  <span class="url-text">${llhlsInternal}</span>
-                  <button class="btn-copy" onclick="copyText('${llhlsInternal}')">Copy</button>
-                </div>
-                <div class="url-item">
-                  <span class="url-tag">LL-HLS (HTTPS)</span>
-                  <span class="url-text">${llhlsPublic}</span>
-                  <button class="btn-copy" onclick="copyText('${llhlsPublic}')">Copy</button>
-                </div>
-                <div class="url-item">
-                  <span class="url-tag">HLS (MPEG-TS)</span>
-                  <span class="url-text">${hlsInternal}</span>
-                  <button class="btn-copy" onclick="copyText('${hlsInternal}')">Copy</button>
-                </div>
-                <div class="url-item">
-                  <span class="url-tag">WebRTC Play</span>
-                  <span class="url-text">${webrtcPlay}</span>
-                  <button class="btn-copy" onclick="copyText('${webrtcPlay}')">Copy</button>
-                </div>
-                <div class="url-item">
-                  <span class="url-tag">SRT Play</span>
-                  <span class="url-text">${srtPlay}</span>
-                  <button class="btn-copy" onclick="copyText('${srtPlay}')">Copy</button>
-                </div>
-              </div>
+              <div class="tracks-info"></div>
+              <div class="url-box"></div>
             `;
+            card.querySelector('.path-name').textContent = `/${appName}/${name}`;
+            card.querySelector('[data-detail="source"]').textContent = `Source: ${sourceType} (${remoteAddr})`;
+            card.querySelector('[data-detail="viewers"]').textContent = `Viewers: ${viewers}`;
+            card.querySelector('[data-detail="bitrate"]').textContent = `Bitrate In: ${bitrateIn}`;
+            card.querySelector('[data-detail="bytes"]').textContent = `Data In: ${bytesIn}`;
+            card.querySelector('.tracks-info').textContent = tracksDesc;
+            card.querySelector('[data-action="preview"]').addEventListener('click', () => openPreview(name));
+            card.querySelector('[data-action="terminate"]').addEventListener('click', () => terminateStream(name));
+            const urls = card.querySelector('.url-box');
+            appendUrlRow(urls, 'LL-HLS (HTTPS)', llhlsPublic);
+            appendUrlRow(urls, 'HLS (HTTPS)', hlsPublic);
+            appendUrlRow(urls, 'WebRTC Play', webrtcPlay);
             streamsContainer.appendChild(card);
           });
         }
 
         async function terminateStream(name) {
           if (!confirm(`Terminate stream /${appName}/${name}?`)) return;
-          const res = await fetchAPI(`/v1/vhosts/default/apps/${appName}/streams/${encodeURIComponent(name)}`, { method: 'DELETE' });
+          const res = await fetchAPI(`/v1/vhosts/default/apps/${appPath}/streams/${encodeURIComponent(name)}`, { method: 'DELETE' });
           if (res) {
             showToast(`Terminated /${appName}/${name}`);
             updateDashboard();
@@ -610,7 +707,7 @@ data:
           const title = document.getElementById('modal-stream-title');
           title.textContent = `Live Stream Preview: /${appName}/${name}`;
           // The configured playlist uses relative media URLs, preserving the /llhls/ proxy prefix.
-          const streamUrl = `/llhls/${appName}/${name}/master.m3u8`;
+          const streamUrl = `/llhls/${appPath}/${encodeURIComponent(name)}/master.m3u8`;
 
           if (Hls.isSupported()) {
             if (currentHls) currentHls.destroy();
@@ -657,7 +754,6 @@ data:
           showToast('Dashboard refreshed');
         });
 
-        renderIngestGuide();
         updateDashboard();
         scheduleRefresh();
       </script>

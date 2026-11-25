@@ -26,7 +26,7 @@ data:
     pid =
     [rtmps]
     accept = {{ .Values.rtmps.port | default 1936 }}
-    connect = 127.0.0.1:{{ .Values.rtmp.port | default 1935 }}
+    connect = 127.0.0.1:{{ .Values.rtmps.backendPort | default 1935 }}
     cert = /certs/tls.crt
     key = /certs/tls.key
   {{- end }}
@@ -37,7 +37,7 @@ data:
       <Name>OvenMediaEngine</Name>
       <Type>origin</Type>
       <IP>*</IP>
-      <PrivacyProtection>false</PrivacyProtection>
+      <PrivacyProtection>true</PrivacyProtection>
       <StunServer>{{ .Values.webrtc.stunServer | default "stun.ovenmediaengine.com:13478" }}</StunServer>
 
       <Modules>
@@ -47,7 +47,7 @@ data:
         <LLHLS>
           <Enable>{{ if .Values.llhls.enabled }}true{{ else }}false{{ end }}</Enable>
         </LLHLS>
-        {{- if .Values.rtmp.ertmp }}
+        {{- if .Values.rtmps.ertmp }}
         <ERTMP>
           <Enable>true</Enable>
         </ERTMP>
@@ -75,17 +75,9 @@ data:
         </Managers>
         {{- end }}
         <Providers>
-          <RTSPC>
-            <WorkerCount>1</WorkerCount>
-          </RTSPC>
-          {{- if .Values.ovt.enabled }}
-          <OVT>
-            <WorkerCount>1</WorkerCount>
-          </OVT>
-          {{- end }}
-          {{- if .Values.rtmp.enabled }}
+          {{- if .Values.rtmps.enabled }}
           <RTMP>
-            <Port>{{ .Values.rtmp.port | default 1935 }}</Port>
+            <Port>{{ .Values.rtmps.backendPort | default 1935 }}</Port>
             <WorkerCount>1</WorkerCount>
           </RTMP>
           {{- end }}
@@ -93,6 +85,11 @@ data:
           <SRT>
             <Port>{{ .Values.srt.port | default 8890 }}</Port>
             <WorkerCount>1</WorkerCount>
+            <Options>
+              <Option><Key>SRTO_PASSPHRASE</Key><Value>${env:OME_SRT_PASSPHRASE}</Value></Option>
+              <Option><Key>SRTO_PBKEYLEN</Key><Value>32</Value></Option>
+              <Option><Key>SRTO_ENFORCEDENCRYPTION</Key><Value>true</Value></Option>
+            </Options>
           </SRT>
           {{- end }}
           {{- if .Values.webrtc.enabled }}
@@ -117,12 +114,6 @@ data:
         </Providers>
 
         <Publishers>
-          {{- if .Values.ovt.enabled }}
-          <OVT>
-            <Port>{{ .Values.ovt.port | default 9000 }}</Port>
-            <WorkerCount>1</WorkerCount>
-          </OVT>
-          {{- end }}
           {{- if .Values.llhls.enabled }}
           <LLHLS>
             <Port>{{ $httpPort }}</Port>
@@ -145,6 +136,11 @@ data:
           <SRT>
             <Port>{{ .Values.srt.playbackPort | default 9998 }}</Port>
             <WorkerCount>1</WorkerCount>
+            <Options>
+              <Option><Key>SRTO_PASSPHRASE</Key><Value>${env:OME_SRT_PASSPHRASE}</Value></Option>
+              <Option><Key>SRTO_PBKEYLEN</Key><Value>32</Value></Option>
+              <Option><Key>SRTO_ENFORCEDENCRYPTION</Key><Value>true</Value></Option>
+            </Options>
           </SRT>
           {{- end }}
           {{- if .Values.webrtc.enabled }}
@@ -177,7 +173,7 @@ data:
           </Names>
         </Host>
         <API>
-          <AccessToken>${env:OME_API_ACCESS_TOKEN:{{ .Values.api.accessToken | default "ome-internal-api-token" }}}</AccessToken>
+          <AccessToken>${env:OME_API_ACCESS_TOKEN}</AccessToken>
           <CrossDomains>
             <Url>*</Url>
           </CrossDomains>
@@ -208,16 +204,14 @@ data:
             {{- end }}
           </Host>
 
-          {{- if and .Values.auth.signedPolicy .Values.auth.signedPolicy.enabled }}
           <SignedPolicy>
             <PolicyQueryKeyName>{{ .Values.auth.signedPolicy.policyQueryKeyName | default "policy" }}</PolicyQueryKeyName>
             <SignatureQueryKeyName>{{ .Values.auth.signedPolicy.signatureQueryKeyName | default "signature" }}</SignatureQueryKeyName>
-            <SecretKey>${env:OME_STREAM_KEY:default-secret-key}</SecretKey>
+            <SecretKey>${env:OME_STREAM_KEY}</SecretKey>
             <Enables>
               <Providers>rtmp,webrtc,srt</Providers>
             </Enables>
           </SignedPolicy>
-          {{- end }}
 
           <Applications>
             <Application>
@@ -274,9 +268,6 @@ data:
                 </OutputProfile>
               </OutputProfiles>
               <Providers>
-                {{- if .Values.ovt.enabled }}
-                <OVT />
-                {{- end }}
                 {{- if .Values.webrtc.enabled }}
                 <WebRTC>
                   <Timeout>30000</Timeout>
@@ -285,20 +276,16 @@ data:
                   </CrossDomains>
                 </WebRTC>
                 {{- end }}
-                {{- if .Values.rtmp.enabled }}
+                {{- if .Values.rtmps.enabled }}
                 <RTMP />
                 {{- end }}
                 {{- if .Values.srt.enabled }}
                 <SRT />
                 {{- end }}
-                <RTSPPull />
               </Providers>
               <Publishers>
                 <AppWorkerCount>1</AppWorkerCount>
                 <StreamWorkerCount>8</StreamWorkerCount>
-                {{- if .Values.ovt.enabled }}
-                <OVT />
-                {{- end }}
                 {{- if .Values.srt.enabled }}
                 <SRT />
                 {{- end }}

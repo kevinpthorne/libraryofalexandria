@@ -1,0 +1,18 @@
+{{- if not (or .Values.ui.enabled .Values.rtmps.enabled .Values.srt.enabled .Values.webrtc.enabled .Values.llhls.enabled .Values.hls.enabled) -}}
+{{- fail "At least one encrypted endpoint must be enabled" -}}
+{{- end -}}
+{{- if not .Values.tls.enabled -}}
+{{- fail "TLS is required; plaintext media and dashboard access are not supported" -}}
+{{- end -}}
+{{- if and .Values.ui.enabled (not .Values.api.enabled) -}}
+{{- fail "api.enabled is required by the authenticated dashboard" -}}
+{{- end -}}
+{{- $_ := required "auth.secretName is required" .Values.auth.secretName -}}
+{{- $_ := required "auth.secretKey is required" .Values.auth.secretKey -}}
+{{- $_ := required "auth.apiTokenKey is required" .Values.auth.apiTokenKey -}}
+{{- $_ := required "auth.dashboardPasswordKey is required" .Values.auth.dashboardPasswordKey -}}
+{{- $_ := required "auth.srtPassphraseKey is required" .Values.auth.srtPassphraseKey -}}
+{{- $_ := required "auth.dashboardUser is required" .Values.auth.dashboardUser -}}
+{{- if eq .Values.auth.signedPolicy.policyQueryKeyName .Values.auth.signedPolicy.signatureQueryKeyName -}}
+{{- fail "SignedPolicy query keys must differ" -}}
+{{- end -}}

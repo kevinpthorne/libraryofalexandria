@@ -17,6 +17,7 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         {{- if .Values.ui.enabled }}
         checksum/ui-config: {{ include (print $.Template.BasePath "/ui-configmap.yaml") . | sha256sum }}
+        checksum/auth-config: {{ include (print $.Template.BasePath "/auth-configmap.yaml") . | sha256sum }}
         {{- end }}
       labels:
         {{- include "ovenmediaengine.selectorLabels" . | nindent 8 }}
@@ -30,9 +31,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
           ports:
-            {{- if .Values.rtmp.enabled }}
-            - name: rtmp
-              containerPort: {{ .Values.rtmp.port | default 1935 }}
+            {{- if .Values.rtmps.enabled }}
+            - name: rtmp-backend
+              containerPort: {{ .Values.rtmps.backendPort | default 1935 }}
               protocol: TCP
             {{- end }}
             {{- if .Values.srt.enabled }}
@@ -66,11 +67,6 @@ spec:
               containerPort: {{ .Values.webrtc.turnPort | default 3478 }}
               protocol: TCP
             {{- end }}
-            {{- if .Values.ovt.enabled }}
-            - name: ovt
-              containerPort: {{ .Values.ovt.port | default 9000 }}
-              protocol: TCP
-            {{- end }}
             {{- if .Values.api.enabled }}
             - name: api
               containerPort: {{ .Values.api.port | default 8081 }}
@@ -78,15 +74,20 @@ spec:
             {{- end }}
           env:
             - name: OME_API_ACCESS_TOKEN
-              value: {{ (.Values.api.accessToken | default "ome-internal-api-token") | quote }}
-            {{- if .Values.auth.secretName }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.secretName }}
+                  key: {{ .Values.auth.apiTokenKey }}
             - name: OME_STREAM_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.auth.secretName }}
-                  key: {{ .Values.auth.secretKey | default "stream-key" }}
-                  optional: true
-            {{- end }}
+                  key: {{ .Values.auth.secretKey }}
+            - name: OME_SRT_PASSPHRASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.secretName }}
+                  key: {{ .Values.auth.srtPassphraseKey }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -166,6 +167,52 @@ spec:
               mountPath: /usr/share/nginx/html/index.html
               subPath: index.html
               readOnly: true
+            - name: ui-tls
+              mountPath: /ui-certs
+              readOnly: true
+        - name: admin-auth
+          image: "{{ .Values.ui.authImage.repository }}:{{ .Values.ui.authImage.tag }}"
+          imagePullPolicy: {{ .Values.ui.authImage.pullPolicy }}
+          command: ["python3", "-B", "/opt/auth/auth.py", "--config", "/etc/ome-auth/config.json"]
+          env:
+            - name: OME_STREAM_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.secretName }}
+                  key: {{ .Values.auth.secretKey }}
+            - name: OME_API_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.secretName }}
+                  key: {{ .Values.auth.apiTokenKey }}
+            - name: OME_DASHBOARD_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.secretName }}
+                  key: {{ .Values.auth.dashboardPasswordKey }}
+            - name: OME_DASHBOARD_USER
+              value: {{ .Values.auth.dashboardUser | quote }}
+            - name: OME_SRT_PASSPHRASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.auth.secretName }}
+                  key: {{ .Values.auth.srtPassphraseKey }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 24Mi
+            limits:
+              memory: 96Mi
+          volumeMounts:
+            - name: auth
+              mountPath: /opt/auth
+              readOnly: true
+            - name: auth
+              mountPath: /etc/ome-auth
+              readOnly: true
         {{- end }}
       volumes:
         - name: config
@@ -180,4 +227,10 @@ spec:
         - name: ui
           configMap:
             name: {{ include "ovenmediaengine.fullname" . }}-ui
+        - name: ui-tls
+          secret:
+            secretName: {{ .Values.ui.tls.secretName }}
+        - name: auth
+          configMap:
+            name: {{ include "ovenmediaengine.fullname" . }}-auth
         {{- end }}

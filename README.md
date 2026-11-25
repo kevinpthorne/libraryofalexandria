@@ -82,14 +82,58 @@ Several root-level helper scripts simplify operational tasks:
 
 ## Usage
 
-### OvenMediaEngine internal preview
+### OvenMediaEngine access and encrypted streaming
 
-Open `http://catcher.k.loa.internal:8080/` on the LAN/VPN and select **Preview Stream**.
-The preview loads `/llhls/app/<stream>/master.m3u8` through the dashboard's same-origin proxy.
-Use the configured `master.m3u8` playlist: its relative media URLs preserve the `/llhls/` prefix.
-The built-in `llhls.m3u8` playlist emits root-relative URLs that bypass this proxy and return dashboard HTML instead of media.
-Dashboard **Copy** buttons support plain HTTP using a selection-based clipboard fallback.
-If the browser blocks copying, a prompt displays the URL for manual copying.
+The dashboard is **HTTPS-only** at `https://catcher.k.loa.internal:8080/` on the LAN/VPN.
+Trust the cluster CA (`app-pki-bootstrap-k`) on your client; it issues the dashboard's internal-domain certificate.
+The public media certificate remains separate. Do not enter dashboard credentials over HTTP or bypass certificate warnings.
+
+The dashboard user defaults to `admin`. Retrieve its generated password with an authorized cluster context:
+
+```bash
+kubectl -n ovenmediaengine get secret ovenmediaengine-access \
+  -o jsonpath='{.data.dashboard-password}' | base64 --decode
+```
+
+The `ovenmediaengine-access` Secret contains four independent generated credentials: `dashboard-password`,
+`stream-key` (the URL-signing master key), `api-token` (OME management API), and `srt-passphrase` (AES transport encryption).
+They are required: missing credentials prevent startup rather than falling back to known defaults.
+Keep this Secret out of Git. With `auth.autoGenerate: false`, provision all four keys yourself before deployment.
+
+Sign in, select a stream name and connection validity (1 hour, 24 hours, or 7 days), then select **Generate signed URLs**.
+Copy the complete RTMPS, encrypted SRT, or WHIP URL into your sender.
+For OBS RTMPS, use the generated **OBS Server** and **OBS Stream Key** separately; leave OBS's username/password authentication disabled.
+The stream key includes `policy` and `signature` query parameters: the bare name `live` is not a credential.
+For SRT, use the complete URL, including the encoded `streamid`, `passphrase`, and `pbkeylen=32`; leave OBS's stream-key field blank.
+
+Signed URLs are bearer credentials bound to one URL and stream. Do not modify their hostname, port, scheme, path, or signed query parameters.
+Expiry rejects new connections and reconnects, but does not disconnect an established stream.
+Generate fresh URLs before reconnecting after expiry. The master signing key never reaches the browser.
+RTMPS and WHIP use TLS; SRT publishing and playback require AES-256 encryption.
+WebRTC media uses DTLS-SRTP. Unsigned, tampered, and expired publishing URLs are rejected.
+
+Playback authorization is separate: HTTPS HLS/LL-HLS and WSS/WebRTC playback remain public to clients that can reach them.
+Use the public media hostname `catcher.k.kpt.link:3334` so its certificate matches; internal DNS must resolve that name to a reachable media address.
+Encrypted SRT playback URLs are provided alongside the signed ingest URLs and contain the SRT transport passphrase.
+The preview loads `/llhls/app/<stream>/master.m3u8` through the authenticated, same-origin dashboard proxy.
+Its relative media URLs preserve `/llhls/`; the built-in `llhls.m3u8` playlist does not.
+
+Plain RTMP, HTTP playback/signalling, and OVT are not exposed by Services.
+A required ingress NetworkPolicy blocks direct network access to the pod's plaintext RTMP/HTTP backends,
+the management API, and the signing service. The backends remain available to sidecars in the same pod.
+This requires a NetworkPolicy-enforcing CNI (the cluster uses Cilium).
+
+**Migration:** syncing this change restarts OME and interrupts existing streams.
+Old unsigned sender URLs no longer work; sign in and generate replacements before reconnecting.
+ArgoCD creates the credential generators, ExternalSecret, internal dashboard certificate, and NetworkPolicy with the deployment.
+Do not treat the old `ovenmediaengine-auth` Secret as an active publishing credential.
+
+**Rotation/revocation:** update the relevant key in `ovenmediaengine-access`, then run
+`kubectl -n ovenmediaengine rollout restart deployment/ovenmediaengine`.
+Rotating `stream-key` invalidates all previously signed URLs; the restart also disconnects active sessions.
+Rotating `dashboard-password` revokes the old dashboard login; rotating `api-token` requires the same restart to update both OME and its proxy.
+Rotating `srt-passphrase` requires new encrypted SRT URLs.
+ExternalSecret generation uses `refreshInterval: "0"` and does not periodically rotate credentials.
 
 ### Building initial boot images
 

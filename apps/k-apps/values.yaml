@@ -224,10 +224,9 @@ ovenmediaengine:
   rtmpsPort: 1936
   issuerName: "letsencrypt-prod"
   auth:
-    secretName: "ovenmediaengine-auth"
+    secretName: "ovenmediaengine-access"
     secretKey: "stream-key"
-    userKey: "stream-user"
-    defaultUser: "publisher"
+    dashboardUser: "admin"
 
 llmProxy:
   enabled: true

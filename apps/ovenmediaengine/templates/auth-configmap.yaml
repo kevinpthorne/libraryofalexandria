@@ -1,0 +1,22 @@
+{{- if .Values.ui.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ovenmediaengine.fullname" . }}-auth
+  labels:
+    {{- include "ovenmediaengine.labels" . | nindent 4 }}
+data:
+  auth.py: |
+    {{- .Files.Get "files/auth.py" | nindent 4 }}
+  config.json: |
+    {
+      "appName": {{ .Values.appName | toJson }},
+      "publicHost": {{ .Values.domain | toJson }},
+      "internalHost": {{ .Values.internalDomain | toJson }},
+      "rtmps": {"enabled": {{ .Values.rtmps.enabled }}, "port": {{ .Values.rtmps.port }}},
+      "srt": {"enabled": {{ .Values.srt.enabled }}, "port": {{ .Values.srt.port }}, "playbackPort": {{ .Values.srt.playbackPort }}},
+      "webrtc": {"enabled": {{ .Values.webrtc.enabled }}, "port": {{ .Values.webrtc.signallingTlsPort }}},
+      "policyQueryKeyName": {{ .Values.auth.signedPolicy.policyQueryKeyName | toJson }},
+      "signatureQueryKeyName": {{ .Values.auth.signedPolicy.signatureQueryKeyName | toJson }}
+    }
+{{- end }}

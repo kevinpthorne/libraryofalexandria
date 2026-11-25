@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ovenmediaengine.fullname" . }}-encrypted-only
+  labels:
+    {{- include "ovenmediaengine.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ovenmediaengine.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        {{- if .Values.ui.enabled }}
+        - port: {{ .Values.ui.port }}
+          protocol: TCP
+        {{- end }}
+        {{- if .Values.rtmps.enabled }}
+        - port: {{ .Values.rtmps.port }}
+          protocol: TCP
+        {{- end }}
+        {{- if or .Values.llhls.enabled .Values.hls.enabled .Values.webrtc.enabled }}
+        - port: {{ .Values.llhls.tlsPort }}
+          protocol: TCP
+        {{- end }}
+        {{- if .Values.srt.enabled }}
+        - port: {{ .Values.srt.port }}
+          protocol: UDP
+        - port: {{ .Values.srt.playbackPort }}
+          protocol: UDP
+        {{- end }}
+        {{- if .Values.webrtc.enabled }}
+        {{- range $port := untilStep (int .Values.webrtc.icePortRangeStart) (add1 .Values.webrtc.icePortRangeEnd | int) 1 }}
+        - port: {{ $port }}
+          protocol: UDP
+        {{- end }}
+        - port: {{ .Values.webrtc.tcpIcePort }}
+          protocol: TCP
+        - port: {{ .Values.webrtc.turnPort }}
+          protocol: TCP
+        {{- end }}

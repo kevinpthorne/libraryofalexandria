@@ -72,28 +72,16 @@ spec:
       targetPort: ui
       protocol: TCP
     {{- end }}
-    {{- if or .Values.llhls.enabled .Values.hls.enabled .Values.webrtc.enabled }}
-    - name: http-stream
-      port: {{ .Values.llhls.port | default 3333 }}
-      targetPort: http-stream
-      protocol: TCP
     {{- if .Values.tls.enabled }}
     - name: https-stream
       port: {{ .Values.llhls.tlsPort | default 3334 }}
       targetPort: https-stream
       protocol: TCP
     {{- end }}
-    {{- end }}
     {{- if .Values.rtmps.enabled }}
     - name: rtmps
       port: {{ .Values.rtmps.port | default 1936 }}
       targetPort: rtmps
-      protocol: TCP
-    {{- end }}
-    {{- if .Values.rtmp.enabled }}
-    - name: rtmp
-      port: {{ .Values.rtmp.port | default 1935 }}
-      targetPort: rtmp
       protocol: TCP
     {{- end }}
     {{- if .Values.srt.enabled }}
@@ -120,12 +108,6 @@ spec:
     - name: turn-tcp
       port: {{ .Values.webrtc.turnPort | default 3478 }}
       targetPort: turn-tcp
-      protocol: TCP
-    {{- end }}
-    {{- if .Values.ovt.enabled }}
-    - name: ovt
-      port: {{ .Values.ovt.port | default 9000 }}
-      targetPort: ovt
       protocol: TCP
     {{- end }}
   selector:
