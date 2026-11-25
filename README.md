@@ -127,6 +127,21 @@ A required ingress NetworkPolicy blocks direct network access to the pod's plain
 the management API, and the signing service. The backends remain available to sidecars in the same pod.
 This requires a NetworkPolicy-enforcing CNI (the cluster uses Cilium).
 
+RTMPS anycast uses `STRICT_SINGLETON` on TCP 1936. The origin manifest authorizes `*.k.kpt.link`;
+the discovered SNI route is the concrete `catcher.k.kpt.link`, because edges match SNI hostnames exactly.
+Only RTMPS is advertised: the SNI annotation uses an explicit backend target on port 1936, not the default gateway on 443.
+The policy schema uses `allowed_sni_patterns`; `allowed_sni_hostnames` is not consumed by the manifest signer.
+The signed public manifest is `clusters/k/keys/anycast-origin-manifest.pb64`.
+After changing the policy, re-sign with the matching trusted CA. To install the new manifest without replacing the origin's identity or master key:
+
+```bash
+kubectl -n kube-system patch secret p2p-anycast-secrets --type merge \
+  --patch "$(jq -n --rawfile manifest clusters/k/keys/anycast-origin-manifest.pb64 \
+    '{stringData: {"origin_manifest.pb": $manifest}}')"
+kubectl -n kube-system rollout restart deployment \
+  -l app.kubernetes.io/instance=federation-p2p-anycast
+```
+
 **Migration:** syncing this change restarts OME and interrupts existing streams.
 Old unsigned sender URLs no longer work; sign in and generate replacements before reconnecting.
 ArgoCD creates the credential generators, ExternalSecret, internal dashboard certificate, and NetworkPolicy with the deployment.

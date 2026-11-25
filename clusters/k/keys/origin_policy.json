@@ -1,16 +1,25 @@
 {
-  "serial_number": 2,
+  "serial_number": 3,
   "subject_id": "k",
   "role": "ORIGIN_NODE",
   "libp2p_peer_id": "QmScQKzdvNVNVAR53DzpPSTbTTvHuhfPLXFJdMfwtL6eon",
   "validity_days": 3650,
   "capabilities": [
     {
-      "service_pattern": "cilium-gateway-public-gateway",
+      "service_pattern": "ovenmediaengine-*",
+      "allowed_policies": ["STRICT_SINGLETON"],
+      "allowed_ports": [
+        {"start": 1936, "end": 1936}
+      ],
+      "allowed_sni_patterns": ["*.k.kpt.link"]
+    },
+    {
+      "service_pattern": "cilium-gateway-anycast-gateway",
       "allowed_policies": ["CLUSTERED_RTT", "FAILOVER_STANDBY"],
       "allowed_ports": [
         {"start": 443, "end": 443}
-      ]
+      ],
+      "allowed_sni_patterns": ["*.k.kpt.link", "chat.kpt.link"]
     },
     {
       "service_pattern": "loa-voip-*",

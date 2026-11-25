@@ -11,6 +11,13 @@ metadata:
     external-dns.loa.internal/expose: "public"
     external-dns.alpha.kubernetes.io/hostname: {{ .Values.domain | quote }}
     external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
+    {{- if .Values.rtmps.enabled }}
+    p2p-anycast.io/expose: "true"
+    p2p-anycast.io/policy: "STRICT_SINGLETON"
+    p2p-anycast.io/sni-hostnames: {{ .Values.domain | quote }}
+    p2p-anycast.io/public-port: {{ .Values.rtmps.port | quote }}
+    p2p-anycast.io/target: {{ printf "%s.%s.svc.cluster.local:%v" (include "ovenmediaengine.fullname" .) .Release.Namespace .Values.rtmps.port | quote }}
+    {{- end }}
 spec:
   type: {{ .Values.service.public.type | default "LoadBalancer" }}
   ports:
