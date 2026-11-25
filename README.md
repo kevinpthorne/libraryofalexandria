@@ -137,6 +137,8 @@ TLS is not terminated at the gateway; WHIP publishing signatures and keyless HTT
 With the gateway enabled, the Service must not also advertise port 3334. With it disabled, HTTPS anycast targets the Service directly.
 The policy schema uses `allowed_sni_patterns`; `allowed_sni_hostnames` is not consumed by the manifest signer.
 The signed public manifest is `clusters/k/keys/anycast-origin-manifest.pb64`.
+Serial 5 adds service `llm-proxy-anycast-tls-443` on TCP 443 with `STRICT_SINGLETON`, restricted to SNI `llm.k.kpt.link`, and retains WHIP port 3334.
+Committing the signed file does not install it into the live `p2p-anycast-secrets` Secret.
 After changing the policy, re-sign with the matching trusted CA. To install the new manifest without replacing the origin's identity or master key:
 
 ```bash

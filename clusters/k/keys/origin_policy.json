@@ -1,5 +1,5 @@
 {
-  "serial_number": 4,
+  "serial_number": 5,
   "subject_id": "k",
   "role": "ORIGIN_NODE",
   "libp2p_peer_id": "QmScQKzdvNVNVAR53DzpPSTbTTvHuhfPLXFJdMfwtL6eon",
@@ -21,6 +21,14 @@
         {"start": 443, "end": 443}
       ],
       "allowed_sni_patterns": ["*.k.kpt.link", "chat.kpt.link"]
+    },
+    {
+      "service_pattern": "llm-proxy-anycast-tls-443",
+      "allowed_policies": ["STRICT_SINGLETON"],
+      "allowed_ports": [
+        {"start": 443, "end": 443}
+      ],
+      "allowed_sni_patterns": ["llm.k.kpt.link"]
     },
     {
       "service_pattern": "loa-voip-*",
