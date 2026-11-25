@@ -196,14 +196,35 @@ class AuthenticationHTTPTests(unittest.TestCase):
                 self.assertTrue(reference_policy_allows(url, 1700086400000))
                 self.assertFalse(reference_policy_allows(url, 1700086400001))
 
+    def test_permanent_keys_survive_time_changes_but_not_signing_key_rotation(self):
+        status, _, body = self.request(body=b'{"stream":"live","ttlHours":0}')
+        self.assertEqual(status, 200)
+        result = json.loads(body)
+        self.assertIsNone(result["expiresAt"])
+        regenerated = auth.connection_urls(
+            auth.Config.from_dict(CONFIG), auth.Credentials.from_env(ENV), "live", 0, NOW + 100 * 365 * 86400)
+        self.assertEqual(regenerated, result)
+        for item in result["items"]:
+            if item["tag"] == "SRT Playback":
+                continue
+            url = item["url"]
+            if item["tag"] == "SRT Ingest":
+                url = parse_qs(urlsplit(url).query)["streamid"][0]
+            with self.subTest(protocol=item["tag"]):
+                policy = parse_qs(urlsplit(url).query)["policy"][0]
+                self.assertEqual(json.loads(base64.urlsafe_b64decode(policy + "==")),
+                                 {"url_expire": 18446744073709551615})
+                self.assertTrue(reference_policy_allows(url, (NOW + 100 * 365 * 86400) * 1000))
+                self.assertFalse(reference_policy_allows(url, NOW * 1000, key="rotated-signing-key"))
+
     def test_allowed_lifetimes_and_stream_name_boundaries(self):
-        for ttl in (1, 24, 168):
+        for ttl in (0, 1, 24, 168):
             for stream in ("a", "A_9-z", "x" * 64):
                 with self.subTest(ttl=ttl, stream=stream):
                     status, _, body = self.request(body=json.dumps({"stream": stream, "ttlHours": ttl}).encode())
                     self.assertEqual(status, 200)
                     result = json.loads(body)
-                    self.assertEqual(result["expiresAt"], NOW * 1000 + ttl * 3600000)
+                    self.assertEqual(result["expiresAt"], None if ttl == 0 else NOW * 1000 + ttl * 3600000)
                     self.assertIn("/app/" + stream + "?", result["items"][0]["url"])
 
     def test_invalid_payloads(self):
@@ -212,7 +233,7 @@ class AuthenticationHTTPTests(unittest.TestCase):
         payloads += [{"stream": stream, "ttlHours": 24} for stream in
                      ("", "x" * 65, "../live", "live/other", "live?x=y", "live&x=y", "live#x", "live%2f", "a b", "é", "a\n", 1, None)]
         payloads += [{"stream": "live", "ttlHours": ttl} for ttl in
-                     (0, -1, 2, 169, 1.0, True, "24", None, [], {})]
+                     (-1, 2, 169, 1.0, True, "24", None, [], {})]
         for payload in payloads:
             with self.subTest(payload=payload):
                 self.assert_private_error(self.request(body=json.dumps(payload).encode()), 400)

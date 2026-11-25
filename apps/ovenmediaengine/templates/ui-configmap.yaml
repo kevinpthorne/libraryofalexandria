@@ -388,15 +388,16 @@ data:
             </label>
             <label for="ingest-ttl">Valid for new connections
               <select id="ingest-ttl">
+                <option value="0" selected>Never expires</option>
                 <option value="1">1 hour</option>
-                <option value="24" selected>24 hours</option>
+                <option value="24">24 hours</option>
                 <option value="168">7 days</option>
               </select>
             </label>
             <button id="ingest-generate" class="primary" type="submit">Generate signed URLs</button>
           </form>
           <p id="ingest-status" class="ingest-status" role="status" aria-live="polite">Generate URLs to authorize publishing. Treat generated URLs and stream keys as secrets.</p>
-          <p class="ingest-status">Expiry applies to new connections only. Established streams continue; reconnecting after expiry requires newly generated URLs.</p>
+          <p class="ingest-status">Keys do not expire by default and survive rollouts. Rotating the signing secret revokes them. Optional timed URLs expire only for new connections.</p>
           <div id="ingest-results" hidden></div>
         </div>
       </div>
@@ -536,7 +537,8 @@ data:
             });
             if (!response.ok) throw new Error('Generation failed');
             const result = await response.json();
-            if (!Number.isFinite(result.expiresAt) || !Array.isArray(result.items) || result.items.length === 0 ||
+            if ((result.expiresAt !== null && !Number.isFinite(result.expiresAt)) ||
+                !Array.isArray(result.items) || result.items.length === 0 ||
                 !result.items.every(item => typeof item.tag === 'string' && typeof item.url === 'string')) {
               throw new Error('Invalid response');
             }
@@ -551,7 +553,9 @@ data:
               ingestResults.appendChild(box);
             }
             ingestResults.hidden = false;
-            ingestStatus.textContent = 'New connections allowed until ' + new Date(result.expiresAt).toLocaleString() + '.';
+            ingestStatus.textContent = result.expiresAt === null
+              ? 'No expiry. Save these keys; they remain valid until the signing secret is rotated.'
+              : 'New connections allowed until ' + new Date(result.expiresAt).toLocaleString() + '.';
           } catch {
             ingestResults.replaceChildren();
             ingestStatus.className = 'ingest-status error';

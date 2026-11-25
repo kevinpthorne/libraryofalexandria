@@ -100,19 +100,23 @@ The `ovenmediaengine-access` Secret contains four independent generated credenti
 They are required: missing credentials prevent startup rather than falling back to known defaults.
 Keep this Secret out of Git. With `auth.autoGenerate: false`, provision all four keys yourself before deployment.
 
-Sign in, select a stream name and connection validity (1 hour, 24 hours, or 7 days), then select **Generate signed URLs**.
+Sign in, select a stream name, leave validity at **Never expires**, then select **Generate signed URLs**.
 Copy the complete RTMPS, encrypted SRT, or WHIP URL into your sender.
 For OBS RTMPS, use the generated **OBS Server** and **OBS Stream Key** separately; leave OBS's username/password authentication disabled.
 The stream key includes `policy` and `signature` query parameters: the bare name `live` is not a credential.
 For SRT, use the complete URL, including the encoded `streamid`, `passphrase`, and `pbkeylen=32`; leave OBS's stream-key field blank.
 
 Signed URLs are bearer credentials bound to one URL and stream. Do not modify their hostname, port, scheme, path, or signed query parameters.
-Expiry rejects new connections and reconnects, but does not disconnect an established stream.
-Generate fresh URLs before reconnecting after expiry. The master signing key never reaches the browser.
+New publishing keys do not expire by default. OME requires a timestamp, so permanent keys use its maximum unsigned 64-bit expiry.
+They are stable across regeneration and rollouts while the signing secret, hostname, port, and stream name remain unchanged.
+Treat them like passwords: rotating `stream-key` revokes every signed publishing URL.
+Optional timed URLs (1 hour, 24 hours, or 7 days) still expire for new connections; established streams continue.
+Existing timed URLs do not become permanent: generate replacements with **Never expires**.
+The master signing key never reaches the browser. Rollouts still disconnect sessions, but senders can reconnect with permanent keys.
 RTMPS and WHIP use TLS; SRT publishing and playback require AES-256 encryption.
 WebRTC media uses DTLS-SRTP. Unsigned, tampered, and expired publishing URLs are rejected.
 
-Playback authorization is separate: HTTPS HLS/LL-HLS and WSS/WebRTC playback remain public to clients that can reach them.
+Playback authorization is separate: HTTPS HLS/LL-HLS and WSS/WebRTC viewers need no publishing key or dashboard login.
 Use the public media hostname `catcher.k.kpt.link:3334` so its certificate matches; internal DNS must resolve that name to a reachable media address.
 Encrypted SRT playback URLs are provided alongside the signed ingest URLs and contain the SRT transport passphrase.
 The preview loads `/llhls/app/<stream>/master.m3u8` through the authenticated, same-origin dashboard proxy.

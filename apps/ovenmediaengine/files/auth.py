@@ -19,6 +19,8 @@ from urllib.parse import quote
 STREAM_NAME = re.compile(r"[A-Za-z0-9_-]{1,64}\Z")
 QUERY_KEY = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,63}\Z")
 HOST_LABEL = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\Z")
+# OME requires an unsigned 64-bit epoch-millisecond expiry, even for permanent keys.
+MAX_URL_EXPIRE = (1 << 64) - 1
 KNOWN_DEFAULTS = frozenset({
     "password", "secret", "default", "admin", "changeme", "change-me",
     "change_me", "ovenmediaengine", "ome-internal-api-token",
@@ -118,9 +120,10 @@ def _signed_url(base, policy, config, credentials):
 
 
 def connection_urls(config, credentials, stream, ttl_hours, now):
-    expires_at = int(now * 1000) + ttl_hours * 60 * 60 * 1000
-    # Only admission expires: existing streams must not be disconnected at URL expiry.
-    policy = _base64url(json.dumps({"url_expire": expires_at}, separators=(",", ":")).encode("ascii"))
+    expires_at = None if ttl_hours == 0 else int(now * 1000) + ttl_hours * 60 * 60 * 1000
+    # Use OME's maximum expiry for permanent keys; never set stream_expire.
+    policy_expiry = MAX_URL_EXPIRE if expires_at is None else expires_at
+    policy = _base64url(json.dumps({"url_expire": policy_expiry}, separators=(",", ":")).encode("ascii"))
     path = "/" + config.app_name + "/" + stream
     items = []
     if config.rtmps_port:
@@ -259,7 +262,7 @@ class AuthHandler(BaseHTTPRequestHandler):
             stream = payload["stream"]
             ttl = payload["ttlHours"]
             if (not isinstance(stream, str) or not STREAM_NAME.fullmatch(stream)
-                    or type(ttl) is not int or ttl not in (1, 24, 168)):
+                    or type(ttl) is not int or ttl not in (0, 1, 24, 168)):
                 raise ValueError("Invalid payload")
         except (ValueError, UnicodeError, RecursionError):
             self.send_error(400)
