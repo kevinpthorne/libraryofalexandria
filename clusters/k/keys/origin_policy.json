@@ -1,5 +1,5 @@
 {
-  "serial_number": 3,
+  "serial_number": 4,
   "subject_id": "k",
   "role": "ORIGIN_NODE",
   "libp2p_peer_id": "QmScQKzdvNVNVAR53DzpPSTbTTvHuhfPLXFJdMfwtL6eon",
@@ -9,7 +9,8 @@
       "service_pattern": "ovenmediaengine-*",
       "allowed_policies": ["STRICT_SINGLETON"],
       "allowed_ports": [
-        {"start": 1936, "end": 1936}
+        {"start": 1936, "end": 1936},
+        {"start": 3334, "end": 3334}
       ],
       "allowed_sni_patterns": ["*.k.kpt.link"]
     },
