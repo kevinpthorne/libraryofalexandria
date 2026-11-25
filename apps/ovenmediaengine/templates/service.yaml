@@ -17,6 +17,7 @@ metadata:
     p2p-anycast.io/sni-hostnames: {{ .Values.domain | quote }}
     p2p-anycast.io/public-port: {{ .Values.rtmps.port | quote }}
     p2p-anycast.io/target: {{ printf "%s.%s.svc.cluster.local:%v" (include "ovenmediaengine.fullname" .) .Release.Namespace .Values.rtmps.port | quote }}
+    external-dns.alpha.kubernetes.io/target: "gateway.kpt.link"
     {{- end }}
 spec:
   type: {{ .Values.service.public.type | default "LoadBalancer" }}
