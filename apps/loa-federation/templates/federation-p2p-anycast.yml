@@ -14,6 +14,9 @@ spec:
       valuesObject:
         image:
           repository: ghcr.io/kevinpthorne/anycast-origin
+          tag: "1.2.0"
+        nodeSelector:
+          kubernetes.io/arch: amd64
         existingSecret: "p2p-anycast-secrets"
         identity:
           pvc:

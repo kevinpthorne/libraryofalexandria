@@ -1,0 +1,22 @@
+{{- if and .Values.gateway.enabled .Values.service.public.enabled .Values.tls.enabled (or (and .Values.llhls.enabled .Values.llhls.public) (and .Values.webrtc.enabled .Values.webrtc.public)) }}
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: {{ include "ovenmediaengine.fullname" . }}-stream-tls
+  labels:
+    {{- include "ovenmediaengine.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    # The Service advertises public port 3334; this route must not advertise port 443.
+spec:
+  parentRefs:
+    - name: {{ .Values.gateway.name }}
+      namespace: {{ .Values.gateway.namespace }}
+      sectionName: {{ .Values.gateway.sectionName }}
+  hostnames:
+    - {{ .Values.domain | quote }}
+  rules:
+    - backendRefs:
+        - name: {{ include "ovenmediaengine.fullname" . }}
+          port: {{ .Values.llhls.tlsPort }}
+{{- end }}

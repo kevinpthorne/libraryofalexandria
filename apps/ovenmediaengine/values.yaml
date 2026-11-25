@@ -112,6 +112,14 @@ service:
     enabled: true
     type: LoadBalancer
 
+gateway:
+  enabled: true
+  name: anycast-gateway
+  namespace: public-gateway
+  serviceName: cilium-gateway-anycast-gateway
+  port: 443
+  sectionName: tls-443
+
 tls:
   enabled: true
   secretName: ovenmediaengine-tls

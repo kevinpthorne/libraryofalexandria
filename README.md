@@ -127,9 +127,13 @@ A required ingress NetworkPolicy blocks direct network access to the pod's plain
 the management API, and the signing service. The backends remain available to sidecars in the same pod.
 This requires a NetworkPolicy-enforcing CNI (the cluster uses Cilium).
 
-RTMPS anycast uses `STRICT_SINGLETON` on TCP 1936. The origin manifest authorizes `*.k.kpt.link`;
-the discovered SNI route is the concrete `catcher.k.kpt.link`, because edges match SNI hostnames exactly.
-Only RTMPS is advertised: the SNI annotation uses an explicit backend target on port 1936, not the default gateway on 443.
+RTMPS and HTTPS/WHIP anycast use `STRICT_SINGLETON` on TCP 1936 and 3334. The origin manifest authorizes `*.k.kpt.link`;
+the discovered SNI routes use the concrete `catcher.k.kpt.link`, because edges match SNI hostnames exactly.
+The origin image is pinned to `1.2.0` with amd64 placement. Its comma-separated public ports have distinct targets:
+1936 goes directly to the OME Service; 3334 goes to `cilium-gateway-anycast-gateway.public-gateway.svc.cluster.local:443`.
+A catcher-specific TLSRoute on `anycast-gateway` forwards that passthrough TLS connection to OME port 3334.
+TLS is not terminated at the gateway; WHIP publishing signatures and keyless HTTPS playback keep the same public URL.
+Upgrade/sync `federation-p2p-anycast` before syncing the new OME annotations; old origins do not understand a port list.
 The policy schema uses `allowed_sni_patterns`; `allowed_sni_hostnames` is not consumed by the manifest signer.
 The signed public manifest is `clusters/k/keys/anycast-origin-manifest.pb64`.
 After changing the policy, re-sign with the matching trusted CA. To install the new manifest without replacing the origin's identity or master key:

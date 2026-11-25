@@ -1,5 +1,13 @@
 {{- $iceStart := int (.Values.webrtc.icePortRangeStart | default 10000) -}}
 {{- $iceEnd := int (.Values.webrtc.icePortRangeEnd | default 10003) -}}
+{{- $httpsPublic := and .Values.tls.enabled (or (and .Values.llhls.enabled .Values.llhls.public) (and .Values.webrtc.enabled .Values.webrtc.public)) -}}
+{{- $sniPorts := list -}}
+{{- if .Values.rtmps.enabled -}}
+{{- $sniPorts = append $sniPorts (.Values.rtmps.port | toString) -}}
+{{- end -}}
+{{- if $httpsPublic -}}
+{{- $sniPorts = append $sniPorts (.Values.llhls.tlsPort | toString) -}}
+{{- end -}}
 {{- if .Values.service.public.enabled }}
 apiVersion: v1
 kind: Service
@@ -11,12 +19,21 @@ metadata:
     external-dns.loa.internal/expose: "public"
     external-dns.alpha.kubernetes.io/hostname: {{ .Values.domain | quote }}
     external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
-    {{- if .Values.rtmps.enabled }}
+    {{- if $sniPorts }}
     p2p-anycast.io/expose: "true"
     p2p-anycast.io/policy: "STRICT_SINGLETON"
     p2p-anycast.io/sni-hostnames: {{ .Values.domain | quote }}
-    p2p-anycast.io/public-port: {{ .Values.rtmps.port | quote }}
-    p2p-anycast.io/target: {{ printf "%s.%s.svc.cluster.local:%v" (include "ovenmediaengine.fullname" .) .Release.Namespace .Values.rtmps.port | quote }}
+    p2p-anycast.io/public-port: {{ join "," $sniPorts | quote }}
+    {{- if .Values.rtmps.enabled }}
+    p2p-anycast.io/target.{{ .Values.rtmps.port }}: {{ printf "%s.%s.svc.cluster.local:%v" (include "ovenmediaengine.fullname" .) .Release.Namespace .Values.rtmps.port | quote }}
+    {{- end }}
+    {{- if $httpsPublic }}
+    {{- if .Values.gateway.enabled }}
+    p2p-anycast.io/target.{{ .Values.llhls.tlsPort }}: {{ printf "%s.%s.svc.cluster.local:%v" .Values.gateway.serviceName .Values.gateway.namespace .Values.gateway.port | quote }}
+    {{- else }}
+    p2p-anycast.io/target.{{ .Values.llhls.tlsPort }}: {{ printf "%s.%s.svc.cluster.local:%v" (include "ovenmediaengine.fullname" .) .Release.Namespace .Values.llhls.tlsPort | quote }}
+    {{- end }}
+    {{- end }}
     external-dns.alpha.kubernetes.io/target: "gateway.kpt.link"
     {{- end }}
 spec:
@@ -34,7 +51,7 @@ spec:
       targetPort: srt
       protocol: UDP
     {{- end }}
-    {{- if and .Values.tls.enabled (or (and .Values.llhls.enabled .Values.llhls.public) (and .Values.webrtc.enabled .Values.webrtc.public)) }}
+    {{- if $httpsPublic }}
     - name: https-stream
       port: {{ .Values.llhls.tlsPort | default 3334 }}
       targetPort: https-stream
