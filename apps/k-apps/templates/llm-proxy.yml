@@ -100,6 +100,7 @@ spec:
             gatewayNamespace: public-gateway
             annotations:
               p2p-anycast.io/expose: "true"
+              p2p-anycast.io/target: cilium-gateway-anycast-gateway.public-gateway.svc.cluster.local:443
               external-dns.loa.internal/expose: "public"
             hostnames:
               - {{ $domain | quote }}

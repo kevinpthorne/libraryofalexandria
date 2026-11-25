@@ -8,6 +8,8 @@ cert:
 cluster: {}
 
 # A list of endpoints to expose via the Gateway API.
+# For p2p-anycast TLSRoutes, set p2p-anycast.io/target when the Gateway and backing
+# Service names differ (Cilium uses cilium-gateway-<gatewayName>).
 endpoints: []
 # - name: example-app
 #   className: cilium # Default gateway class; optional
