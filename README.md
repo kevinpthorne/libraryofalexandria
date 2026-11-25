@@ -88,6 +88,8 @@ Open `http://catcher.k.loa.internal:8080/` on the LAN/VPN and select **Preview S
 The preview loads `/llhls/app/<stream>/master.m3u8` through the dashboard's same-origin proxy.
 Use the configured `master.m3u8` playlist: its relative media URLs preserve the `/llhls/` prefix.
 The built-in `llhls.m3u8` playlist emits root-relative URLs that bypass this proxy and return dashboard HTML instead of media.
+Dashboard **Copy** buttons support plain HTTP using a selection-based clipboard fallback.
+If the browser blocks copying, a prompt displays the URL for manual copying.
 
 ### Building initial boot images
 

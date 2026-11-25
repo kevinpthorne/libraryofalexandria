@@ -396,12 +396,41 @@ data:
           setTimeout(() => toast.classList.remove('show'), 2500);
         }
 
-        function copyText(text) {
-          navigator.clipboard.writeText(text).then(() => {
+        async function copyText(text) {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+              await navigator.clipboard.writeText(text);
+              showToast('Copied: ' + text);
+              return;
+            } catch {
+              // Permissions may block the Clipboard API; try the user-initiated copy below.
+            }
+          }
+
+          // The internal HTTP dashboard has no Clipboard API.
+          const field = document.createElement('textarea');
+          const focused = document.activeElement;
+          field.value = text;
+          field.readOnly = true;
+          field.style.position = 'fixed';
+          field.style.left = '-9999px';
+          let copied = false;
+          try {
+            document.body.appendChild(field);
+            field.select();
+            field.setSelectionRange(0, text.length);
+            copied = document.execCommand('copy');
+          } catch {
+            // Fall back to manual copying if the browser blocks both methods.
+          } finally {
+            field.remove();
+            if (focused) focused.focus({ preventScroll: true });
+          }
+          if (copied) {
             showToast('Copied: ' + text);
-          }).catch(() => {
+          } else {
             prompt('Copy URL:', text);
-          });
+          }
         }
 
         function renderIngestGuide() {
