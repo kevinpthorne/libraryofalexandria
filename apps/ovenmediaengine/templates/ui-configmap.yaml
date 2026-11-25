@@ -506,8 +506,8 @@ data:
             const bytesIn = stats ? formatBytes(stats.totalBytesIn || 0) : '0 B';
             const bitrateIn = stats ? formatBits(stats.lastThroughputIn || 0) : '0 bps';
 
-            const llhlsInternal = `http://${internalHost}:${httpPort}/${appName}/${name}/llhls.m3u8`;
-            const llhlsPublic = `https://${publicHost}:${tlsPort}/${appName}/${name}/llhls.m3u8`;
+            const llhlsInternal = `http://${internalHost}:${httpPort}/${appName}/${name}/master.m3u8`;
+            const llhlsPublic = `https://${publicHost}:${tlsPort}/${appName}/${name}/master.m3u8`;
             const hlsInternal = `http://${internalHost}:${httpPort}/${appName}/${name}/ts:playlist.m3u8`;
             const webrtcPlay = `wss://${publicHost}:${tlsPort}/${appName}/${name}`;
             const srtPlay = `srt://${internalHost}:${srtPlayPort}?streamid=default/${appName}/${name}`;
@@ -580,7 +580,8 @@ data:
           const video = document.getElementById('preview-video');
           const title = document.getElementById('modal-stream-title');
           title.textContent = `Live Stream Preview: /${appName}/${name}`;
-          const streamUrl = `/llhls/${appName}/${name}/llhls.m3u8`;
+          // The configured playlist uses relative media URLs, preserving the /llhls/ proxy prefix.
+          const streamUrl = `/llhls/${appName}/${name}/master.m3u8`;
 
           if (Hls.isSupported()) {
             if (currentHls) currentHls.destroy();

@@ -82,6 +82,13 @@ Several root-level helper scripts simplify operational tasks:
 
 ## Usage
 
+### OvenMediaEngine internal preview
+
+Open `http://catcher.k.loa.internal:8080/` on the LAN/VPN and select **Preview Stream**.
+The preview loads `/llhls/app/<stream>/master.m3u8` through the dashboard's same-origin proxy.
+Use the configured `master.m3u8` playlist: its relative media URLs preserve the `/llhls/` prefix.
+The built-in `llhls.m3u8` playlist emits root-relative URLs that bypass this proxy and return dashboard HTML instead of media.
+
 ### Building initial boot images
 
 ```bash
