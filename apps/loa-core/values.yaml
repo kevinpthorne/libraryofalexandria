@@ -14,12 +14,12 @@ seaweedfsUi:
   enabled: true
   chart: seaweedfs-ui
   repoURL: oci://ghcr.io/kevinpthorne/charts/seaweedfs-ui
-  targetRevision: "0.1.0"
+  targetRevision: "0.1.0-081241e"
   namespace: seaweedfs-system
   syncWave: "2"
   image:
     repository: ghcr.io/kevinpthorne/seaweedfs-ui
-    tag: "latest"
+    tag: "0.1.0-081241e"
     pullPolicy: IfNotPresent
   config:
     tls:
