@@ -35,7 +35,7 @@ and [configuration-level allocation](https://docs.akri.sh/architecture/configura
 
 ## Host IPv6 and USB prerequisites
 
-Apply the NixOS changes in `clusters/k/default.nix` **before syncing the broker**:
+Apply the NixOS changes in `clusters/k/submodules/otbr.nix` **before syncing the broker**:
 all k nodes enable IPv6/IPv4 forwarding, load TUN and netfilter modules, and accept
 IPv6 router advertisements even while forwarding (`accept_ra=2`). The LAN interface
 also accepts route-information prefixes through /64. These are host sysctls,
