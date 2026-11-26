@@ -9,6 +9,9 @@ pgedge:
   instances: 1
   appName: main
   namespace: pgedge
+  # PostgreSQL 17.11, Spock 5.0.13, pgvector 0.8.7; amd64 + arm64.
+  # Keep extension binaries consistent across nodes and reboots.
+  imageName: ghcr.io/pgedge/pgedge-postgres:17-spock5-standard@sha256:6d2fb528a11a059d07247e38b38e601a3795d1ab2bfd78ad945f9e77227c0a15
   storageSize: "50Gi"
   pjsipViewsJob:
     enabled: false

@@ -36,3 +36,67 @@ Phase 3: Cluster B Launch (The "Joiner")
     App B: Deploy.
 
         Result: Connects to B-rw. Sees tables exist. Skips migrations. Ready for traffic.
+
+## Image and extension compatibility
+
+`pgedge.imageName` in `apps/loa-federation/values.yaml` pins a multi-architecture
+image digest (PostgreSQL 17.11, Spock 5.0.13, pgvector 0.8.7). The pgEdge
+Application passes it to each CNPG Cluster explicitly; do not inherit the
+upstream mutable `17-spock5-standard` tag. `IfNotPresent` is safe with a digest,
+but a mutable tag can select different cached binaries on different nodes.
+
+After the November 2026 reboot, cluster k's primary and one replica had
+pgvector 0.8.1 / Spock 5.0.8 binaries while the database catalogs recorded
+0.8.7 / 5.0.13. The remaining replica supplied the compatible pinned image.
+Do not edit `pg_extension.extversion`, drop extensions, or recreate Immich's
+database to bypass this mismatch.
+
+Publish the repository change and sync `loa-federation`, then
+`pgedge-restricted`. This rolls the shared database cluster and may briefly
+disconnect clients; the default pin also applies to other federated clusters.
+Check every instance, not only the current primary:
+
+```bash
+kubectl -n pgedge get cluster main-k-data
+for pod in $(kubectl -n pgedge get pods -l cnpg.io/cluster=main-k-data -o name); do
+  echo "$pod"
+  kubectl -n pgedge exec "$pod" -c postgres -- psql -X -d immich -c \
+    "SELECT name, default_version, installed_version
+     FROM pg_available_extensions WHERE name IN ('vector', 'spock');"
+done
+kubectl -n immich rollout status deployment/immich-restricted-server --timeout=180s
+```
+
+The available and installed versions must match on all instances. Immich's
+crash-looping server retries automatically once compatible binaries are serving
+the read-write Service.
+
+## Interpreting database DNS NXDOMAINs
+
+Immich connects to `main-k-data-rw.pgedge.svc` with the pod's DNS search path
+and `ndots:5`. NXDOMAIN responses for candidates such as
+`main-k-data-rw.pgedge.svc.immich.svc.cluster.local.` or the absolute
+`main-k-data-rw.pgedge.svc.` are expected. The canonical name
+`main-k-data-rw.pgedge.svc.cluster.local.` must resolve to the read-write
+Service's ClusterIP, even during a primary change; this is not a headless Service.
+
+For an intermittent failure, capture the exact query name, response code,
+timestamp, client node, and answering DNS server. From a DNS-equipped client
+pod, query the canonical name directly against each CoreDNS pod IP, the
+`kube-dns-upstream` Service, and the node-local cache to distinguish authoritative
+failures from cached negatives:
+
+```bash
+kubectl -n kube-system get pods -l k8s-app=kube-dns -o wide
+kubectl -n kube-system get svc kube-dns-upstream
+kubectl -n pgedge get svc main-k-data-rw
+# Run inside the client pod, substituting each DNS server IP:
+dig @DNS_SERVER_IP main-k-data-rw.pgedge.svc.cluster.local. A
+```
+
+The recovery investigation found successful canonical-name answers across both
+CoreDNS replicas and three client nodes, but did not localize the reported
+intermittent fault. No CoreDNS configuration change was made.
+Do not change `DB_URL` to the canonical name without also adding that name to
+the pgEdge server certificate: Immich uses `sslmode=verify-full`, and the
+current certificate lists the shorter `.svc` identity.
