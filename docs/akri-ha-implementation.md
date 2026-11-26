@@ -59,10 +59,37 @@ The new Configuration name lets ArgoCD prune `homeassistant-connection-zb1` and
 create fresh discovery state instead of retaining old configuration-level claims.
 The old OTBR sidecar and resource requests are removed together.
 
-OTBR retains `/var/lib/otbr-thread` on the USB host, mounted at `/data`
-(the image stores the dataset in `/data/thread`). Back this directory up before
-moving the stick: moving USB does **not** move the Thread dataset. Preserve the
-Home Assistant PVC and Matter storage as well.
+OTBR stores `/data` on the `akri/homeassistant-thread-state` Longhorn PVC
+(`ReadWriteOnce`, 1 GiB); the image keeps the dataset in `/data/thread`.
+The claim is independent of the Akri Instance and broker Pod, so unplugging the
+radio does not delete it. Only `/dev/net/tun` is a hostPath.
+
+To move the stick, unplug it and plug it into another k node. Akri discovers it
+and creates the replacement broker there using the same claim. Expect downtime
+while the old broker terminates and Longhorn detaches/reattaches the volume.
+A Pending/Multi-Attach period during that handoff is not an admission failure.
+Do not force-detach a volume from a still-running broker. If the old node is
+unreachable, fence it before recovering the attachment. Do not change the claim
+to ReadWriteMany: concurrent OTBR processes must not write the same dataset.
+
+### Migrating an existing hostPath deployment
+
+If the hostPath version has already run, migrate its state before starting a
+broker with the PVC; an empty PVC does not recover the existing Thread network.
+
+1. Stop OTBR and temporarily suspend broker reconciliation during migration.
+2. Back up the **entire contents** of `/var/lib/otbr-thread` on the old USB host.
+   Preserve the `thread/` subdirectory, permissions, and ownership.
+3. Sync the PVC and copy that backup into its root using a temporary pod mounting
+   `homeassistant-thread-state` in namespace `akri`. The resulting dataset path
+   must be `/data/thread`, not `/data/otbr-thread/thread`.
+4. Remove the migration pod to release the volume. Recreate the Akri Configuration
+   from the updated manifest, then resume reconciliation so newly created brokers
+   use the PVC rather than retaining the old PodSpec.
+5. Verify the existing Thread network before retiring the host backup. Preserve
+   the Home Assistant PVC and Matter storage as well.
+
+For a fresh deployment, no hostPath migration is needed.
 
 After host configuration and ArgoCD sync:
 

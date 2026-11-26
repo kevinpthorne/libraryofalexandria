@@ -1,3 +1,18 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: homeassistant-thread-state
+  namespace: akri
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: akri.sh/v0
 kind: Configuration
 metadata:
@@ -79,9 +94,8 @@ spec:
             path: /dev/net/tun
             type: CharDevice
         - name: thread-state
-          hostPath:
-            path: /var/lib/otbr-thread
-            type: DirectoryOrCreate
+          persistentVolumeClaim:
+            claimName: homeassistant-thread-state
   configurationServiceSpec:
     type: ClusterIP
     ports:
