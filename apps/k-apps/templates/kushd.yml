@@ -3,17 +3,20 @@ kind: Application
 metadata:
   name: kushd
   namespace: {{ .Values.argoNamespace }}
+  annotations:
+    argocd.argoproj.io/skip-reconcile: "true"
 spec:
   project: default
   source:
     repoURL: https://github.com/kevinpthorne/kushd.git
     path: charts/kushd
-    targetRevision: HEAD
+    targetRevision: v1.0.9
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
   syncPolicy:
     automated:
+      enabled: false
       prune: true
       selfHeal: true
     managedNamespaceMetadata:
