@@ -19,7 +19,7 @@ seaweedfsUi:
   syncWave: "2"
   image:
     repository: ghcr.io/kevinpthorne/seaweedfs-ui
-    tag: "0.1.0-edad125"
+    tag: "0.1.0-c3b7b68"
     pullPolicy: IfNotPresent
   config:
     tls:
