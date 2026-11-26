@@ -1,0 +1,91 @@
+apiVersion: akri.sh/v0
+kind: Configuration
+metadata:
+  name: homeassistant-thread-rcp
+  namespace: akri
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "1" # akri comes in wave 0
+spec:
+  discoveryHandler:
+    name: udev
+    discoveryDetails: |+
+      udevRules:
+        - 'SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ENV{ID_VENDOR}=="Nabu_Casa"'
+  capacity: 1
+  brokerSpec:
+    brokerPodSpec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: otbr
+          image: ghcr.io/ownbee/hass-otbr-docker@sha256:70bdba58d5194bebbb66fdb8700e664009f50bd5cd887dec70f9640fafee3797
+          command: ["/bin/bash", "-ec"]
+          args:
+            - |
+              # Akri injects the actual tty path; do not assume ttyUSB0.
+              device_variables=( ${!UDEV_DEVNODE_@} )
+              if (( ${#device_variables[@]} != 1 )); then
+                echo "Expected exactly one Akri serial device" >&2
+                exit 1
+              fi
+              variable="${device_variables[0]}"
+              export DEVICE="${!variable}"
+              : "${DEVICE:?Akri supplied an empty serial device}"
+              export BACKBONE_IF="$(ip -4 route show default | awk '/dev/ {for (i=1; i<NF; i++) if ($i=="dev") {print $(i+1); exit}}')"
+              : "${BACKBONE_IF:?No LAN default-route interface}"
+              exec /init
+          securityContext:
+            privileged: true
+          env:
+            - name: BAUDRATE
+              value: "460800"
+            - name: FLOW_CONTROL
+              value: "1"
+            - name: AUTOFLASH_FIRMWARE
+              value: "0"
+            - name: FIREWALL
+              value: "1"
+            - name: NAT64
+              value: "1"
+            - name: OTBR_REST_PORT
+              value: "8081"
+            - name: OTBR_LOG_LEVEL
+              value: info
+          ports:
+            - name: rest
+              containerPort: 8081
+          resources:
+            requests:
+              {{`"{{PLACEHOLDER}}"`}}: "1"
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              {{`"{{PLACEHOLDER}}"`}}: "1"
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /node
+              port: rest
+            periodSeconds: 10
+          volumeMounts:
+            - name: tun
+              mountPath: /dev/net/tun
+            - name: thread-state
+              mountPath: /data
+      volumes:
+        - name: tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice
+        - name: thread-state
+          hostPath:
+            path: /var/lib/otbr-thread
+            type: DirectoryOrCreate
+  configurationServiceSpec:
+    type: ClusterIP
+    ports:
+      - name: rest
+        port: 8081
+        targetPort: rest
+        protocol: TCP
