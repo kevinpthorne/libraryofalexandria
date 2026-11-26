@@ -27,21 +27,23 @@ spec:
                   serverCASecret: pgedge-{{ .Values.pgedge.appName }}-server-cert
                   clientCASecret: pgedge-{{ .Values.pgedge.appName }}-client-ca-public
                   replicationTLSSecret: streaming-replica-client-cert
-                # CloudNativePG Security Context Injection
-                image:
-                  podSecurityContext:
-                    runAsNonRoot: true
-                    runAsUser: 26        # Standard Postgres UID
-                    runAsGroup: 26       # Standard Postgres GID
-                    fsGroup: 26
-                    seccompProfile:
-                      type: RuntimeDefault
-                  securityContext:
-                    allowPrivilegeEscalation: false
-                    readOnlyRootFilesystem: true
-                    capabilities:
-                      drop:
-                        - ALL
+                podSecurityContext:
+                  runAsNonRoot: true
+                  runAsUser: 26
+                  runAsGroup: 26
+                  fsGroup: 26
+                  seccompProfile:
+                    type: RuntimeDefault
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  readOnlyRootFilesystem: true
+                  runAsNonRoot: true
+                  privileged: false
+                  seccompProfile:
+                    type: RuntimeDefault
+                  capabilities:
+                    drop:
+                      - ALL
                 managed:
                   roles:
                   - name: admin

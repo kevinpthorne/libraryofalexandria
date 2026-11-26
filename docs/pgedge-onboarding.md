@@ -100,3 +100,12 @@ intermittent fault. No CoreDNS configuration change was made.
 Do not change `DB_URL` to the canonical name without also adding that name to
 the pgEdge server certificate: Immich uses `sslmode=verify-full`, and the
 current certificate lists the shorter `.svc` identity.
+
+## CNPG pod security overrides
+
+Set `podSecurityContext` and `securityContext` directly under each node's
+`clusterSpec`, not under `image`. The installed CNPG 1.28 CRD supports these
+fields; it prunes the unsupported `spec.image` block, causing persistent ArgoCD
+drift. The explicit contexts match the operator's enforced settings: UID/GID 26,
+non-root execution, RuntimeDefault seccomp, no privilege escalation, a read-only
+container root filesystem, and all capabilities dropped.
