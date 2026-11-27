@@ -3,6 +3,8 @@
   config = {
     # Matter needs IPv6 routes to Thread devices even with an external border router.
     networking.enableIPv6 = true;
+    # Match per-node IPv6 firewall aliases instead of selecting rotating privacy addresses.
+    networking.interfaces.${builtins.head config.libraryofalexandria.node.interfaces}.tempAddress = "disabled";
     boot.kernel.sysctl = {
       "net.ipv6.conf.all.disable_ipv6" = 0;
       "net.ipv6.conf.default.disable_ipv6" = 0;

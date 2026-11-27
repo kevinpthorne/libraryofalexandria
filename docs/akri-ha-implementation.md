@@ -21,6 +21,16 @@ when Kubernetes enables host forwarding. It uses each node's primary interface:
 the Matter Server to reach Thread devices through an external border router.
 The LAN must provide working IPv6 routing and multicast; IPv6 WAN access is not required.
 
+The module disables temporary IPv6 addresses on the primary LAN interface so
+Matter traffic uses a stable SLAAC source address matching per-node firewall aliases.
+Include each eligible HA node's stable address in those aliases, since HA can move
+between nodes. Check the selected source with `ip -6 route get <device-OMR-address>`.
+
+For cross-VLAN routing, pfSense needs a route to the actual Thread OMR prefix via
+the Apple TV's current LAN IPv6 address. Confirm the next hop still belongs to the
+Apple TV after network/interface changes; a stale link-local gateway can break
+HA access even while clients on the Apple TV VLAN reach Thread devices directly.
+
 The USB-only `otbr.nix` module is not imported. The Helm chart omits
 `homeassistant-thread-rcp`, so ArgoCD sync prunes any previously deployed USB
 Configuration and its owned brokers. Akri itself remains available for other devices.
