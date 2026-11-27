@@ -12,6 +12,7 @@ spec:
   resources:
     requests:
       storage: 1Gi
+{{- if .Values.usbOtbr.enabled }}
 ---
 apiVersion: akri.sh/v0
 kind: Configuration
@@ -103,3 +104,4 @@ spec:
         port: 8081
         targetPort: rest
         protocol: TCP
+{{- end }}

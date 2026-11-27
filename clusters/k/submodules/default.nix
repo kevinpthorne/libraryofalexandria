@@ -3,6 +3,7 @@
   imports = [
     ./kevint.nix
     ./longhorn.nix
-    ./otbr.nix
+    ./matter-ipv6.nix
+    # ./otbr.nix # Enable before deploying the USB OTBR broker.
   ];
 }

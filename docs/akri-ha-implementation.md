@@ -7,9 +7,38 @@
 - `apps/homeassistant` runs one StatefulSet replica with the existing Longhorn
   `homeassistant-pvc`. Matter Server remains a sidecar. Host networking supports
   LAN multicast; `ClusterFirstWithHostNet` retains Kubernetes service discovery.
-- OTBR runs separately as an Akri broker in namespace `akri`, not as a Home Assistant
-  sidecar. Home Assistant has **no Akri resource request**: a missing radio cannot
-  prevent Home Assistant from starting.
+- USB OTBR is disabled by default (`usbOtbr.enabled: false`). Home Assistant and
+  Matter Server remain enabled for use with a Thread-capable Apple TV.
+  Home Assistant has **no Akri resource request**: a missing radio cannot prevent
+  it from starting.
+
+## Apple TV border router (current configuration)
+
+`clusters/k/submodules/matter-ipv6.nix` keeps IPv6 enabled and accepts LAN router
+advertisements (`accept_ra=2`) and route-information prefixes through /64, including
+when Kubernetes enables host forwarding. It uses each node's primary interface:
+`end0` on the Pi nodes, `enp5s0` on worker2-k. These settings are still needed for
+the Matter Server to reach Thread devices through an external border router.
+The LAN must provide working IPv6 routing and multicast; IPv6 WAN access is not required.
+
+The USB-only `otbr.nix` module is not imported. The Helm chart omits
+`homeassistant-thread-rcp`, so ArgoCD sync prunes any previously deployed USB
+Configuration and its owned brokers. Akri itself remains available for other devices.
+The `homeassistant-thread-state` PVC stays rendered even while USB OTBR is disabled,
+preserving any existing dataset.
+
+Connect Home Assistant's Matter integration to `ws://127.0.0.1:5580/ws` and use
+the Apple Thread network for commissioning. Do not add the Apple TV as an OTBR
+REST endpoint. See [Home Assistant's Matter documentation](https://www.home-assistant.io/integrations/matter/).
+
+### Enabling USB OTBR later
+
+1. Uncomment `./otbr.nix` in `clusters/k/submodules/default.nix` and apply the
+   NixOS configuration to the nodes before enabling the broker.
+2. Set `usbOtbr.enabled: true` in the `k-apps` Helm values and sync ArgoCD.
+3. Follow the USB firmware, dataset, and integration instructions below. If keeping
+   the Apple Thread network, import its credentials into Home Assistant first;
+   do not accidentally form a separate network.
 
 ## Single-radio allocation
 
@@ -35,11 +64,11 @@ and [configuration-level allocation](https://docs.akri.sh/architecture/configura
 
 ## Host IPv6 and USB prerequisites
 
-Apply the NixOS changes in `clusters/k/submodules/otbr.nix` **before syncing the broker**:
-all k nodes enable IPv6/IPv4 forwarding, load TUN and netfilter modules, and accept
-IPv6 router advertisements even while forwarding (`accept_ra=2`). The LAN interface
-also accepts route-information prefixes through /64. These are host sysctls,
-not pod sysctls: Kubernetes host-network pods cannot own a separate network namespace.
+For USB OTBR, apply the opt-in `clusters/k/submodules/otbr.nix` module **before
+syncing the broker**. It adds IPv4/IPv6 forwarding plus TUN and netfilter modules.
+Matter's IPv6/RA settings remain in the always-imported `matter-ipv6.nix`; disabling
+USB OTBR does not turn off forwarding configured elsewhere for Kubernetes.
+These are host sysctls, not pod sysctls: host-network pods share the node's network namespace.
 
 The privileged broker mounts `/dev/net/tun` as a character device and receives the
 serial device from Akri. `BACKBONE_IF` is selected from the host's IPv4 default
