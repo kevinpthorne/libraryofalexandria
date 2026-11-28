@@ -3,8 +3,6 @@ kind: Application
 metadata:
   name: kushd
   namespace: {{ .Values.argoNamespace }}
-  annotations:
-    argocd.argoproj.io/skip-reconcile: "true"
 spec:
   project: default
   source:
@@ -16,7 +14,6 @@ spec:
     namespace: kube-system
   syncPolicy:
     automated:
-      enabled: false
       prune: true
       selfHeal: true
     managedNamespaceMetadata:
